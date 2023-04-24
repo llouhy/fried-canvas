@@ -41,7 +41,7 @@ export const useLineWidthToCoordinateMap: UseLineWidthToCoordinateMap = () => {
       return lineWidthMap.delete(width);
     },
     getAll: (): [number, Point[]][] => {
-      const result = [];
+      const result: [number, Point[]][] = [];
       for (const item of lineWidthMap) {
         result.push(item);
       }
