@@ -122,8 +122,8 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   const getShape = (shapeId: string) => {
     return _getShape(shapeId);
   };
-  const createShape = (modelName: string, options: { data?: any; model?: ModelOptions; index?: number }) => {
-    return _createShape(modelName, options.data, options.model, options.index);
+  const createShape = (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => {
+    return _createShape(modelName, options?.data, options?.model, options?.index);
   };
   const engineResult = getPureObject({
     engine: engineInstance,
