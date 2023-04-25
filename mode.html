@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<script src="./dist/engine.js">
+</script>
+
+<body>
+  <div class="main">
+    <canvas id="canvas"></canvas>
+  </div>
+
+</body>
+
+</html>
+<script>
+  // console.log();
+  const engine = dogdog.initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
+  console.log(engine);
+  const { addModel, createShape, drawShape } = engine;
+  // console.log(engine);
+  const angleToRadian = (angle) => {
+    return (Math.PI * angle) / 180;
+  };
+  const getTestModel2 = () => {
+    return {
+      name: 'test2',
+      draw: (ctx) => {
+        ctx.save();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = 'pink';
+        ctx.beginPath();
+        ctx.moveTo(300, 60);
+        ctx.lineTo(420, 420);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(420, 420, 44, angleToRadian(45), angleToRadian(270));
+        ctx.stroke();
+        ctx.restore();
+      },
+      borderOptions: {
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        borderDash: [5, 5],
+        borderWidth: 2
+      }
+    };
+  };
+
+  addModel(getTestModel2());
+  drawShape(createShape('test2'));
+</script>
