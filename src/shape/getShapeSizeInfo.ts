@@ -17,32 +17,32 @@ export const getImpreciseShapeSizeInfo = (
   height: number;
 } => {
   const preBoundary: Boundary = getInitBoundary();
-  const map = new Map<keyof Boundary, number>();
+  const boundToLineWidth = new Map<keyof Boundary, number>();
   for (const item of coordinateStack) {
     const { x, y, dWidth } = item; // the difference of stroke lineWidth and 1px
     if (preBoundary.minX > x) {
       preBoundary.minX = x;
-      map.set('minX', dWidth ?? 0);
+      boundToLineWidth.set('minX', dWidth ?? 0);
     }
     if (preBoundary.maxX < x) {
       preBoundary.maxX = x;
-      map.set('maxX', dWidth ?? 0);
+      boundToLineWidth.set('maxX', dWidth ?? 0);
     }
     if (preBoundary.minY > y) {
       preBoundary.minY = y;
-      map.set('minY', dWidth ?? 0);
+      boundToLineWidth.set('minY', dWidth ?? 0);
     }
     if (preBoundary.maxY < y) {
       preBoundary.maxY = y;
-      map.set('maxY', dWidth ?? 0);
+      boundToLineWidth.set('maxY', dWidth ?? 0);
     }
   }
   // let boundary = { ...preBoundary };
   const boundary = {
-    minX: preBoundary.minX - (map.get('minX') ?? 0),
-    maxX: preBoundary.maxX + (map.get('maxX') ?? 0),
-    minY: preBoundary.minY - (map.get('minY') ?? 0),
-    maxY: preBoundary.maxY + (map.get('maxY') ?? 0)
+    minX: preBoundary.minX - (boundToLineWidth.get('minX') ?? 0),
+    maxX: preBoundary.maxX + (boundToLineWidth.get('maxX') ?? 0),
+    minY: preBoundary.minY - (boundToLineWidth.get('minY') ?? 0),
+    maxY: preBoundary.maxY + (boundToLineWidth.get('maxY') ?? 0)
   };
   return {
     ox: boundary.minX,
