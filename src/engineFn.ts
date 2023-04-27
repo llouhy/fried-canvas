@@ -1,11 +1,12 @@
 import { useModel } from './init/useModel';
 import { useShape } from './init/useShape';
+import { useGrid } from './init/initGrid';
 import { generateRandomStr } from './config/common';
 // import { _Error, isString, setCanvasSize } from './tools/utils';
 import { initContext, reloadCtxFunction } from './init/context';
 import type { Shape } from './shape/shape';
-import type { ModelOptions } from './graphOptions';
-import type { EngineCtx, Point } from './rewriteFn/type';
+import type { Graphics, ModelOptions } from './graphOptions';
+import type { Boundary, EngineCtx, Point } from './rewriteFn/type';
 import { isString } from './utils/is';
 import { getError } from './definition/error';
 import { identifyMap } from './definition/identify';
@@ -24,13 +25,16 @@ export type InitEngineResult = {
     ctx: EngineCtx;
     canvas: HTMLCanvasElement;
     readonly: boolean;
+    repaintInfluencedShape: (graphics: Graphics) => void;
   };
   addModel: (modelList: ModelOptions[] | ModelOptions) => any;
   getModel: (modelName: string) => ModelOptions | undefined;
   deleteModel: (modelName: string) => boolean;
+  createShape: (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => Shape;
   drawShape: (shape: Shape, placePoint?: Point) => string | undefined;
   getShape: (shapeId: string) => Shape | undefined;
   resizeCanvas: (w: number, h: number) => void;
+  clearRect: (x: number, y: number, width: number, height: number) => void;
   [key: string]: any;
 };
 export type InitEngine = (options: EngineOptions) => InitEngineResult;
@@ -125,6 +129,11 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   const createShape = (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => {
     return _createShape(modelName, options?.data, options?.model, options?.index);
   };
+  const clearRect = (x: number, y: number, width: number, height: number) => {
+    const { ctx } = engineInstance;
+    ctx.clearRect(x, y, width, height);
+  };
+
   const engineResult = getPureObject({
     engine: engineInstance,
     addModel,
@@ -132,11 +141,30 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
     deleteModel,
     drawShape,
     getShape,
+    clearRect,
     createShape,
     resizeCanvas
   });
   setIdentify(engineResult, 'engine');
   engineById.set(engineResult.engine.id, engineResult);
+  const { getInfluencedShape } = useGrid(_id);
+  const repaintInfluencedShape = (graphics: Graphics) => {
+    const boundary = {
+      minX: graphics.ox,
+      minY: graphics.oy,
+      maxX: graphics.ox + graphics.width,
+      maxY: graphics.oy + graphics.height
+    };
+    const shapes = getInfluencedShape(boundary);
+    for (const item of shapes) {
+      item.draw(ctx);
+    }
+    console.log('受影响的shape', shapes);
+  };
+  Object.defineProperty(engineInstance, 'repaintInfluencedShape', {
+    value: repaintInfluencedShape,
+    writable: false
+  });
   _addModel(modelList ?? []);
   return engineResult;
 };

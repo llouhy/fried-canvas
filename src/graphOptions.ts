@@ -1,6 +1,7 @@
 import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
 
 export type BorderOptions = {
+  needBorder?: boolean;
   paddingLeft?: number;
   paddingRight?: number;
   paddingTop?: number;

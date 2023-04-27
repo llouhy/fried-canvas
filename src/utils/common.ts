@@ -10,3 +10,11 @@ export const setCanvasSize = (canvas: HTMLCanvasElement, width: number, height: 
 export const getPureObject = (obj: { [key: string]: any }) => {
   return Object.assign(Object.create(null), obj);
 };
+
+export const getDivisibleNum = (cur: number, divisor: number): number => {
+  let result = cur;
+  if (cur % divisor !== 0) {
+    result++;
+  }
+  return result;
+};

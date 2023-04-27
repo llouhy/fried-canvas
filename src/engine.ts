@@ -167,7 +167,7 @@ export default class Engine {
 
   createShape = (shape: Shape) => {
     try {
-      shape.draw(this.ctx as EngineCtx, this.id);
+      shape.draw(this.ctx as EngineCtx);
       const shapeId = shape.id;
       this.shapeMap.set(shapeId, shape);
     } catch (err) {
