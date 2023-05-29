@@ -116,19 +116,14 @@ export class Shape {
 
   moveTo(x: number, y: number) {
     // const { getInfluencedShape } = useGrid(this.belongEngineId);
-    // this.clearPreRect();
-    // this.clearCurRect();
+    // const { clearRect } = engineById.get(this.belongEngineId);
     const { repaintInfluencedShape } = engineById.get(this.belongEngineId).engine;
     // 需要重新绘制开始位置跟结束位置影响的shape
     // 方案1：分别对新旧位置执行清除重绘操作
     // 方案2：将新旧位置的boundary合并成一个大Bound执行清除重绘操作
-    const mergeBoundary = 
-    this.clear();
-    repaintInfluencedShape(this.graphics);
-    this.clear();
-    repaintInfluencedShape(this.graphics);
-    // const shapes = engineById.get(this.belongEngineId).getRelationShape();
-    // shapes.draw();
+
+    // const mergeBoundary = this.graphics
+    repaintInfluencedShape(this.graphics, [this]); // repaint应该
     this.draw(this.ctx, {x, y});
     // const offCanvas = new OffscreenCanvas();
   }

@@ -1,3 +1,6 @@
+import { Graphics } from "../graphOptions";
+import { Boundary } from "../rewriteFn/type";
+
 export const getTypeStr = (value: any) => {
   return Object.prototype.toString.call(value).slice(8, -1).toLowerCase();
 };
@@ -18,3 +21,12 @@ export const getDivisibleNum = (cur: number, divisor: number): number => {
   }
   return result;
 };
+
+export const graphicsToBoundary = (graphics: Graphics): Boundary => {
+  return {
+    minX: graphics.ox,
+    minY: graphics.oy,
+    maxX: graphics.ox + graphics.width,
+    maxY: graphics.oy + graphics.height
+  };
+}

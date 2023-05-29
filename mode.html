@@ -21,7 +21,8 @@
 <script>
 
   // return;
-  // const engine = dogdog.initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
+  const engine = dogdog.initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
+  console.log(engine)
   // const { addModel, createShape, drawShape } = engine;
   // const angleToRadian = (angle) => {
   //   return (Math.PI * angle) / 180;
@@ -124,45 +125,45 @@
 // // 绘制最外层的网格
 // drawGrid(0, 0, canvas.width, canvas.height, 0);
 // 获取Canvas元素
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+// const canvas = document.getElementById("canvas");
+// const ctx = canvas.getContext("2d");
 
-// 设置画布宽度和高度
-canvas.width = 500;
-canvas.height = 500;
+// // 设置画布宽度和高度
+// canvas.width = 500;
+// canvas.height = 500;
 
-// 定义单元格大小和行列数
-const cellSize = 50;
-const numRows = Math.floor(canvas.height / cellSize);
-const numCols = Math.floor(canvas.width / cellSize);
+// // 定义单元格大小和行列数
+// const cellSize = 50;
+// const numRows = Math.floor(canvas.height / cellSize);
+// const numCols = Math.floor(canvas.width / cellSize);
 
-// 绘制网格
-for (let row = 0; row < numRows; row++) {
-  for (let col = 0; col < numCols; col++) {
-    // 计算单元格位置和宽度和高度
-    const x = col * cellSize;
-    const y = row * cellSize;
-    const width = cellSize;
-    const height = cellSize;
+// // 绘制网格
+// for (let row = 0; row < numRows; row++) {
+//   for (let col = 0; col < numCols; col++) {
+//     // 计算单元格位置和宽度和高度
+//     const x = col * cellSize;
+//     const y = row * cellSize;
+//     const width = cellSize;
+//     const height = cellSize;
 
-    // 绘制当前网格
-    ctx.strokeRect(x, y, width, height);
+//     // 绘制当前网格
+//     ctx.strokeRect(x, y, width, height);
 
-    // 如果当前列是奇数，绘制垂直分隔线
-    if (col % 2 === 1) {
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x, y + height);
-      ctx.stroke();
-    }
+//     // 如果当前列是奇数，绘制垂直分隔线
+//     if (col % 2 === 1) {
+//       ctx.beginPath();
+//       ctx.moveTo(x, y);
+//       ctx.lineTo(x, y + height);
+//       ctx.stroke();
+//     }
 
-    // 如果当前行是奇数，绘制水平分隔线
-    if (row % 2 === 1) {
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + width, y);
-      ctx.stroke();
-    }
-  }
-}
+//     // 如果当前行是奇数，绘制水平分隔线
+//     if (row % 2 === 1) {
+//       ctx.beginPath();
+//       ctx.moveTo(x, y);
+//       ctx.lineTo(x + width, y);
+//       ctx.stroke();
+//     }
+//   }
+// }
 </script>
