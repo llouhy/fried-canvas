@@ -1,3 +1,6 @@
+import { Graphics } from "../graphOptions";
+import { Boundary } from "../rewriteFn/type";
+
 export const getTypeStr = (value: any) => {
   return Object.prototype.toString.call(value).slice(8, -1).toLowerCase();
 };
@@ -10,3 +13,20 @@ export const setCanvasSize = (canvas: HTMLCanvasElement, width: number, height: 
 export const getPureObject = (obj: { [key: string]: any }) => {
   return Object.assign(Object.create(null), obj);
 };
+
+export const getDivisibleNum = (cur: number, divisor: number): number => {
+  let result = cur;
+  if (cur % divisor !== 0) {
+    result++;
+  }
+  return result;
+};
+
+export const graphicsToBoundary = (graphics: Graphics): Boundary => {
+  return {
+    minX: graphics.ox,
+    minY: graphics.oy,
+    maxX: graphics.ox + graphics.width,
+    maxY: graphics.oy + graphics.height
+  };
+}

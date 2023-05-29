@@ -34,6 +34,8 @@ export const useModel = (
             dx: placePoint && elem.graphics ? placePoint.x - elem.graphics.ox : 0,
             dy: placePoint && elem.graphics ? placePoint.y - elem.graphics.oy : 0
           };
+          // console.log('ctx', ctx);
+          // console.log('offset', offset)
           ctx.drawOffset = offset;
           if (!isInitInfo) {
             const coordinates: Point[] = [];
