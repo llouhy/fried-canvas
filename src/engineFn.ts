@@ -1,15 +1,16 @@
 import { useModel } from './init/useModel';
 import { useShape } from './init/useShape';
+import { useGrid } from './init/initGrid';
 import { generateRandomStr } from './config/common';
 // import { _Error, isString, setCanvasSize } from './tools/utils';
 import { initContext, reloadCtxFunction } from './init/context';
-import type { Shape } from './shape/shape';
-import type { ModelOptions } from './graphOptions';
-import type { EngineCtx, Point } from './rewriteFn/type';
+import { Shape } from './shape/shape';
+import type { Graphics, ModelOptions } from './graphOptions';
+import type { Boundary, EngineCtx, Point } from './rewriteFn/type';
 import { isString } from './utils/is';
 import { getError } from './definition/error';
 import { identifyMap } from './definition/identify';
-import { setCanvasSize, getPureObject } from './utils/common';
+import { setCanvasSize, getPureObject, graphicsToBoundary } from './utils/common';
 import { setIdentify } from './utils/setIdentify';
 
 export const isEngine = (value: any) => {
@@ -24,13 +25,16 @@ export type InitEngineResult = {
     ctx: EngineCtx;
     canvas: HTMLCanvasElement;
     readonly: boolean;
+    repaintInfluencedShape: (graphics: Graphics, excludes: Shape[]) => void;
   };
   addModel: (modelList: ModelOptions[] | ModelOptions) => any;
   getModel: (modelName: string) => ModelOptions | undefined;
   deleteModel: (modelName: string) => boolean;
+  createShape: (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => Shape;
   drawShape: (shape: Shape, placePoint?: Point) => string | undefined;
   getShape: (shapeId: string) => Shape | undefined;
   resizeCanvas: (w: number, h: number) => void;
+  clearRect: (x: number, y: number, width: number, height: number) => void;
   [key: string]: any;
 };
 export type InitEngine = (options: EngineOptions) => InitEngineResult;
@@ -125,6 +129,11 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   const createShape = (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => {
     return _createShape(modelName, options?.data, options?.model, options?.index);
   };
+  const clearRect = (x: number, y: number, width: number, height: number) => {
+    const { ctx } = engineInstance;
+    ctx.clearRect(x, y, width, height);
+  };
+
   const engineResult = getPureObject({
     engine: engineInstance,
     addModel,
@@ -132,11 +141,45 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
     deleteModel,
     drawShape,
     getShape,
+    clearRect,
     createShape,
     resizeCanvas
   });
   setIdentify(engineResult, 'engine');
   engineById.set(engineResult.engine.id, engineResult);
+  const { getInfluencedShape, getInfluencedGrid } = useGrid(_id);
+  const repaintPart = (graphics: Graphics, placementMap: WeakMap<Shape, Point> = new WeakMap()) => {
+    const shapes = getInfluencedShape(graphicsToBoundary(graphics));
+    for (const elem of shapes) {
+      elem.draw(ctx, placementMap.get(elem));
+    }
+  };
+  const repaintInfluencedShape = (graphics: Graphics, excludes: Shape[] = []) => {
+    const boundary = graphicsToBoundary(graphics);
+    const grids = getInfluencedGrid(boundary);
+    const shapes = getInfluencedShape(boundary, grids);
+    const clearBoundary = grids.reduce((pre, cur) => {
+      return {
+        minX: Math.min(pre.minX, cur.boundary.minX),
+        minY: Math.min(pre.minY, cur.boundary.minY),
+        maxX: Math.max(pre.maxX, cur.boundary.maxX),
+        maxY: Math.max(pre.maxY, cur.boundary.maxY)
+      }
+    }, { minX: 999999, minY: 999999, maxX: -999999, maxY: -999999 });
+    clearRect(clearBoundary.minX, clearBoundary.minY, clearBoundary.maxX - clearBoundary.minX, clearBoundary.maxY - clearBoundary.minY);
+    for (const item of shapes) {
+      !excludes.includes(item) && item.draw(ctx);
+    }
+    console.log('受影响的shape', shapes);
+  };
+  Object.defineProperty(engineInstance, 'repaintInfluencedShape', {
+    value: repaintInfluencedShape,
+    writable: false
+  });
+  Object.defineProperty(engineInstance, 'repaintPart', {
+    value: repaintPart,
+    writable: false
+  });
   _addModel(modelList ?? []);
   return engineResult;
 };
