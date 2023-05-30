@@ -38,6 +38,7 @@ export class Shape {
       ...this.borderOptions,
       ...(this.$model?.borderOptions ?? {})
     };
+    // console.log('chushihua')
     this.id = `${engineId}:${generateRandomStr(8)}`;
     this.data = data;
     this.index = index ?? this.index;
@@ -57,7 +58,9 @@ export class Shape {
       ox: placePoint.x,
       oy: placePoint.y
     };
-    this.drawBoundary();
+    const { updateShapeToGrid } = useGrid(this.belongEngineId)
+    updateShapeToGrid(this, this.graphics);
+    // this.drawBoundary();
     return this.id;
   }
 
@@ -109,7 +112,7 @@ export class Shape {
     const engine = engineById.get(this.belongEngineId);
     const clearWidth = engine.engine.width;
     const clearHeight = engine.engine.height;
-    console.log(width, height)
+    // console.log(width, height)
     // clip
     engineById.get(this.belongEngineId).clearRect(0, 0, clearWidth, clearHeight);
   }
@@ -123,6 +126,7 @@ export class Shape {
     // 方案2：将新旧位置的boundary合并成一个大Bound执行清除重绘操作
 
     // const mergeBoundary = this.graphics
+    // debugger
     repaintInfluencedShape(this.graphics, [this]); // repaint应该
     this.draw(this.ctx, {x, y});
     // const offCanvas = new OffscreenCanvas();
