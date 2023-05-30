@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<script>
+
+</script>
+
+<body>
+  <div class="main">
+    <canvas id="canvas"></canvas>
+  </div>
+</body>
+
+</html>
+<script defer>
+
+  // return;
+  setTimeout(() => {
+    // const engine = dogdog.initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
+    // console.log(engine)
+    // const { addModel, createShape, drawShape } = engine;
+    // const angleToRadian = (angle) => {
+    //   return (Math.PI * angle) / 180;
+    // };
+    // const getTestModel2 = () => {
+    //   return {
+    //     name: 'test2',
+    //     draw: (ctx) => {
+    //       ctx.save();
+    //       ctx.lineWidth = 5;
+    //       ctx.strokeStyle = 'pink';
+    //       ctx.beginPath();
+    //       ctx.moveTo(300, 60);
+    //       ctx.lineTo(420, 420);
+    //       ctx.closePath();
+    //       ctx.stroke();
+    //       ctx.beginPath();
+    //       ctx.arc(420, 420, 44, angleToRadian(45), angleToRadian(270));
+    //       ctx.stroke();
+    //       ctx.restore();
+    //     },
+    //     borderOptions: {
+    //       paddingLeft: 0,
+    //       paddingRight: 0,
+    //       paddingTop: 0,
+    //       paddingBottom: 0,
+    //       borderDash: [5, 5],
+    //       borderWidth: 2
+    //     }
+    //   };
+    // };
+    // addModel(getTestModel2());
+    // const shape = createShape('test2');
+    // drawShape(createShape('test2'), { x: 10, y: 10 });
+
+    // const getTestModel3 = () => {
+    //   return {
+    //     name: 'test3',
+    //     draw: (ctx) => {
+    //       ctx.save();
+    //       ctx.beginPath();
+    //       ctx.moveTo(50, 50);
+    //       ctx.lineTo(100, 100);
+    //       ctx.closePath();
+    //       ctx.stroke();
+    //       ctx.restore();
+    //     }
+    //   }
+    // }
+    // addModel(getTestModel3());
+    // const shape3 = createShape('test3');
+    // drawShape(shape3);
+    // let idx = 0;
+    // let id = setInterval(() => {
+    //   // drawShape(shape, { x: idx * 3 + 50, y: idx * 3 + 50 });
+    //   idx += 1;
+    //   idx >= 2 && clearInterval(id);
+    //   shape.moveTo(idx * 3 + 50, idx * 3 + 50);
+    // }, 0);
+
+    // const ctx = engine.engine.ctx;
+    // ctx.fillStyle = 'yellow';
+    // ctx.$fillRect(600, 600, 50, 50);
+    // ctx.save();
+    // ctx.beginPath();
+    // ctx.$rect(100, 100, 300, 300);
+    // ctx.$stroke();
+    // ctx.clip();
+    // ctx.fillStyle = 'green';
+    // ctx.$fillRect(200, 200, 300, 300);
+    // ctx.clearRect(0, 0, engine.engine.width, engine.engine.height);
+    // ctx.restore();
+    // // ctx.clearRect(0, 0, engine.engine.width, engine.engine.height);
+    // // drawShape(createShape('test2'));
+
+    //   // 获取Canvas元素
+    // const canvas = document.getElementById("canvas");
+    // const ctx = canvas.getContext("2d");
+
+    // // 设置画布宽度和高度
+    // canvas.width = 500;
+    // canvas.height = 500;
+
+    // // 定义单元格大小和行列数
+    // const cellSize = 50;
+    // const numRows = canvas.height / cellSize;
+    // const numCols = canvas.width / cellSize;
+
+    // // 绘制网格
+    // function drawGrid(x, y, width, height, level) {
+    //   // 绘制当前网格
+    //   ctx.strokeRect(x, y, width, height);
+
+    //   // 如果当前级别小于 3，继续递归绘制子网格
+    //   if (level < 3) {
+    //     const subWidth = width / 2;
+    //     const subHeight = height / 2;
+
+    //     // 绘制水平分隔线
+    //     ctx.beginPath();
+    //     ctx.moveTo(x, y + subHeight);
+    //     ctx.lineTo(x + width, y + subHeight);
+    //     ctx.stroke();
+
+    //     // 绘制垂直分隔线
+    //     ctx.beginPath();
+    //     ctx.moveTo(x + subWidth, y);
+    //     ctx.lineTo(x + subWidth, y + height);
+    //     ctx.stroke();
+
+    //     // 递归绘制四个子网格
+    //     drawGrid(x, y, subWidth, subHeight, level + 1);
+    //     drawGrid(x + subWidth, y, subWidth, subHeight, level + 1);
+    //     drawGrid(x, y + subHeight, subWidth, subHeight, level + 1);
+    //     drawGrid(x + subWidth, y + subHeight, subWidth, subHeight, level + 1);
+    //   }
+    // }
+
+    // // 绘制最外层的网格
+    // drawGrid(0, 0, canvas.width, canvas.height, 0);
+    // 获取Canvas元素
+    // const canvas = document.getElementById("canvas");
+    // const ctx = canvas.getContext("2d");
+
+    // // 设置画布宽度和高度
+    // canvas.width = 500;
+    // canvas.height = 500;
+
+    // // 定义单元格大小和行列数
+    // const cellSize = 50;
+    // const numRows = Math.floor(canvas.height / cellSize);
+    // const numCols = Math.floor(canvas.width / cellSize);
+
+    // // 绘制网格
+    // for (let row = 0; row < numRows; row++) {
+    //   for (let col = 0; col < numCols; col++) {
+    //     // 计算单元格位置和宽度和高度
+    //     const x = col * cellSize;
+    //     const y = row * cellSize;
+    //     const width = cellSize;
+    //     const height = cellSize;
+
+    //     // 绘制当前网格
+    //     ctx.strokeRect(x, y, width, height);
+
+    //     // 如果当前列是奇数，绘制垂直分隔线
+    //     if (col % 2 === 1) {
+    //       ctx.beginPath();
+    //       ctx.moveTo(x, y);
+    //       ctx.lineTo(x, y + height);
+    //       ctx.stroke();
+    //     }
+
+    //     // 如果当前行是奇数，绘制水平分隔线
+    //     if (row % 2 === 1) {
+    //       ctx.beginPath();
+    //       ctx.moveTo(x, y);
+    //       ctx.lineTo(x + width, y);
+    //       ctx.stroke();
+    //     }
+    //   }
+    // }
+  }, 0);
+
+</script>

@@ -23,46 +23,65 @@
   // return;
   const engine = dogdog.initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
   console.log(engine)
-  // const { addModel, createShape, drawShape } = engine;
-  // const angleToRadian = (angle) => {
-  //   return (Math.PI * angle) / 180;
-  // };
-  // const getTestModel2 = () => {
-  //   return {
-  //     name: 'test2',
-  //     draw: (ctx) => {
-  //       ctx.save();
-  //       ctx.lineWidth = 5;
-  //       ctx.strokeStyle = 'pink';
-  //       ctx.beginPath();
-  //       ctx.moveTo(300, 60);
-  //       ctx.lineTo(420, 420);
-  //       ctx.closePath();
-  //       ctx.stroke();
-  //       ctx.beginPath();
-  //       ctx.arc(420, 420, 44, angleToRadian(45), angleToRadian(270));
-  //       ctx.stroke();
-  //       ctx.restore();
-  //     },
-  //     borderOptions: {
-  //       paddingLeft: 0,
-  //       paddingRight: 0,
-  //       paddingTop: 0,
-  //       paddingBottom: 0,
-  //       borderDash: [5, 5],
-  //       borderWidth: 2
-  //     }
-  //   };
-  // };
-  // addModel(getTestModel2());
-  // const shape = createShape('test2');
-  // let idx = 0;
-  // let id = setInterval(() => {
-  //   // drawShape(shape, { x: idx * 3 + 50, y: idx * 3 + 50 });
-  //   idx += 1;
-  //   idx >= 100 && clearInterval(id);
-  //   shape.moveTo(idx * 3 + 50, idx * 3 + 50);
-  // }, 0);
+  const { addModel, createShape, drawShape } = engine;
+  const angleToRadian = (angle) => {
+    return (Math.PI * angle) / 180;
+  };
+  const getTestModel2 = () => {
+    return {
+      name: 'test2',
+      draw: (ctx) => {
+        ctx.save();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = 'pink';
+        ctx.beginPath();
+        ctx.moveTo(300, 60);
+        ctx.lineTo(420, 420);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(420, 420, 44, angleToRadian(45), angleToRadian(270));
+        ctx.stroke();
+        ctx.restore();
+      },
+      borderOptions: {
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        borderDash: [5, 5],
+        borderWidth: 2
+      }
+    };
+  };
+  addModel(getTestModel2());
+  const shape = createShape('test2');
+  drawShape(createShape('test2'), { x: 10, y: 10 });
+
+  const getTestModel3 = () => {
+    return {
+      name: 'test3',
+      draw: (ctx) => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(50, 50);
+        ctx.lineTo(100, 100);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+  addModel(getTestModel3());
+  const shape3 = createShape('test3');
+  drawShape(shape3);
+  let idx = 0;
+  let id = setInterval(() => {
+    // drawShape(shape, { x: idx * 3 + 50, y: idx * 3 + 50 });
+    idx += 1;
+    idx >= 2 && clearInterval(id);
+    shape.moveTo(idx * 3 + 50, idx * 3 + 50);
+  }, 0);
 
   // const ctx = engine.engine.ctx;
   // ctx.fillStyle = 'yellow';

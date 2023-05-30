@@ -24,9 +24,9 @@ export const getDivisibleNum = (cur: number, divisor: number): number => {
 
 export const graphicsToBoundary = (graphics: Graphics): Boundary => {
   return {
-    minX: graphics.ox,
-    minY: graphics.oy,
-    maxX: graphics.ox + graphics.width,
-    maxY: graphics.oy + graphics.height
+    minX: Math.floor(graphics.ox),
+    minY: Math.floor(graphics.oy),
+    maxX: Math.ceil(Math.floor(graphics.ox) + graphics.width),
+    maxY: Math.ceil(Math.floor(graphics.oy) + graphics.height)
   };
 }
