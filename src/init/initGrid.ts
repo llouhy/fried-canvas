@@ -1,8 +1,9 @@
 import { Grid } from "../definition/grid";
 import { engineById } from "../engineFn";
+import { Graphics } from "../graphOptions";
 import { Boundary } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
-import { getDivisibleNum } from "../utils/common";
+import { getDivisibleNum, graphicsToBoundary } from "../utils/common";
 
 const gridByEngineId = new Map<string, { getInfluencedShape: (b: Boundary, g?: Grid[]) => Shape[]; getInfluencedGrid: (b: Boundary) => Grid[]; rootGrid: Grid; divider: { xs: number[]; ys: number[] } }>();
 
@@ -42,11 +43,16 @@ const generateGrid = (engineId: string): { grid: Grid; divider: { xs: number[]; 
     }
     return grid;
   }
-  return { grid: createGrid(0, 0, getDivisibleNum(width, 2), getDivisibleNum(height, 2), 0), divider: { xs, ys } };
+  return { grid: createGrid(0, 0, getDivisibleNum(width, 2), getDivisibleNum(height, 2), 0), divider: { xs: [...new Set(xs)], ys: [...new Set(ys)] } };
 };
 
-export const useGrid = (engineId: string): { getInfluencedShape: (boundary: Boundary, influenceGrids?: Grid[]) => Shape[]; getInfluencedGrid: (boundary: Boundary) => Grid[]; } => {
+export const useGrid = (engineId: string): {
+  getInfluencedShape: (boundary: Boundary, influenceGrids?: Grid[]) => Shape[];
+  getInfluencedGrid: (boundary: Boundary) => Grid[];
+  updateShapeToGrid: (shape: Shape, graphics: Graphics) => void;
+} => {
   const { grid, divider } = generateGrid(engineId);
+  console.log(divider)
   const getInfluencedGrid = (boundary: Boundary): Grid[] => {
 
     const bound = { left: boundary.maxX, right: boundary.minX, top: boundary.maxY, bottom: boundary.minY };
@@ -66,6 +72,7 @@ export const useGrid = (engineId: string): { getInfluencedShape: (boundary: Boun
         break;
       }
     }
+    console.log('bound', bound)
     const isDeepValid = (bound: { left: number; right: number; top: number; bottom: number; }, gridBoundary: Boundary): boolean => {
       return !(gridBoundary.minX > bound.right
         || gridBoundary.maxX < bound.left
@@ -73,10 +80,19 @@ export const useGrid = (engineId: string): { getInfluencedShape: (boundary: Boun
         || gridBoundary.maxY < bound.top);
     };
     const isGridInBound = (bound: { left: number; right: number; top: number; bottom: number; }, grid: Grid): boolean => {
-      return grid.boundary.minX > bound.left
-        && grid.boundary.maxX < bound.right
-        && grid.boundary.minY > bound.top
-        && grid.boundary.maxY < bound.bottom;
+      // console.log(grid.boundary)
+      grid.boundary.minX === 0 && grid.boundary.maxY === 562.5 && console.log({
+        bound,
+        gb: grid.boundary,
+        yes: (grid.boundary.minX >= bound.left
+        && grid.boundary.maxX <= bound.right
+        && grid.boundary.minY >= bound.top
+        && grid.boundary.maxY <= bound.bottom)
+      })
+      return grid.boundary.minX >= bound.left
+        && grid.boundary.maxX <= bound.right
+        && grid.boundary.minY >= bound.top
+        && grid.boundary.maxY <= bound.bottom;
     };
     const deep = (grids: Grid[], result: Grid[]) => {
       for (const elem of grids) {
@@ -96,9 +112,18 @@ export const useGrid = (engineId: string): { getInfluencedShape: (boundary: Boun
     const shapes = grids.reduce((pre, cur) => {
       return [...pre, ...(getGridShapes(cur))];
     }, []);
-    return shapes;
+    return [...new Set(shapes)];
   };
-  const result = { getInfluencedShape, getInfluencedGrid, rootGrid: grid, divider };
+  const updateShapeToGrid = (shape: Shape, graphics: Graphics) => {
+    const boundary = graphicsToBoundary(graphics);
+    const grids = getInfluencedGrid(boundary);
+    for (const elem of grids) {
+      (elem.shapes || (elem.shapes = [])) && elem.shapes.push(shape);
+      elem.shapes = [...new Set(elem.shapes)];
+      // console.log('elem', elem)
+    }
+  };
+  const result = { getInfluencedShape, getInfluencedGrid, updateShapeToGrid, rootGrid: grid, divider };
   gridByEngineId.set(engineId, result);
   return result;
 };

@@ -34,6 +34,7 @@ export const useShape = (
     return idToShape.get(shapeId);
   };
   const createShape = (modelName: string, data?: any, model?: ModelOptions, index?: number) => {
+    // console.log('createShape')
     const shape = new Shape(modelName, engineId, data, model, index);
     idToShape.set(shape.id, shape);
     return shape;
