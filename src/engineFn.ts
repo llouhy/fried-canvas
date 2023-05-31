@@ -1,7 +1,7 @@
 import { useModel } from './init/useModel';
 import { useShape } from './init/useShape';
 import { useGrid } from './init/initGrid';
-import { generateRandomStr } from './config/common';
+import { generateRandomStr, radianToAngle } from './config/common';
 // import { _Error, isString, setCanvasSize } from './tools/utils';
 import { initContext, reloadCtxFunction } from './init/context';
 import { Shape } from './shape/shape';
@@ -25,7 +25,7 @@ export type InitEngineResult = {
     ctx: EngineCtx;
     canvas: HTMLCanvasElement;
     readonly: boolean;
-    repaintInfluencedShape: (graphics: Graphics, excludes: Shape[]) => void;
+    repaintInfluencedShape: (graphics: Graphics, excludes: Set<Shape>) => void;
   };
   addModel: (modelList: ModelOptions[] | ModelOptions) => any;
   getModel: (modelName: string) => ModelOptions | undefined;
@@ -132,7 +132,11 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   const clearRect = (x: number, y: number, width: number, height: number) => {
     const { ctx } = engineInstance;
     ctx.clearRect(x, y, width, height);
+    ctx.save();
+    ctx.strokeStyle = 'yellow';
+    console.log(x, y, width, height)
     ctx.$strokeRect(x, y, width, height);
+    ctx.restore();
   };
 
   const engineResult = getPureObject({
@@ -149,25 +153,11 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   setIdentify(engineResult, 'engine');
   engineById.set(engineResult.engine.id, engineResult);
   const { getInfluencedShape, getInfluencedGrid } = useGrid(_id);
-  const repaintPart = (graphics: Graphics, placementMap: WeakMap<Shape, Point> = new WeakMap()) => {
-    const shapes = getInfluencedShape(graphicsToBoundary(graphics));
-    for (const elem of shapes) {
-      elem.draw(ctx, placementMap.get(elem));
-    }
-  };
-  const repaintInfluencedShape = (graphics: Graphics, excludes: Shape[] = []) => {
+  const repaintInfluencedShape = (graphics: Graphics, excludesSet: Set<Shape> = new Set()) => {
     const boundary = graphicsToBoundary(graphics);
-    // (ctx as any).$strokeRect(boundary.minX, boundary.minY, boundary.maxX - boundary.minX, boundary.maxY - boundary.minY);
-    // console.log('engineFn159', boundary)
-    // console.log(JSON.parse(JSON.stringify(excludes[0].graphics)));
     const grids = getInfluencedGrid(boundary);
-    // console.log('grids', grids)
     const shapes = getInfluencedShape(boundary, grids);
-    // console.log('engineFn162', grids);
-    // console.log('engineFn163', shapes)
-    // console.log('shapes', shapes);
     const clearBoundary = grids.reduce((pre, cur) => {
-      // console.log('griddddd', cur);
       // (ctx as any).$strokeRect()
       return {
         minX: Math.min(pre.minX, cur.boundary.minX),
@@ -175,24 +165,17 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
         maxX: Math.max(pre.maxX, cur.boundary.maxX),
         maxY: Math.max(pre.maxY, cur.boundary.maxY)
       }
-    }, { minX: 999999, minY: 999999, maxX: -999999, maxY: -999999 });
-    // console.log('clearBound', clearBoundary)
-    // console.log(clearBoundary.minX, clearBoundary.minY, clearBoundary.maxX - clearBoundary.minX, clearBoundary.maxY - clearBoundary.minY)
+    }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
     clearRect(clearBoundary.minX, clearBoundary.minY, clearBoundary.maxX - clearBoundary.minX, clearBoundary.maxY - clearBoundary.minY);
-    // console.log('', excludes)
     for (const item of shapes) {
-      // console.log(item);
-      !excludes.includes(item) && item.draw(ctx);
+      !excludesSet.has(item) && item.draw(ctx);
     }
-    // console.log('受影响的shape', shapes);
   };
-  Object.defineProperty(engineInstance, 'repaintInfluencedShape', {
-    value: repaintInfluencedShape,
-    writable: false
-  });
-  Object.defineProperty(engineInstance, 'repaintPart', {
-    value: repaintPart,
-    writable: false
+  Object.defineProperties(engineInstance, {
+    repaintInfluencedShape: {
+      value: repaintInfluencedShape,
+      writable: false
+    }
   });
   _addModel(modelList ?? []);
   return engineResult;
@@ -201,8 +184,8 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 (window as any)['dogdog'] =  { initEngine };
 
 const engine = initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
-// console.log(engine)
-const { addModel, createShape, drawShape } = engine;
+console.log(engine)
+const { addModel, createShape, drawShape, getModel } = engine;
 const angleToRadian = (angle: number) => {
   return (Math.PI * angle) / 180;
 };
@@ -233,10 +216,6 @@ const getTestModel2 = (): ModelOptions => {
     }
   };
 };
-addModel(getTestModel2());
-const shape = createShape('test2');
-drawShape(shape, { x: 10, y: 10 });
-
 const getTestModel3 = () => {
   return {
     name: 'test3',
@@ -245,19 +224,43 @@ const getTestModel3 = () => {
       ctx.beginPath();
       ctx.moveTo(50, 50);
       ctx.lineTo(100, 100);
+      ctx.lineTo(2, 2);
       ctx.closePath();
       ctx.stroke();
       ctx.restore();
     }
   }
 }
+const getTestModel4 = () => {
+  return {
+    name: 'test4',
+    draw: (ctx: EngineCtx | OffEngineCtx) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(600, 430);
+      ctx.lineTo(500, 500);
+      ctx.bezierCurveTo(500, 500, 874, 674, 732, 434);
+      ctx.arc(603, 434, 24, angleToRadian(30), angleToRadian(150));
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+addModel(getTestModel2());
 addModel(getTestModel3());
+addModel(getTestModel4());
+const shape2 = createShape('test2');
+const shape4 = createShape('test4');
+console.log(shape4)
 const shape3 = createShape('test3');
+drawShape(shape2, { x: 10, y: 10 });
 drawShape(shape3);
+drawShape(shape4)
 let idx = 0;
 let id = setInterval(() => {
   // drawShape(shape, { x: idx * 3 + 50, y: idx * 3 + 50 });
   idx += 1;
-  idx >= 1 && clearInterval(id);
-  shape.moveTo(idx * 3 + 50, idx * 3 + 50);
-}, 0);
+  idx >= 100 && clearInterval(id);
+  shape2.moveTo(idx * 5 + 100, idx * 5 + 100);
+}, 100);

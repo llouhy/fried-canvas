@@ -38,12 +38,12 @@ export const sumBoundary = (
 ): number => {
   const { minX, maxX, minY, maxY } = boundary;
   const isX = direction === 'toLeft' || direction === 'toRight';
-  const isFindMax = direction === 'toLeft' || direction === 'toBottom';
+  const isFindMax = direction === 'toLeft' || direction === 'toTop';
   const directionToTargetMap = {
     toLeft: 'maxX',
     toRight: 'minX',
-    toTop: 'minY',
-    toBottom: 'maxY'
+    toTop: 'maxY',
+    toBottom: 'minY'
   };
   const key = directionToTargetMap[direction];
   const groupStart = isX ? minY : minX;
@@ -80,21 +80,22 @@ export const getBoundary = (
   controlPoints: Point[],
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
 ): Boundary => {
-  const controlx = controlPoints.map((item) => item.x);
-  const controly = controlPoints.map((item) => item.y);
-  const xs = [...pathPoints.map((item) => item.x), ...controlx].filter((item) => !!item);
-  const ys = [...pathPoints.map((item) => item.y), ...controly].filter((item) => !!item);
+  const controlX = controlPoints.map((item) => item.x);
+  const controlY = controlPoints.map((item) => item.y);
+  const xs = [...pathPoints.map((item) => item.x), ...controlX].filter((item) => !!item);
+  const ys = [...pathPoints.map((item) => item.y), ...controlY].filter((item) => !!item);
   let [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  if (controlx.includes(maxX)) {
+  if (controlX.includes(maxX)) {
     maxX = sumBoundary({ minX, minY, maxX, maxY }, 'toLeft', ctx);
   }
-  if (controlx.includes(minX)) {
+  if (controlX.includes(minX)) {
     minX = sumBoundary({ minX, minY, maxX, maxY }, 'toRight', ctx);
   }
-  if (controly.includes(maxY)) {
+  if (controlY.includes(maxY)) {
+    console.log('进来了', maxY, minY)
     maxY = sumBoundary({ minX, minY, maxX, maxY }, 'toTop', ctx);
   }
-  if (controly.includes(minY)) {
+  if (controlY.includes(minY)) {
     minY = sumBoundary({ minX, minY, maxX, maxY }, 'toBottom', ctx);
   }
   return {

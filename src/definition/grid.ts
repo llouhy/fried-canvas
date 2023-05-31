@@ -1,27 +1,23 @@
 import { generateRandomStr } from "../config/common";
 import { Boundary } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
+import { getPureObject } from "../utils/common";
+import { setIdentify } from "../utils/setIdentify";
 
-export class Grid {
+export type GridIns = {
   id: string;
-  isLeaf: boolean;
   boundary: Boundary;
-  children?: Grid[];
+  isLeaf: boolean;
+  children?: GridIns[] | null;
   shapes?: Shape[];
-
-  constructor(boundary: Boundary, isLeaf: boolean) {
-    this.id = generateRandomStr(6);
-    this.boundary = boundary;
-    this.isLeaf = isLeaf;
-    !this.isLeaf && (this.children = []);
-  }
-
-  addShape = (shape: Shape) => {
-    this.shapes.push(shape);
-  };
-
-  removeShape = (shape: Shape) => {
-    this.shapes = this.shapes.filter(elem => elem !== shape);
-  };
-
 };
+
+export const getGrid = (boundary: Boundary, isLeaf: boolean): GridIns => {
+  return setIdentify(getPureObject({
+    id: generateRandomStr(6),
+    boundary,
+    isLeaf,
+    children: !isLeaf ? [] : null,
+    shapes: []
+  }), 'grid');
+}
