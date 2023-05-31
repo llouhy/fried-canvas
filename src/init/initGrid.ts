@@ -1,14 +1,14 @@
-import { Grid } from "../definition/grid";
+import { GridIns, getGrid } from "../definition/grid";
 import { engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
 import { Boundary } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
 import { getDivisibleNum, graphicsToBoundary } from "../utils/common";
 
-const gridByEngineId = new Map<string, { getInfluencedShape: (b: Boundary, g?: Grid[]) => Shape[]; getInfluencedGrid: (b: Boundary) => Grid[]; rootGrid: Grid; divider: { xs: number[]; ys: number[] } }>();
+const gridByEngineId = new Map<string, { getInfluencedShape: (b: Boundary, g?: GridIns[]) => Shape[]; getInfluencedGrid: (b: Boundary) => GridIns[]; rootGrid: GridIns; divider: { xs: number[]; ys: number[] } }>();
 
-const getGridShapes = (grid: Grid): Shape[] => {
-  const deep = (grid: Grid, res: Shape[]) => {
+const getGridShapes = (grid: GridIns): Shape[] => {
+  const deep = (grid: GridIns, res: Shape[]) => {
     if (!grid.isLeaf) {
       for (const elem of grid.children) {
         deep(elem, res);
@@ -22,16 +22,16 @@ const getGridShapes = (grid: Grid): Shape[] => {
   return [...new Set(result)];
 };
 
-const generateGrid = (engineId: string): { grid: Grid; divider: { xs: number[]; ys: number[] } } => {
+const generateGrid = (engineId: string): { grid: GridIns; divider: { xs: number[]; ys: number[] } } => {
   if (gridByEngineId.get(engineId)) return { grid: gridByEngineId.get(engineId).rootGrid, divider: gridByEngineId.get(engineId).divider };
   const { engine: { width, height } } = engineById.get(engineId);
-  const maxLevel = 4;
-  const xs: number[] = [];
-  const ys: number[] = [];
+  const maxLevel = 5;
+  const xs: Set<number> = new Set();
+  const ys: Set<number> = new Set();
   function createGrid(x: number, y: number, width: number, height: number, idx: number) {
     const isLeaf = idx === maxLevel - 1;
-    const grid = new Grid({ minX: x, minY: y, maxX: x + width, maxY: y + height }, isLeaf);
-    xs.push(x) && ys.push(y);
+    const grid = getGrid({ minX: x, minY: y, maxX: x + width, maxY: y + height }, isLeaf);
+    isLeaf && xs.add(x) && ys.add(y);
     if (idx < maxLevel) {
       grid.children = [];
       const subWidth = width / 2;
@@ -43,19 +43,20 @@ const generateGrid = (engineId: string): { grid: Grid; divider: { xs: number[]; 
     }
     return grid;
   }
-  return { grid: createGrid(0, 0, getDivisibleNum(width, 2), getDivisibleNum(height, 2), 0), divider: { xs: [...new Set(xs)], ys: [...new Set(ys)] } };
+  return { grid: createGrid(0, 0, getDivisibleNum(width, 2), getDivisibleNum(height, 2), 0), divider: { xs: [...xs], ys: [...ys] } };
 };
 
 export const useGrid = (engineId: string): {
-  getInfluencedShape: (boundary: Boundary, influenceGrids?: Grid[]) => Shape[];
-  getInfluencedGrid: (boundary: Boundary) => Grid[];
+  getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
+  getInfluencedGrid: (boundary: Boundary) => GridIns[];
   updateShapeToGrid: (shape: Shape, graphics: Graphics) => void;
 } => {
   const { grid, divider } = generateGrid(engineId);
-  console.log(divider)
-  const getInfluencedGrid = (boundary: Boundary): Grid[] => {
+  // console.log(grid)
+  // const influenceGridsByBoundary = new Map();
+  const getInfluencedGrid = (boundary: Boundary): GridIns[] => {
 
-    const bound = { left: boundary.maxX, right: boundary.minX, top: boundary.maxY, bottom: boundary.minY };
+    const bound = { left: boundary.minX, right: boundary.maxX, top: boundary.minY, bottom: boundary.maxY };
     for (const x of divider.xs) {
       if (x < boundary.minX) {
         bound.left = x;
@@ -72,29 +73,20 @@ export const useGrid = (engineId: string): {
         break;
       }
     }
-    console.log('bound', bound)
+    // console.log('bound', bound)
     const isDeepValid = (bound: { left: number; right: number; top: number; bottom: number; }, gridBoundary: Boundary): boolean => {
       return !(gridBoundary.minX > bound.right
         || gridBoundary.maxX < bound.left
         || gridBoundary.minY > bound.bottom
         || gridBoundary.maxY < bound.top);
     };
-    const isGridInBound = (bound: { left: number; right: number; top: number; bottom: number; }, grid: Grid): boolean => {
-      // console.log(grid.boundary)
-      grid.boundary.minX === 0 && grid.boundary.maxY === 562.5 && console.log({
-        bound,
-        gb: grid.boundary,
-        yes: (grid.boundary.minX >= bound.left
-        && grid.boundary.maxX <= bound.right
-        && grid.boundary.minY >= bound.top
-        && grid.boundary.maxY <= bound.bottom)
-      })
+    const isGridInBound = (bound: { left: number; right: number; top: number; bottom: number; }, grid: GridIns): boolean => {
       return grid.boundary.minX >= bound.left
         && grid.boundary.maxX <= bound.right
         && grid.boundary.minY >= bound.top
         && grid.boundary.maxY <= bound.bottom;
     };
-    const deep = (grids: Grid[], result: Grid[]) => {
+    const deep = (grids: GridIns[], result: GridIns[]) => {
       for (const elem of grids) {
         if (elem.isLeaf) {
           isGridInBound(bound, elem) && result.push(elem);
@@ -103,11 +95,11 @@ export const useGrid = (engineId: string): {
         }
       }
     }
-    const result: Grid[] = [];
+    const result: GridIns[] = [];
     deep([grid], result);
     return result;
   };
-  const getInfluencedShape = (boundary: Boundary, influenceGrids?: Grid[]): Shape[] => {
+  const getInfluencedShape = (boundary: Boundary, influenceGrids?: GridIns[]): Shape[] => {
     const grids = influenceGrids || getInfluencedGrid(boundary);
     const shapes = grids.reduce((pre, cur) => {
       return [...pre, ...(getGridShapes(cur))];
@@ -115,8 +107,7 @@ export const useGrid = (engineId: string): {
     return [...new Set(shapes)];
   };
   const updateShapeToGrid = (shape: Shape, graphics: Graphics) => {
-    const boundary = graphicsToBoundary(graphics);
-    const grids = getInfluencedGrid(boundary);
+    const grids = getInfluencedGrid(graphicsToBoundary(graphics));
     for (const elem of grids) {
       (elem.shapes || (elem.shapes = [])) && elem.shapes.push(shape);
       elem.shapes = [...new Set(elem.shapes)];

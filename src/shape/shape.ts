@@ -1,6 +1,6 @@
 import { generateRandomStr } from '../config/common';
 import { useModel } from '../init/useModel';
-import { getPureObject } from '../utils/common';
+import { getGraphicsWithBorder, getPureObject } from '../utils/common';
 import type { Boundary, EngineCtx } from '../rewriteFn/type';
 import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
 import { engineById } from '../engineFn';
@@ -14,6 +14,7 @@ export class Shape {
   data: any = undefined;
   $model!: ModelOptions;
   graphics: Graphics;
+  graphicsWithBoundary: Graphics;
   children: Shape[];
   borderOptions: BorderOptions = {
     needBorder: true,
@@ -29,16 +30,12 @@ export class Shape {
   boundary: Boundary;
   readonly _graphics: Graphics;
   constructor(modelName: string, engineId: string, data?: any, model?: ModelOptions, index?: number) {
-    // const { modelMap } = useModelCache() as ModelCache;
-    // this.$model = model ?? getModel(modelName);
-    // this.$model = model ?? modelMap.get(modelName);
     const { getModel } = useModel(engineId);
     this.$model = getModel(modelName) as ModelOptions;
     this.borderOptions = {
       ...this.borderOptions,
       ...(this.$model?.borderOptions ?? {})
     };
-    // console.log('chushihua')
     this.id = `${engineId}:${generateRandomStr(8)}`;
     this.data = data;
     this.index = index ?? this.index;
@@ -58,9 +55,11 @@ export class Shape {
       ox: placePoint.x,
       oy: placePoint.y
     };
-    const { updateShapeToGrid } = useGrid(this.belongEngineId)
-    updateShapeToGrid(this, this.graphics);
-    // this.drawBoundary();
+    const { updateShapeToGrid } = useGrid(this.belongEngineId);
+    this.graphicsWithBoundary = getGraphicsWithBorder(this.graphics, this.borderOptions);
+    updateShapeToGrid(this, this.graphicsWithBoundary);
+    this.drawBoundary();
+    console.log('helloo', this.graphics, this.graphicsWithBoundary)
     return this.id;
   }
 
@@ -112,23 +111,16 @@ export class Shape {
     const engine = engineById.get(this.belongEngineId);
     const clearWidth = engine.engine.width;
     const clearHeight = engine.engine.height;
-    // console.log(width, height)
     // clip
     engineById.get(this.belongEngineId).clearRect(0, 0, clearWidth, clearHeight);
   }
 
   moveTo(x: number, y: number) {
-    // const { getInfluencedShape } = useGrid(this.belongEngineId);
-    // const { clearRect } = engineById.get(this.belongEngineId);
     const { repaintInfluencedShape } = engineById.get(this.belongEngineId).engine;
     // 需要重新绘制开始位置跟结束位置影响的shape
     // 方案1：分别对新旧位置执行清除重绘操作
     // 方案2：将新旧位置的boundary合并成一个大Bound执行清除重绘操作
-
-    // const mergeBoundary = this.graphics
-    // debugger
-    repaintInfluencedShape(this.graphics, [this]); // repaint应该
-    this.draw(this.ctx, {x, y});
-    // const offCanvas = new OffscreenCanvas();
+    repaintInfluencedShape(this.graphics, new Set([this])); // repaint应该
+    this.draw(this.ctx, { x, y });
   }
 }

@@ -5,6 +5,7 @@ import { reloadCtxFunction } from './context';
 import { getPreciseShapeSizeInfo, getImpreciseShapeSizeInfo } from '../shape/getShapeSizeInfo';
 import type { ModelOptions } from '../graphOptions';
 import type { EngineCtx, OffEngineCtx, Point } from '../rewriteFn/type';
+import { setIdentify } from '../utils/setIdentify';
 
 const modelMap = new Map<string, ModelOptions>();
 export const useModel = (
@@ -27,6 +28,7 @@ export const useModel = (
         writable: false,
         value: draw
       });
+      setIdentify(elem, 'model');
       elem.draw = (() => {
         let isInitInfo = false;
         return (ctx: EngineCtx | OffEngineCtx, placePoint?: Point) => {
