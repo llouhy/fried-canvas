@@ -34,6 +34,7 @@ export const graphicsToBoundary = (graphics: Graphics): Boundary => {
 }
 
 export const getGraphicsWithBorder = (graphics: Graphics, borderOptions: BorderOptions): Graphics => {
+  // console.log(graphics, borderOptions)
   const { paddingLeft, paddingRight, paddingTop, paddingBottom, borderWidth } = borderOptions;
   const lineWidth = borderWidth ?? 2;
   const boundOx = graphics.ox - (paddingLeft ?? 4);
@@ -47,4 +48,40 @@ export const getGraphicsWithBorder = (graphics: Graphics, borderOptions: BorderO
     width: Math.floor(boundWidth + 2 * dlineWidth),
     height: Math.floor(boundHeight + 2 * dlineWidth)
   };
+}
+
+export const compose = (...fns: ((arg: any) => any)[]) => {
+  return (arg: any) => {
+    return fns.reduce((preRes, curFn) => {
+      return curFn(preRes);
+    }, arg);
+  };
+};
+
+export const useCollectReturn = (...fns: ((arg: any) => any)[]) => {
+  return (arg: any) => {
+    return fns.reduce((preRes, curFn) => {
+      return arg === preRes ? [curFn(arg)] : [...preRes, curFn(arg)];
+    }, arg);
+  };
+};
+
+export const mergeObjectInList = <result>(list: any[]): result => {
+  return list.reduce((preRes, curElem) => ({ ...preRes, ...curElem }));
+}
+
+export const omitObjectProperty = (obj: { [key: string]: any }, omitProperties: string[]) => {
+  for (const elem of omitProperties) {
+    obj[elem] && (delete obj[elem]);
+  }
+  return obj;
+}
+
+export const setPropertyUnWritable = (obj: { [key: string]: any }, properties?: string[]) => {
+  let allProperties = properties || Object.keys(obj);
+  for (const elem of allProperties) {
+    obj[elem] && Object.defineProperty(obj, elem, {
+      writable: false
+    });
+  }
 }

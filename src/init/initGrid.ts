@@ -5,6 +5,13 @@ import { Boundary } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
 import { getDivisibleNum, graphicsToBoundary } from "../utils/common";
 
+export type UseGridRes = {
+  getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
+  getInfluencedGrid: (boundary: Boundary) => GridIns[];
+  updateShapeToGrid: (shape: Shape, graphics: Graphics) => void;
+}
+export type UseGrid = (engineId: string, ctx?: any) => UseGridRes;
+
 const gridByEngineId = new Map<string, { getInfluencedShape: (b: Boundary, g?: GridIns[]) => Shape[]; getInfluencedGrid: (b: Boundary) => GridIns[]; rootGrid: GridIns; divider: { xs: number[]; ys: number[] } }>();
 
 const getGridShapes = (grid: GridIns): Shape[] => {
@@ -22,15 +29,16 @@ const getGridShapes = (grid: GridIns): Shape[] => {
   return [...new Set(result)];
 };
 
-const generateGrid = (engineId: string): { grid: GridIns; divider: { xs: number[]; ys: number[] } } => {
+const generateGrid = (engineId: string, ctx: any, drawGrid?: boolean): { grid: GridIns; divider: { xs: number[]; ys: number[] } } => {
   if (gridByEngineId.get(engineId)) return { grid: gridByEngineId.get(engineId).rootGrid, divider: gridByEngineId.get(engineId).divider };
   const { engine: { width, height } } = engineById.get(engineId);
-  const maxLevel = 5;
+  const maxLevel = 6;
   const xs: Set<number> = new Set();
   const ys: Set<number> = new Set();
   function createGrid(x: number, y: number, width: number, height: number, idx: number) {
     const isLeaf = idx === maxLevel - 1;
     const grid = getGrid({ minX: x, minY: y, maxX: x + width, maxY: y + height }, isLeaf);
+    ctx?.$strokeRect(x, y, width, height);
     isLeaf && xs.add(x) && ys.add(y);
     if (idx < maxLevel) {
       grid.children = [];
@@ -43,19 +51,12 @@ const generateGrid = (engineId: string): { grid: GridIns; divider: { xs: number[
     }
     return grid;
   }
-  return { grid: createGrid(0, 0, getDivisibleNum(width, 2), getDivisibleNum(height, 2), 0), divider: { xs: [...xs], ys: [...ys] } };
+  return { grid: createGrid(0, 0, getDivisibleNum(width * 2, 2), getDivisibleNum(height * 2, 2), 0), divider: { xs: [...xs], ys: [...ys] } };
 };
 
-export const useGrid = (engineId: string): {
-  getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
-  getInfluencedGrid: (boundary: Boundary) => GridIns[];
-  updateShapeToGrid: (shape: Shape, graphics: Graphics) => void;
-} => {
-  const { grid, divider } = generateGrid(engineId);
-  // console.log(grid)
-  // const influenceGridsByBoundary = new Map();
+export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
+  const { grid, divider } = generateGrid(engineId, ctx);
   const getInfluencedGrid = (boundary: Boundary): GridIns[] => {
-
     const bound = { left: boundary.minX, right: boundary.maxX, top: boundary.minY, bottom: boundary.maxY };
     for (const x of divider.xs) {
       if (x < boundary.minX) {
@@ -73,7 +74,6 @@ export const useGrid = (engineId: string): {
         break;
       }
     }
-    // console.log('bound', bound)
     const isDeepValid = (bound: { left: number; right: number; top: number; bottom: number; }, gridBoundary: Boundary): boolean => {
       return !(gridBoundary.minX > bound.right
         || gridBoundary.maxX < bound.left
@@ -86,6 +86,7 @@ export const useGrid = (engineId: string): {
         && grid.boundary.minY >= bound.top
         && grid.boundary.maxY <= bound.bottom;
     };
+    // const isGridInScreen = (bound) => {};
     const deep = (grids: GridIns[], result: GridIns[]) => {
       for (const elem of grids) {
         if (elem.isLeaf) {
@@ -111,7 +112,6 @@ export const useGrid = (engineId: string): {
     for (const elem of grids) {
       (elem.shapes || (elem.shapes = [])) && elem.shapes.push(shape);
       elem.shapes = [...new Set(elem.shapes)];
-      // console.log('elem', elem)
     }
   };
   const result = { getInfluencedShape, getInfluencedGrid, updateShapeToGrid, rootGrid: grid, divider };

@@ -7,14 +7,17 @@ import type { ModelOptions } from '../graphOptions';
 import type { EngineCtx, OffEngineCtx, Point } from '../rewriteFn/type';
 import { setIdentify } from '../utils/setIdentify';
 
-const modelMap = new Map<string, ModelOptions>();
-export const useModel = (
-  engineId: string
-): {
+export type UseModelRes = {
   addModel: (x: ModelOptions | ModelOptions[]) => any;
   getModel: (name: string) => undefined | ModelOptions;
   deleteModel: (name: string) => boolean;
-} => {
+};
+export type UseModel = (engineId: string) => UseModelRes;
+
+const modelMap = new Map<string, ModelOptions>();
+export const useModel: UseModel = (
+  engineId: string
+): UseModelRes => {
   const prefix = engineId + ':';
   const addModel = (modelOptions: ModelOptions | ModelOptions[]): any => {
     const models = isArray(modelOptions) ? modelOptions : [modelOptions];

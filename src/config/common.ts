@@ -92,7 +92,7 @@ export const getBoundary = (
     minX = sumBoundary({ minX, minY, maxX, maxY }, 'toRight', ctx);
   }
   if (controlY.includes(maxY)) {
-    console.log('进来了', maxY, minY)
+    // console.log('进来了', maxY, minY)
     maxY = sumBoundary({ minX, minY, maxX, maxY }, 'toTop', ctx);
   }
   if (controlY.includes(minY)) {
