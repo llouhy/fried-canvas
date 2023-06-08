@@ -6,6 +6,12 @@ import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
 import { engineById } from '../engineFn';
 import { useGrid } from '../init/initGrid';
 
+export const allShapeBoundary = {
+  minX: -Infinity,
+  minY: -Infinity,
+  maxX: Infinity,
+  maxY: Infinity
+};
 export class Shape {
   belongEngineId: string;
   ctx!: CanvasRenderingContext2D;
@@ -14,7 +20,7 @@ export class Shape {
   data: any = undefined;
   $model!: ModelOptions;
   graphics: Graphics;
-  graphicsWithBoundary: Graphics;
+  graphicsWithBorder: Graphics;
   children: Shape[];
   borderOptions: BorderOptions = {
     needBorder: true,
@@ -56,10 +62,13 @@ export class Shape {
       oy: placePoint.y
     };
     const { updateShapeToGrid } = useGrid(this.belongEngineId);
-    this.graphicsWithBoundary = getGraphicsWithBorder(this.graphics, this.borderOptions);
-    updateShapeToGrid(this, this.graphicsWithBoundary);
+    this.$model.name === 'test2' && console.log('不包含border的graphics', this.graphics);
+    this.graphicsWithBorder = getGraphicsWithBorder(this.graphics, this.borderOptions);
+    console.log('包含border的',this.graphicsWithBorder);
+    updateShapeToGrid(this, this.graphicsWithBorder);
+
     this.drawBoundary();
-    console.log('helloo', this.graphics, this.graphicsWithBoundary)
+    // console.log('helloo', this.graphics, this.graphicsWithBorder)
     return this.id;
   }
 
@@ -115,12 +124,12 @@ export class Shape {
     engineById.get(this.belongEngineId).clearRect(0, 0, clearWidth, clearHeight);
   }
 
-  moveTo(x: number, y: number) {
-    const { repaintInfluencedShape } = engineById.get(this.belongEngineId).engine;
+  moveTo(x: number, y: number) { // moveTo偏移量会导致清除失败，graphics不同步
+    const { repaintInfluencedShape } = engineById.get(this.belongEngineId);
     // 需要重新绘制开始位置跟结束位置影响的shape
     // 方案1：分别对新旧位置执行清除重绘操作
     // 方案2：将新旧位置的boundary合并成一个大Bound执行清除重绘操作
-    repaintInfluencedShape(this.graphics, new Set([this])); // repaint应该
+    repaintInfluencedShape(this.graphicsWithBorder || getGraphicsWithBorder(this.graphics, this.borderOptions), new Set([this])); // repaint应该
     this.draw(this.ctx, { x, y });
   }
 }

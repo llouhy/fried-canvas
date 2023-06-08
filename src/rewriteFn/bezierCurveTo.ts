@@ -30,7 +30,7 @@ export const bezierCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
         { x: minX, y: minY },
         { x: maxX, y: maxY }
       ];
-      console.log({ minX, minY, maxX, maxY })
+      // console.log({ minX, minY, maxX, maxY })
       drawCoordinates.push(...points);
       set(ctx.lineWidth, points);
     } else {
@@ -39,7 +39,7 @@ export const bezierCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
         { x: cp2x, y: cp2y },
         { x, y }
       ];
-      console.log([...points])
+      // console.log([...points])
       drawCoordinates.push(...points);
       set(ctx.lineWidth, points);
     }

@@ -1,6 +1,6 @@
-import { useModel } from './init/useModel';
-import { useShape } from './init/useShape';
-import { useGrid } from './init/initGrid';
+import { UseModelRes, useModel } from './init/useModel';
+import { UseShape, UseShapeRes, useShape } from './init/useShape';
+import { UseGrid, UseGridRes, useGrid } from './init/initGrid';
 import { generateRandomStr, radianToAngle } from './config/common';
 // import { _Error, isString, setCanvasSize } from './tools/utils';
 import { initContext, reloadCtxFunction } from './init/context';
@@ -10,8 +10,9 @@ import type { Boundary, EngineCtx, OffEngineCtx, Point } from './rewriteFn/type'
 import { isString } from './utils/is';
 import { getError } from './definition/error';
 import { identifyMap } from './definition/identify';
-import { setCanvasSize, getPureObject, graphicsToBoundary } from './utils/common';
+import { setCanvasSize, getPureObject, graphicsToBoundary, mergeObjectInList, useCollectReturn, omitObjectProperty, setPropertyUnWritable } from './utils/common';
 import { setIdentify } from './utils/setIdentify';
+import { UseGraphRes, useGraph } from './init/useGraph';
 
 export const isEngine = (value: any) => {
   return value === identifyMap.engine;
@@ -84,108 +85,35 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 
   reloadCtxFunction(ctx as CanvasRenderingContext2D, _id);
   setCanvasSize(canvasDom, _width, _height);
-  const engineInstance = getPureObject({
-    ctx,
-    id: _id,
-    width: _width,
-    height: _height,
-    readonly: _readonly,
-    canvas: canvasDom
-  });
-
-  const { addModel: _addModel, getModel: _getModel, deleteModel: _deleteModel } = useModel(_id);
-  const {
-    drawShape: _drawShape,
-    getShape: _getShape,
-    createShape: _createShape
-  } = useShape(ctx as CanvasRenderingContext2D, _id);
-
-  const resizeCanvas = (width: number, height: number) => {
-    const { ctx, width: oldWidth, height: oldHeight, canvas } = engineInstance;
-    const tmpImage = ctx.getImageData(0, 0, oldWidth, oldHeight);
-    setCanvasSize(canvas, width, height);
-    Object.assign(engineInstance, { width, height });
-    ctx.putImageData(tmpImage, 0, 0);
-  };
-  const addModel = (models: ModelOptions[] | ModelOptions) => {
-    return _addModel(models);
-  };
-  const getModel = (modelName: string): ModelOptions | undefined => {
-    return _getModel(modelName);
-  };
-  const deleteModel = (modelName: string): boolean => {
-    return _deleteModel(modelName);
-  };
-  const drawShape = (shape: Shape, placePoint?: Point) => {
-    try {
-      return _drawShape(shape, placePoint);
-    } catch (err) {
-      throw getError(`Draw shape ${shape.$model?.name} course an error`);
-    }
-  };
-  const getShape = (shapeId: string) => {
-    return _getShape(shapeId);
-  };
-  const createShape = (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => {
-    return _createShape(modelName, options?.data, options?.model, options?.index);
-  };
-  const clearRect = (x: number, y: number, width: number, height: number) => {
-    const { ctx } = engineInstance;
-    ctx.clearRect(x, y, width, height);
-    ctx.save();
-    ctx.strokeStyle = 'yellow';
-    console.log(x, y, width, height)
-    ctx.$strokeRect(x, y, width, height);
-    ctx.restore();
-  };
-
   const engineResult = getPureObject({
-    engine: engineInstance,
-    addModel,
-    getModel,
-    deleteModel,
-    drawShape,
-    getShape,
-    clearRect,
-    createShape,
-    resizeCanvas
+    engine: getPureObject({
+      ctx,
+      id: _id,
+      width: _width,
+      height: _height,
+      readonly: _readonly,
+      canvas: canvasDom
+    })
   });
-  setIdentify(engineResult, 'engine');
   engineById.set(engineResult.engine.id, engineResult);
-  const { getInfluencedShape, getInfluencedGrid } = useGrid(_id);
-  const repaintInfluencedShape = (graphics: Graphics, excludesSet: Set<Shape> = new Set()) => {
-    const boundary = graphicsToBoundary(graphics);
-    const grids = getInfluencedGrid(boundary);
-    const shapes = getInfluencedShape(boundary, grids);
-    const clearBoundary = grids.reduce((pre, cur) => {
-      // (ctx as any).$strokeRect()
-      return {
-        minX: Math.min(pre.minX, cur.boundary.minX),
-        minY: Math.min(pre.minY, cur.boundary.minY),
-        maxX: Math.max(pre.maxX, cur.boundary.maxX),
-        maxY: Math.max(pre.maxY, cur.boundary.maxY)
-      }
-    }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
-    clearRect(clearBoundary.minX, clearBoundary.minY, clearBoundary.maxX - clearBoundary.minX, clearBoundary.maxY - clearBoundary.minY);
-    for (const item of shapes) {
-      !excludesSet.has(item) && item.draw(ctx);
-    }
-  };
-  Object.defineProperties(engineInstance, {
-    repaintInfluencedShape: {
-      value: repaintInfluencedShape,
-      writable: false
-    }
-  });
-  _addModel(modelList ?? []);
+  setIdentify(engineResult, 'engine');
+  const callUseResults: [UseModelRes, UseShapeRes, UseGridRes, UseGraphRes] = useCollectReturn(useModel, useShape, useGrid, useGraph)(_id);
+  const funcObject = mergeObjectInList<UseModelRes & UseShapeRes & UseGridRes & UseGraphRes>(callUseResults);
+  Object.assign(engineResult, funcObject);
+  setPropertyUnWritable(omitObjectProperty(engineResult, ['rootGrid']), Object.keys(funcObject));
+  modelList && engineResult.addModel(modelList);
   return engineResult;
 };
 
-(window as any)['dogdog'] =  { initEngine };
+(window as any)['dogdog'] = { initEngine };
 
 const engine = initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
 console.log(engine)
-const { addModel, createShape, drawShape, getModel } = engine;
+const { addModel, createShape, drawShape, getModel, engine: { ctx } } = engine;
+ctx.save();
+ctx.strokeStyle = 'orange';
+ctx.$strokeRect(0, 0, 1500, 1500);
+ctx.restore();
 const angleToRadian = (angle: number) => {
   return (Math.PI * angle) / 180;
 };
@@ -193,6 +121,7 @@ const getTestModel2 = (): ModelOptions => {
   return {
     name: 'test2',
     draw: (ctx: EngineCtx | OffEngineCtx): void => {
+      // console.log('%c画了2', 'color: orange')
       ctx.save();
       ctx.lineWidth = 5;
       ctx.strokeStyle = 'pink';
@@ -207,10 +136,10 @@ const getTestModel2 = (): ModelOptions => {
       ctx.restore();
     },
     borderOptions: {
-      paddingLeft: 0,
-      paddingRight: 0,
-      paddingTop: 0,
-      paddingBottom: 0,
+      paddingLeft: 20,
+      paddingRight: 30,
+      paddingTop: 30,
+      paddingBottom: 30,
       borderDash: [5, 5],
       borderWidth: 2
     }
@@ -220,6 +149,7 @@ const getTestModel3 = () => {
   return {
     name: 'test3',
     draw: (ctx: EngineCtx | OffEngineCtx) => {
+      // console.log('%c画了3', 'color: blue')
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(50, 50);
@@ -235,6 +165,7 @@ const getTestModel4 = () => {
   return {
     name: 'test4',
     draw: (ctx: EngineCtx | OffEngineCtx) => {
+      // console.log('%c画了4', 'color: red')
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(600, 430);
@@ -252,15 +183,27 @@ addModel(getTestModel3());
 addModel(getTestModel4());
 const shape2 = createShape('test2');
 const shape4 = createShape('test4');
-console.log(shape4)
+// console.log(shape4)
 const shape3 = createShape('test3');
 drawShape(shape2, { x: 10, y: 10 });
-drawShape(shape3);
+drawShape(shape3, { x: -20, y: -20 });
 drawShape(shape4)
 let idx = 0;
 let id = setInterval(() => {
   // drawShape(shape, { x: idx * 3 + 50, y: idx * 3 + 50 });
   idx += 1;
-  idx >= 100 && clearInterval(id);
+  idx >= 220 && clearInterval(id)
+  // idx >= 220 && ctx.translate(-100, -100);
+  // idx > 200 && callTranslate();
   shape2.moveTo(idx * 5 + 100, idx * 5 + 100);
-}, 100);
+  // shape4.moveTo(idx * 4 + 200, idx * 4 + 200);
+}, 50);
+
+function callTranslate() {
+  let idx = 0;
+  const id = setInterval(() => {
+    idx++;
+    ctx.translate(-idx * 4 - 100, -idx * 4 - 100)
+    idx >= 20 && clearInterval(id);
+  }, 100);
+}
