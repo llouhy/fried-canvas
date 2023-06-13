@@ -4,7 +4,7 @@ import { getGraphicsWithBorder, getPureObject } from '../utils/common';
 import type { Boundary, EngineCtx } from '../rewriteFn/type';
 import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
 import { engineById } from '../engineFn';
-import { useGrid } from '../init/initGrid';
+import { useGrid } from '../init/useGrid';
 
 export const allShapeBoundary = {
   minX: -Infinity,
@@ -26,11 +26,11 @@ export class Shape {
     needBorder: true,
     paddingLeft: 10,
     paddingRight: 10,
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingTop: 10,
+    paddingBottom: 10,
     borderDash: [5, 5],
     borderWidth: 1,
-    borderColor: 'teal',
+    borderColor: 'tomato',
     radius: 0
   };
   boundary: Boundary;
@@ -61,16 +61,12 @@ export class Shape {
       ox: placePoint.x,
       oy: placePoint.y
     };
-    const { updateShapeToGrid } = useGrid(this.belongEngineId);
-    this.$model.name === 'test2' && console.log('不包含border的graphics', this.graphics);
     this.graphicsWithBorder = getGraphicsWithBorder(this.graphics, this.borderOptions);
-    console.log('包含border的',this.graphicsWithBorder);
-    updateShapeToGrid(this, this.graphicsWithBorder);
-
     this.drawBoundary();
-    // console.log('helloo', this.graphics, this.graphicsWithBorder)
     return this.id;
   }
+
+  // updateToGrid
 
   drawBoundary(): void {
     const { paddingLeft, paddingRight, paddingTop, paddingBottom, borderDash, borderWidth, borderColor } =
@@ -78,10 +74,11 @@ export class Shape {
     const strokeColor = borderColor ?? '#993f55';
     const lineWidth = borderWidth ?? 2;
     const lineDash = borderDash ?? [9, 2];
-    const boundOx = this.graphics.ox - (paddingLeft ?? 4);
-    const boundOy = this.graphics.oy - (paddingTop ?? 4);
-    const boundWidth = this.graphics.width + (paddingLeft ?? 4) + (paddingRight ?? 4);
-    const boundHeight = this.graphics.height + (paddingTop ?? 4) + (paddingBottom ?? 4);
+    const BORDER_PADDING = 0;
+    const boundOx = this.graphics.ox - (paddingLeft);
+    const boundOy = this.graphics.oy - (paddingTop);
+    const boundWidth = this.graphics.width + (paddingLeft) + (paddingRight);
+    const boundHeight = this.graphics.height + (paddingTop) + (paddingBottom);
     const dlineWidth = Math.ceil(lineWidth / 2);
     this.boundary = {
       minX: boundOx - dlineWidth,
@@ -109,21 +106,6 @@ export class Shape {
     return;
   }
 
-  clear() {
-    const { ox, oy, width, height } = this.graphics;
-    const boundary = {
-      minX: ox,
-      minY: oy,
-      maxX: ox + width,
-      maxY: oy + height
-    };
-    const engine = engineById.get(this.belongEngineId);
-    const clearWidth = engine.engine.width;
-    const clearHeight = engine.engine.height;
-    // clip
-    engineById.get(this.belongEngineId).clearRect(0, 0, clearWidth, clearHeight);
-  }
-
   moveTo(x: number, y: number) { // moveTo偏移量会导致清除失败，graphics不同步
     const { repaintInfluencedShape } = engineById.get(this.belongEngineId);
     // 需要重新绘制开始位置跟结束位置影响的shape
@@ -131,5 +113,7 @@ export class Shape {
     // 方案2：将新旧位置的boundary合并成一个大Bound执行清除重绘操作
     repaintInfluencedShape(this.graphicsWithBorder || getGraphicsWithBorder(this.graphics, this.borderOptions), new Set([this])); // repaint应该
     this.draw(this.ctx, { x, y });
+    const { updateShapeToGrid } = useGrid(this.belongEngineId);
+    updateShapeToGrid(this, this.graphicsWithBorder);
   }
 }

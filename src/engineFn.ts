@@ -1,16 +1,15 @@
 import { UseModelRes, useModel } from './init/useModel';
-import { UseShape, UseShapeRes, useShape } from './init/useShape';
-import { UseGrid, UseGridRes, useGrid } from './init/initGrid';
-import { generateRandomStr, radianToAngle } from './config/common';
-// import { _Error, isString, setCanvasSize } from './tools/utils';
+import { UseShapeRes, useShape } from './init/useShape';
+import { UseGridRes, useGrid } from './init/useGrid';
+import { generateRandomStr } from './config/common';
 import { initContext, reloadCtxFunction } from './init/context';
 import { Shape } from './shape/shape';
 import type { Graphics, ModelOptions } from './graphOptions';
-import type { Boundary, EngineCtx, OffEngineCtx, Point } from './rewriteFn/type';
+import type { EngineCtx, OffEngineCtx, Point } from './rewriteFn/type';
 import { isString } from './utils/is';
 import { getError } from './definition/error';
 import { identifyMap } from './definition/identify';
-import { setCanvasSize, getPureObject, graphicsToBoundary, mergeObjectInList, useCollectReturn, omitObjectProperty, setPropertyUnWritable } from './utils/common';
+import { setCanvasSize, getPureObject, mergeObjectInList, useCollectReturn, omitObjectProperty, setPropertyUnWritable } from './utils/common';
 import { setIdentify } from './utils/setIdentify';
 import { UseGraphRes, useGraph } from './init/useGraph';
 
@@ -95,8 +94,8 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
       canvas: canvasDom
     })
   });
-  engineById.set(engineResult.engine.id, engineResult);
   setIdentify(engineResult, 'engine');
+  engineById.set(_id, engineResult);
   const callUseResults: [UseModelRes, UseShapeRes, UseGridRes, UseGraphRes] = useCollectReturn(useModel, useShape, useGrid, useGraph)(_id);
   const funcObject = mergeObjectInList<UseModelRes & UseShapeRes & UseGridRes & UseGraphRes>(callUseResults);
   Object.assign(engineResult, funcObject);
@@ -108,14 +107,37 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 (window as any)['dogdog'] = { initEngine };
 
 const engine = initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
-console.log(engine)
-const { addModel, createShape, drawShape, getModel, engine: { ctx } } = engine;
+// console.log(engine)
+const { addModel, createShape, drawShape, getModel, engine: { ctx }, translate } = engine;
 ctx.save();
 ctx.strokeStyle = 'orange';
 ctx.$strokeRect(0, 0, 1500, 1500);
 ctx.restore();
 const angleToRadian = (angle: number) => {
   return (Math.PI * angle) / 180;
+};
+const getTestModel1 = (): ModelOptions => {
+  return {
+    name: 'test1',
+    draw: (ctx: EngineCtx | OffEngineCtx) => {
+      ctx.save();
+      // ctx.lineWidth = 10;
+      ctx.strokeStyle = 'blue';
+      ctx.beginPath();
+      ctx.moveTo(-200, -200);
+      ctx.lineTo(-200, -300);
+      ctx.lineTo(-100, -300);
+      ctx.stroke();
+      // ctx.strokeStyle = 'yellow';
+      ctx.quadraticCurveTo(-322, 600, -332, -128);
+      // ctx.stroke();
+      ctx.bezierCurveTo(-150, -140, -188, -200, -90, -90);
+      ctx.arc(-500, -500, 44, angleToRadian(45), angleToRadian(270));
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
 };
 const getTestModel2 = (): ModelOptions => {
   return {
@@ -134,15 +156,16 @@ const getTestModel2 = (): ModelOptions => {
       ctx.arc(420, 420, 44, angleToRadian(45), angleToRadian(270));
       ctx.stroke();
       ctx.restore();
-    },
-    borderOptions: {
-      paddingLeft: 20,
-      paddingRight: 30,
-      paddingTop: 30,
-      paddingBottom: 30,
-      borderDash: [5, 5],
-      borderWidth: 2
     }
+    ,
+    // borderOptions: {
+    //   paddingLeft: 20,
+    //   paddingRight: 30,
+    //   paddingTop: 30,
+    //   paddingBottom: 30,
+    //   borderDash: [5, 5],
+    //   borderWidth: 2
+    // }
   };
 };
 const getTestModel3 = () => {
@@ -150,11 +173,13 @@ const getTestModel3 = () => {
     name: 'test3',
     draw: (ctx: EngineCtx | OffEngineCtx) => {
       // console.log('%c画了3', 'color: blue')
+      console.log('huale333')
       ctx.save();
       ctx.beginPath();
-      ctx.moveTo(50, 50);
+      ctx.strokeStyle = 'orange';
+      ctx.moveTo(-50, -50);
       ctx.lineTo(100, 100);
-      ctx.lineTo(2, 2);
+      ctx.lineTo(-50, 100);
       ctx.closePath();
       ctx.stroke();
       ctx.restore();
@@ -181,29 +206,42 @@ const getTestModel4 = () => {
 addModel(getTestModel2());
 addModel(getTestModel3());
 addModel(getTestModel4());
+console.log('%c1f', 'background:orange;padding:5px;')
+addModel(getTestModel1());
+console.log('%c1fff', 'background:orange;padding:5px;')
+const shape1 = createShape('test1');
 const shape2 = createShape('test2');
 const shape4 = createShape('test4');
 // console.log(shape4)
 const shape3 = createShape('test3');
+drawShape(shape1, { x: -200, y: 500 });
 drawShape(shape2, { x: 10, y: 10 });
-drawShape(shape3, { x: -20, y: -20 });
+drawShape(shape3, { x: 0, y: -40 });
 drawShape(shape4)
 let idx = 0;
 let id = setInterval(() => {
   // drawShape(shape, { x: idx * 3 + 50, y: idx * 3 + 50 });
   idx += 1;
-  idx >= 220 && clearInterval(id)
+  idx >= 100 && clearInterval(id)
   // idx >= 220 && ctx.translate(-100, -100);
-  // idx > 200 && callTranslate();
-  shape2.moveTo(idx * 5 + 100, idx * 5 + 100);
+  if (idx === 100) {
+    callTranslate();
+    // ctx.save();
+    // ctx.strokeStyle = 'blue';
+    // ctx.$strokeRect(0, 0, 1500, 1500);
+    // ctx.restore();
+  }
+
+  idx < 100 && shape2.moveTo(idx * 5 + 100, idx * 5 + 100);
   // shape4.moveTo(idx * 4 + 200, idx * 4 + 200);
-}, 50);
+}, 10);
 
 function callTranslate() {
   let idx = 0;
+  let t = {};
   const id = setInterval(() => {
     idx++;
-    ctx.translate(-idx * 4 - 100, -idx * 4 - 100)
-    idx >= 20 && clearInterval(id);
+    translate(12, 12, t)
+    idx >= 30 && clearInterval(id);
   }, 100);
 }

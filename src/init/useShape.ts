@@ -2,6 +2,7 @@ import { engineById } from '../engineFn';
 import type { ModelOptions } from '../graphOptions';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
 import { Shape } from '../shape/shape';
+import { useGrid } from './useGrid';
 
 export type UseShapeRes = {
   drawShape: (shape: Shape, placePoint?: Point) => string | undefined;
@@ -19,7 +20,9 @@ export const useShape: UseShape = (
   const drawShape = (shape: Shape, placePoint?: Point) => {
     try {
       const { engine: { ctx } } = engineById.get(engineId);
+      const { updateShapeToGrid } = useGrid(engineId);
       const shapeId = shape.draw(ctx, placePoint);
+      updateShapeToGrid(shape, shape.graphicsWithBorder);
       idToShape.set(shapeId, shape);
       return shapeId;
     } catch (err) {
