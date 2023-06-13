@@ -1,18 +1,22 @@
 import { Boundary, EngineCtx } from "../rewriteFn/type";
 import { isNumber } from "../utils/is";
-import { idToShape } from "./useShape";
+import { idToShape, useShape } from "./useShape";
 import { engineById } from "../engineFn";
 import { setIdentify } from "../utils/setIdentify";
 import { graphicsToBoundary, setCanvasSize } from "../utils/common";
 import { Shape } from "../shape/shape";
 import { Graphics } from "../graphOptions";
-import { useGrid } from "./initGrid";
+import { useGrid } from "./useGrid";
 
-const graphByEngineId = new Map<string, Graph>();
+export const graphByEngineId = new Map<string, Graph>();
 
-type Graph = {
+export type Graph = {
   translateX: number;
   translateY: number;
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
   zoom: number;
 };
 export type UseGraphRes = {
@@ -34,12 +38,14 @@ const getBoundary = (): Boundary => {
     maxY: 0
   };
   for (const elem of idToShape.values()) {
+    // console.log(idToShape)
     const { minX, minY, maxX, maxY } = imageBoundary;
     imageBoundary.minX = Math.min(elem.boundary.minX, minX);
     imageBoundary.maxX = Math.max(elem.boundary.maxX, maxX);
     imageBoundary.minY = Math.min(elem.boundary.minY, minY);
     imageBoundary.maxY = Math.max(elem.boundary.maxY, maxY);
   };
+  // console.log('sumBoundary', imageBoundary)
   return imageBoundary;
 };
 const getImageData = (imageBoundary: Boundary, ctx: EngineCtx) => {
@@ -47,27 +53,44 @@ const getImageData = (imageBoundary: Boundary, ctx: EngineCtx) => {
     imageBoundary.minX,
     imageBoundary.minY,
     imageBoundary.maxX - imageBoundary.minX,
-    imageBoundary.maxY - imageBoundary.maxY);
+    imageBoundary.maxY - imageBoundary.minY);
   return data;
 };
 
+const isShapeInScreen = (shape: Shape, graph: Graph): boolean => {
+  const { minX, minY, maxX, maxY } = shape.boundary;
+  return !(maxX < graph.left || minX > graph.right || maxY < graph.top || minY > graph.bottom);
+}
+
 export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
-  const graph: Graph = {
+  graphByEngineId.get(engineId) || graphByEngineId.set(engineId, setIdentify({
     translateX: 0,
     translateY: 0,
+    left: 0,
+    top: 0,
+    right: engineById.get(engineId).engine.width,
+    bottom: engineById.get(engineId).engine.height,
     zoom: 1,
-  };
-  setIdentify(graph, 'graph');
-  graphByEngineId.set(engineId, graph);
-  const translate = (x: number, y: number, cachePointer: Object) => {
+  }, 'graph'));
+  const translate = (x: number, y: number, cachePointer: Object = {}) => {
     if (!isNumber(x) || !isNumber(y)) return;
-    const { clearRect, engine: { ctx } } = engineById.get(engineId);
+    const { clearRect, engine: { ctx, width, height } } = engineById.get(engineId);
+    const graph = graphByEngineId.get(engineId);
     const boundary = useCache<Boundary>(getBoundary)(cachePointer);
     const imageData = useCache<ImageData>(getImageData)(cachePointer, boundary, ctx);
-    clearRect(boundary.minX, boundary.minY, boundary.maxX - boundary.minX, boundary.maxY - boundary.minY);
+    // clearRect(boundary.minX, boundary.minY, boundary.maxX - boundary.minX, boundary.maxY - boundary.minY);
+    clearRect(graph.left, graph.top, width, height);
+    // const newTranslateX = graph.translateX + x;
+    // const newTranslateY = graph.translateY + y;
     ctx.translate(x, y);
-    ctx.putImageData(imageData, boundary.minX, boundary.minY);
-    // place图形
+    graph.translateX = graph.translateX + x;
+    graph.translateY = graph.translateY + y;
+    graph.left = -graph.translateX;
+    graph.top = -graph.translateY;
+    graph.right = graph.left + width;
+    graph.bottom = graph.top + height;
+    [...idToShape.values()].forEach(elem => isShapeInScreen(elem, graph) && elem.draw(ctx));
+    // ctx.putImageData(imageData, boundary.minX + graph.translateX, boundary.minY + graph.translateY);
   };
   const resizeCanvas = (width: number, height: number) => {
     if (!isNumber(width) || !isNumber(height)) return;
@@ -84,12 +107,12 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     ctx.save();
     ctx.strokeStyle = 'pink';
     // console.log(x, y, width, height)
-    ctx.$strokeRect(x, y, width, height);
+    // ctx.$strokeRect(x, y, width, height);
     ctx.restore();
   };
   const repaintInfluencedShape = (graphics: Graphics, excludesSet: Set<Shape> = new Set()) => {
     const { getInfluencedGrid, getInfluencedShape } = useGrid(engineId);
-    const boundary = graphicsToBoundary(graphics);
+    const boundary = graphicsToBoundary(graphics, graphByEngineId.get(engineId));
     const grids = getInfluencedGrid(boundary);
     const shapes = getInfluencedShape(boundary, grids);
     const clearBoundary = grids.reduce((pre, cur) => {
@@ -106,7 +129,7 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
       !excludesSet.has(item) && item.draw(engineById.get(engineId).engine.ctx);
     }
   };
-  return { 
+  return {
     translate,
     clearRect,
     resizeCanvas,

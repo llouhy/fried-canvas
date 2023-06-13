@@ -1,4 +1,5 @@
 import { BorderOptions, Graphics } from "../graphOptions";
+import { Graph } from "../init/useGraph";
 import { Boundary } from "../rewriteFn/type";
 
 export const getTypeStr = (value: any) => {
@@ -6,8 +7,12 @@ export const getTypeStr = (value: any) => {
 };
 
 export const setCanvasSize = (canvas: HTMLCanvasElement, width: number, height: number) => {
-  canvas.setAttribute('width', width + '');
-  canvas.setAttribute('height', height + '');
+  canvas.height = height;
+  canvas.width = width;
+  // canvas.setAttribute('width', width);
+  // canvas.setAttribute('height', height);
+  // canvas.style.width = width + 'px';
+  // canvas.style.height = height + 'px';
 };
 
 export const getPureObject = (obj: { [key: string]: any }) => {
@@ -22,14 +27,15 @@ export const getDivisibleNum = (cur: number, divisor: number): number => {
   return result;
 };
 
-export const graphicsToBoundary = (graphics: Graphics): Boundary => {
+export const graphicsToBoundary = (graphics: Graphics, graph: Partial<Graph> = { translateX: 0, translateY: 0 }): Boundary => {
   const minX = Math.floor(graphics.ox);
   const minY = Math.floor(graphics.oy);
+  const { translateX, translateY } = graph;
   return {
-    minX,
-    minY,
-    maxX: Math.ceil(minX + graphics.width),
-    maxY: Math.ceil(minY + graphics.height)
+    minX: minX + translateX,
+    minY: minY + translateY,
+    maxX: Math.ceil(minX + graphics.width) + translateX,
+    maxY: Math.ceil(minY + graphics.height) + translateY
   };
 }
 
