@@ -2,10 +2,10 @@ import type { Boundary, Point } from '../rewriteFn/type';
 import { getPureObject } from '../utils/common';
 const getInitBoundary = () => {
   return getPureObject({
-    minX: 999999,
-    maxX: -999999,
-    minY: 999999,
-    maxY: -999999
+    minX: Infinity,
+    maxX: -Infinity,
+    minY: Infinity,
+    maxY: -Infinity
   });
 };
 export const getImpreciseShapeSizeInfo = (
@@ -37,7 +37,6 @@ export const getImpreciseShapeSizeInfo = (
       boundToLineWidth.set('maxY', dWidth ?? 0);
     }
   }
-  // let boundary = { ...preBoundary };
   const boundary = {
     minX: preBoundary.minX - (boundToLineWidth.get('minX') ?? 0),
     maxX: preBoundary.maxX + (boundToLineWidth.get('maxX') ?? 0),
@@ -56,27 +55,38 @@ export const getPreciseShapeSizeInfo = (
   drawFunc: any,
   info: { ox: number; oy: number; width: number; height: number }
 ) => {
+  // console.log(info)
   const { ox, oy, width, height } = info;
-  const canvasWidth = ox + width + 4;
-  const canvasHeight = oy + height + 4;
-  const offCanvas = new OffscreenCanvas(canvasWidth, canvasHeight);
+  // const canvasWidth = Math.abs(ox) + width + 4;
+  // const canvasHeight = Math.abs(oy) + height + 4;
+  const offCanvas = new OffscreenCanvas(1, 1);
   const ctx = offCanvas.getContext('2d');
   drawFunc(ctx);
-  const imageData = ctx?.getImageData(0, 0, canvasWidth, canvasHeight);
+  // const imageData = ctx?.getImageData(0, 0, canvasWidth, canvasHeight); // bug，负数计算错误
+  const COMPENSATE = 0;
+  const imageWidth = width + 2 * COMPENSATE;
+  const imageHeight = height + 2 * COMPENSATE;
+  const imageData = ctx?.getImageData(ox - COMPENSATE, oy - COMPENSATE, imageWidth, imageHeight);
   const pixels = imageData?.data;
-  let [minX, minY, maxX, maxY] = [ox, oy, ox + width, oy + height];
+  // let [minX, minY, maxX, maxY] = [ox - COMPENSATE, oy - COMPENSATE, ox - COMPENSATE + imageWidth, oy - COMPENSATE + imageHeight];
+  let reduce = {
+    right: 0,
+    left: 0,
+    top: 0,
+    bottom: 0
+  };
+  let [r, g, b, a] = [0, 0, 0, 0];
   let minYFlag = false;
-  for (let y = minY; y < canvasHeight; y++) {
-    for (let x = minX; x < canvasWidth; x++) {
-      const index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
-      const r = pixels![index];
-      const g = pixels![index + 1];
-      const b = pixels![index + 2];
-      const a = pixels![index + 3];
-      // eslint-disable-next-line eqeqeq
-      if (r != 0 || g != 0 || b != 0 || a != 0) {
+  for (let y = 0; y < imageHeight; y++) {
+    for (let x = 0; x < imageWidth; x++) {
+      const index = (y * imageWidth + x) * 4; // 当前像素在pixels的起始位置
+      r = pixels![index];
+      g = pixels![index + 1];
+      b = pixels![index + 2];
+      a = pixels![index + 3];
+      if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
         minYFlag = true;
-        minY = y;
+        reduce.top = y;
         break;
       }
     }
@@ -84,16 +94,15 @@ export const getPreciseShapeSizeInfo = (
   }
 
   let maxYFlag = false;
-  for (let y = oy + height; y > oy; y--) {
-    for (let x = ox - 4; x < canvasWidth; x++) {
-      const index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
-      const r = pixels![index];
-      const g = pixels![index + 1];
-      const b = pixels![index + 2];
-      const a = pixels![index + 3];
-      // eslint-disable-next-line eqeqeq
-      if (r != 0 || g != 0 || b != 0 || a != 0) {
-        maxY = y;
+  for (let y = imageHeight; y > 0; y--) {
+    for (let x = 0; x < imageWidth; x++) {
+      const index = (y * imageWidth + x) * 4; // 当前像素在pixels的起始位置
+      r = pixels![index];
+      g = pixels![index + 1];
+      b = pixels![index + 2];
+      a = pixels![index + 3];
+      if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
+        reduce.bottom = imageHeight - y;
         maxYFlag = true;
         break;
       }
@@ -102,49 +111,42 @@ export const getPreciseShapeSizeInfo = (
   }
 
   let minXFlag = false;
-  for (let x = ox; x < canvasWidth; x++) {
-    for (let y = oy - 4; y < canvasHeight; y++) {
-      const index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
-      const r = pixels![index];
-      const g = pixels![index + 1];
-      const b = pixels![index + 2];
-      const a = pixels![index + 3];
-      // eslint-disable-next-line eqeqeq
-      if (r != 0 || g != 0 || b != 0 || a != 0) {
+  for (let x = 0; x < imageWidth; x++) {
+    for (let y = 0; y < imageHeight; y++) {
+      const index = (y * imageWidth + x) * 4; // 当前像素在pixels的起始位置
+      r = pixels![index];
+      g = pixels![index + 1];
+      b = pixels![index + 2];
+      a = pixels![index + 3];
+      if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
         minXFlag = true;
-        minX = x;
+        reduce.left = x;
         break;
       }
     }
     if (minXFlag) break;
   }
   let maxXFlag = false;
-  for (let x = ox + width; x > x; x--) {
-    for (let y = oy - 4; y < canvasHeight; y++) {
-      const index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
-      const r = pixels![index];
-      const g = pixels![index + 1];
-      const b = pixels![index + 2];
-      const a = pixels![index + 3];
-      // eslint-disable-next-line eqeqeq
-      if (r != 0 || g != 0 || b != 0 || a != 0) {
-        maxX = x;
+  for (let x = imageWidth; x > 0; x--) {
+    for (let y = 0; y < imageHeight; y++) {
+      const index = (y * imageWidth + x) * 4; // 当前像素在pixels的起始位置
+      r = pixels![index];
+      g = pixels![index + 1];
+      b = pixels![index + 2];
+      a = pixels![index + 3];
+      if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
+        reduce.right = imageWidth - x;
         maxXFlag = true;
         break;
       }
     }
     if (maxXFlag) break;
   }
+
   return {
-    ox: minX,
-    oy: minY,
-    width: maxX - minX,
-    height: maxY - minY
+    ox: ox - COMPENSATE + reduce.left,
+    oy: oy - COMPENSATE + reduce.top,
+    width: imageWidth - reduce.left - reduce.right,
+    height: imageHeight - reduce.top - reduce.bottom
   };
-  // return {
-  //   minX,
-  //   maxX,
-  //   minY,
-  //   maxY
-  // };
 };
