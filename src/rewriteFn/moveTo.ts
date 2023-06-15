@@ -10,6 +10,7 @@ export const moveTo = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
+    // console.log('新的', ctx.drawOffset);
     oldMoveTo.call(ctx, x + dx, y + dy);
     if (!drawCoordinates) return;
     drawCoordinates.push(point);

@@ -82,7 +82,7 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   const _width: number = width ?? DEFAULT_CANVAS_WIDTH;
   const _height: number = height ?? DEFAULT_CANVAS_HEIGHT;
 
-  reloadCtxFunction(ctx as CanvasRenderingContext2D, _id);
+  reloadCtxFunction(ctx as CanvasRenderingContext2D);
   setCanvasSize(canvasDom, _width, _height);
   const engineResult = getPureObject({
     engine: getPureObject({
@@ -122,7 +122,7 @@ const getTestModel1 = (): ModelOptions => {
     draw: (ctx: EngineCtx | OffEngineCtx) => {
       ctx.save();
       // ctx.lineWidth = 10;
-      ctx.strokeStyle = 'blue';
+      ctx.strokeStyle = 'Turquoise';
       ctx.beginPath();
       ctx.moveTo(-200, -200);
       ctx.lineTo(-200, -300);
@@ -150,6 +150,7 @@ const getTestModel2 = (): ModelOptions => {
       ctx.beginPath();
       ctx.moveTo(300, 60);
       ctx.lineTo(420, 420);
+      // ctx.lineTo(420, 450);
       ctx.closePath();
       ctx.stroke();
       ctx.beginPath();
@@ -158,14 +159,14 @@ const getTestModel2 = (): ModelOptions => {
       ctx.restore();
     }
     ,
-    // borderOptions: {
-    //   paddingLeft: 20,
-    //   paddingRight: 30,
-    //   paddingTop: 30,
-    //   paddingBottom: 30,
-    //   borderDash: [5, 5],
-    //   borderWidth: 2
-    // }
+    borderOptions: {
+      paddingLeft: 10,
+      paddingRight: 10,
+      paddingTop: 20,
+      paddingBottom: 20,
+      borderDash: [5, 5],
+      borderWidth: 2
+    }
   };
 };
 const getTestModel3 = () => {
@@ -173,16 +174,20 @@ const getTestModel3 = () => {
     name: 'test3',
     draw: (ctx: EngineCtx | OffEngineCtx) => {
       // console.log('%c画了3', 'color: blue')
-      console.log('huale333')
+      // console.log('huale333')
       ctx.save();
       ctx.beginPath();
-      ctx.strokeStyle = 'orange';
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'black';
       ctx.moveTo(-50, -50);
       ctx.lineTo(100, 100);
+      // ctx.stroke();
+      // ctx.strokeStyle = '';
       ctx.lineTo(-50, 100);
       ctx.closePath();
       ctx.stroke();
       ctx.restore();
+      // ctx.putImageData()
     }
   }
 }
@@ -203,20 +208,23 @@ const getTestModel4 = () => {
     }
   }
 };
+// console.log('%c22222', 'background:orange;padding:5px;')
 addModel(getTestModel2());
+// console.log('%c33333', 'background:orange;padding:5px;')
 addModel(getTestModel3());
+// console.log('%c44444', 'background:orange;padding:5px;')
 addModel(getTestModel4());
-console.log('%c1f', 'background:orange;padding:5px;')
+// console.log('%c11111', 'background:orange;padding:5px;')
 addModel(getTestModel1());
-console.log('%c1fff', 'background:orange;padding:5px;')
+// console.log('%cend', 'background:orange;padding:5px;')
 const shape1 = createShape('test1');
 const shape2 = createShape('test2');
 const shape4 = createShape('test4');
 // console.log(shape4)
 const shape3 = createShape('test3');
-drawShape(shape1, { x: -200, y: 500 });
-drawShape(shape2, { x: 10, y: 10 });
-drawShape(shape3, { x: 0, y: -40 });
+drawShape(shape1, { x: 300, y: 600 });
+drawShape(shape2);
+drawShape(shape3);
 drawShape(shape4)
 let idx = 0;
 let id = setInterval(() => {
@@ -232,7 +240,7 @@ let id = setInterval(() => {
     // ctx.restore();
   }
 
-  idx < 100 && shape2.moveTo(idx * 5 + 100, idx * 5 + 100);
+  // idx < 100 && shape3.moveTo(idx * 5 + 100, idx * 5 + 100);
   // shape4.moveTo(idx * 4 + 200, idx * 4 + 200);
 }, 10);
 
@@ -241,7 +249,39 @@ function callTranslate() {
   let t = {};
   const id = setInterval(() => {
     idx++;
-    translate(12, 12, t)
-    idx >= 30 && clearInterval(id);
+    idx < 30 && translate(12, 12, t);
+    idx >= 38 && translate(-4, -8, t);
+    idx >= 60 && moveAShape() && clearInterval(id);
+  }, 20);
+}
+function moveAShape() {
+  // return 'ss'
+  let idx = 0;
+  let id = setInterval(() => {
+    idx++;
+    shape1.moveTo(idx * 3 - 20, idx * 4 - 20);
+    if (idx >= 20) {
+      clearInterval(id);
+      moveShape2();
+      ctx.save();
+      ctx.strokeStyle = 'orange';
+      ctx.$strokeRect(0, 0, 1500, 1500);
+      ctx.restore();
+    };
   }, 100);
+  return true;
+}
+function moveShape2() {
+  let idx = 0;
+  let id = setInterval(() => {
+    idx++;
+    
+    if (idx < 30) {
+      shape3.moveTo(shape3.graphics.ox + 4, shape3.graphics.oy - 5);
+    } else if (idx >= 30 && idx <= 60) {
+      shape3.moveTo(shape3.graphics.ox + 10, shape3.graphics.oy + 12);
+    } else {
+      clearInterval(id);
+    }
+  }, 100)
 }

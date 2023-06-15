@@ -98,10 +98,17 @@ export const getBoundary = (
   if (controlY.includes(minY)) {
     minY = sumBoundary({ minX, minY, maxX, maxY }, 'toBottom', ctx);
   }
+  // console.log({
+  //   minX,
+  //   minY,
+  //   maxX,
+  //   maxY
+  // })
   return {
     minX,
     minY,
     maxX,
     maxY
   };
+  (ctx as any).$strokeRect(minX, minY, maxX - minX, maxY - minY)
 };

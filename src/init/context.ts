@@ -9,8 +9,7 @@ import { getDefaultContextAttribute } from '../config/common';
 type ReloadCtxResult<T> = T extends CanvasRenderingContext2D ? EngineCtx : OffEngineCtx;
 
 export const reloadCtxFunction = <T>(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  engineId: string
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
 ) => {
   // const coordinateStack = useCoordinateCache(engineId);
   const { arc, arcTo, rect, fillRect, strokeRect, moveTo, lineTo, stroke } = useRewriteCtxFunction();

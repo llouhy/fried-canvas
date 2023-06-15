@@ -9,10 +9,6 @@ export const getTypeStr = (value: any) => {
 export const setCanvasSize = (canvas: HTMLCanvasElement, width: number, height: number) => {
   canvas.height = height;
   canvas.width = width;
-  // canvas.setAttribute('width', width);
-  // canvas.setAttribute('height', height);
-  // canvas.style.width = width + 'px';
-  // canvas.style.height = height + 'px';
 };
 
 export const getPureObject = (obj: { [key: string]: any }) => {
@@ -40,9 +36,8 @@ export const graphicsToBoundary = (graphics: Graphics, graph: Partial<Graph> = {
 }
 
 export const getGraphicsWithBorder = (graphics: Graphics, borderOptions: BorderOptions): Graphics => {
-  // console.log(graphics, borderOptions)
   const { paddingLeft, paddingRight, paddingTop, paddingBottom, borderWidth } = borderOptions;
-  const lineWidth = borderWidth ?? 2;
+  const lineWidth = borderWidth || 2;
   const boundOx = graphics.ox - (paddingLeft ?? 4);
   const boundOy = graphics.oy - (paddingTop ?? 4);
   const boundWidth = graphics.width + (paddingLeft ?? 4) + (paddingRight ?? 4);
