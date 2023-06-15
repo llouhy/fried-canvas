@@ -1,7 +1,7 @@
 import { engineById } from '../engineFn';
 import type { ModelOptions } from '../graphOptions';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
-import { Shape } from '../shape/shape';
+import { Shape, getShape as getShapeIns } from '../shape/shape';
 import { useGrid } from './useGrid';
 
 export type UseShapeRes = {
@@ -43,8 +43,9 @@ export const useShape: UseShape = (
   };
   const createShape = (modelName: string, options: { data?: any; model?: ModelOptions; index?: number }) => {
     // console.log('createShape')
-    const shape = new Shape(modelName, engineId, options?.data, options?.model, options?.index);
-    idToShape.set(shape.id, shape);
+    // const shape = new Shape(modelName, engineId, options?.data, options?.model, options?.index);
+    const shape = getShapeIns(modelName, engineId, options?.data, options?.model, options?.index);
+    // idToShape.set(shape.id, shape);
     return shape;
   };
   return {
