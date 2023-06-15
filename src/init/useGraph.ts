@@ -38,7 +38,7 @@ const getBoundary = (): Boundary => {
     maxY: 0
   };
   for (const elem of idToShape.values()) {
-    // console.log(idToShape)
+    // console.log(elem)
     const { minX, minY, maxX, maxY } = imageBoundary;
     imageBoundary.minX = Math.min(elem.boundary.minX, minX);
     imageBoundary.maxX = Math.max(elem.boundary.maxX, maxX);
@@ -74,7 +74,7 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
   }, 'graph'));
   const translate = (x: number, y: number, cachePointer: Object = {}) => {
     if (!isNumber(x) || !isNumber(y)) return;
-    const { clearRect, engine: { ctx, width, height } } = engineById.get(engineId);
+    const { clearRect, updateAllShapeToGrid, engine: { ctx, width, height } } = engineById.get(engineId);
     const graph = graphByEngineId.get(engineId);
     const boundary = useCache<Boundary>(getBoundary)(cachePointer);
     const imageData = useCache<ImageData>(getImageData)(cachePointer, boundary, ctx);
@@ -90,6 +90,7 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     graph.right = graph.left + width;
     graph.bottom = graph.top + height;
     [...idToShape.values()].forEach(elem => isShapeInScreen(elem, graph) && elem.draw(ctx));
+    updateAllShapeToGrid();
     // ctx.putImageData(imageData, boundary.minX + graph.translateX, boundary.minY + graph.translateY);
   };
   const resizeCanvas = (width: number, height: number) => {
@@ -111,9 +112,15 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     ctx.restore();
   };
   const repaintInfluencedShape = (graphics: Graphics, excludesSet: Set<Shape> = new Set()) => {
+    const { engine: { ctx } } = engineById.get(engineId);
+    const graph = graphByEngineId.get(engineId);
     const { getInfluencedGrid, getInfluencedShape } = useGrid(engineId);
-    const boundary = graphicsToBoundary(graphics, graphByEngineId.get(engineId));
+    // const boundary = graphicsToBoundary(graphics, graphByEngineId.get(engineId));
+    const boundary = graphicsToBoundary(graphics);
+    // console.log('boundary', boundary)
+    // console.log('graph', graphByEngineId.get(engineId))
     const grids = getInfluencedGrid(boundary);
+    // console.log('受影响的所有grid', grids)
     const shapes = getInfluencedShape(boundary, grids);
     const clearBoundary = grids.reduce((pre, cur) => {
       // (ctx as any).$strokeRect()
@@ -124,7 +131,24 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
         maxY: Math.max(pre.maxY, cur.boundary.maxY)
       }
     }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
-    clearRect(clearBoundary.minX, clearBoundary.minY, clearBoundary.maxX - clearBoundary.minX, clearBoundary.maxY - clearBoundary.minY);
+    // console.log('clearBoundary', clearBoundary)
+    clearRect(
+      clearBoundary.minX - graph.translateX, // clearBoundary是grid算出来的，gird坐标永远是canvas左上角为0,0
+      clearBoundary.minY - graph.translateY,
+      clearBoundary.maxX - clearBoundary.minX,
+      clearBoundary.maxY - clearBoundary.minY);
+    // ctx.save();
+    // ctx.strokeStyle = 'blue';
+    // ctx.$strokeRect(boundary.minX, boundary.minY, boundary.maxX - boundary.minX, boundary.maxY - boundary.minY);
+    // ctx.stroke();
+    // ctx.restore();    
+    // ctx.save();
+    // ctx.strokeStyle = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padEnd(6, '0');
+    // ctx.$strokeRect(clearBoundary.minX - graph.translateX, // clearBoundary是grid算出来的，gird坐标永远是canvas左上角为0,0
+    // clearBoundary.minY - graph.translateY,
+    // clearBoundary.maxX - clearBoundary.minX,
+    // clearBoundary.maxY - clearBoundary.minY)
+    // ctx.restore();
     for (const item of shapes) {
       !excludesSet.has(item) && item.draw(engineById.get(engineId).engine.ctx);
     }
