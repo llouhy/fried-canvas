@@ -122,7 +122,7 @@ export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
     return [...new Set(shapes)];
   };
   const updateShapeToGrid = (shape: Shape, graphics: Graphics) => {
-    console.log('调用updateShapeToGrid', shape)
+    // console.log('调用updateShapeToGrid', shape)
     const graph = graphByEngineId.get(engineId);
     const grids = getInfluencedGrid(graphicsToBoundary(graphics));
     [...shape.gridSet.values()].map(elem => elem.shapes = elem.shapes.filter(item => item !== shape));

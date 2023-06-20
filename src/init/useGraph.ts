@@ -98,7 +98,7 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     const { clearRect, engine } = engineById.get(engineId);
     const boundary = getBoundary();
     const imageData = getImageData(boundary, engine.ctx);
-    setCanvasSize(engine.canvas, width, height);
+    setCanvasSize(engine.canvas, width, height, engine.ctx);
     Object.assign(engine, { width, height })
     engine.ctx.putImageData(imageData, boundary.minX, boundary.minY);
   };
