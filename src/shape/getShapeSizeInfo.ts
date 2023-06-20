@@ -19,31 +19,40 @@ export const getImpreciseShapeSizeInfo = (
   height: number;
 } => {
   const preBoundary: Boundary = getInitBoundary();
-  const boundToLineWidth = new Map<keyof Boundary, number>();
+  // const boundToLineWidth = new Map<keyof Boundary, number>();
+  console.log('精确计算开始')
+  let pxMin, pyMin, pxMax, pyMax;
   for (const item of coordinateStack) {
-    const { x, y, dWidth } = item; // the difference of stroke lineWidth and 1px
-    if (preBoundary.minX > x) {
-      preBoundary.minX = x;
-      boundToLineWidth.set('minX', dWidth || 0);
+    const { x, y, dWidth, dWidthX, dWidthY } = item; // the difference of stroke lineWidth and 1px
+    pxMin = x - (dWidthX || 0);
+    pyMin = y - (dWidthY || 0);
+    pxMax = x + (dWidthX || 0);
+    pyMax = y + (dWidthY || 0);
+    console.log({
+      pxMin, pxMax, pyMax, pyMin
+    })
+    if (preBoundary.minX > pxMin) {
+      preBoundary.minX = pxMin;
+      // boundToLineWidth.set('minX', dWidth || 0);
     }
-    if (preBoundary.maxX < x) {
-      preBoundary.maxX = x;
-      boundToLineWidth.set('maxX', dWidth || 0);
+    if (preBoundary.maxX < pxMax) {
+      preBoundary.maxX = pxMax;
+      // boundToLineWidth.set('maxX', dWidth || 0);
     }
-    if (preBoundary.minY > y) {
-      preBoundary.minY = y;
-      boundToLineWidth.set('minY', dWidth || 0);
+    if (preBoundary.minY > pyMin) {
+      preBoundary.minY = pyMin;
+      // boundToLineWidth.set('minY', dWidth || 0);
     }
-    if (preBoundary.maxY < y) {
-      preBoundary.maxY = y;
-      boundToLineWidth.set('maxY', dWidth || 0);
+    if (preBoundary.maxY < pyMax) {
+      preBoundary.maxY = pyMax;
+      // boundToLineWidth.set('maxY', dWidth || 0);
     }
   }
   const boundary = {
-    minX: preBoundary.minX - (boundToLineWidth.get('minX') ?? 0),
-    maxX: preBoundary.maxX + (boundToLineWidth.get('maxX') ?? 0),
-    minY: preBoundary.minY - (boundToLineWidth.get('minY') ?? 0),
-    maxY: preBoundary.maxY + (boundToLineWidth.get('maxY') ?? 0)
+    minX: preBoundary.minX,
+    maxX: preBoundary.maxX,
+    minY: preBoundary.minY,
+    maxY: preBoundary.maxY
   };
   return {
     ox: boundary.minX,
@@ -72,6 +81,7 @@ export const getPreciseShapeSizeInfo = (
   const imageOy = oy + translateY;
   const canvasWidth = Math.floor(imageOx + width + COMPENSATE);
   const canvasHeight = Math.floor(imageOy + height + COMPENSATE);
+  // console.log({ drawOffset, imageOx, imageOy, canvasWidth, canvasHeight });
   const offCanvas = getCanvas(canvasWidth, canvasHeight);
   const ctx = offCanvas.getContext('2d');
   (ctx as any).drawOffset = drawOffset;
@@ -88,7 +98,7 @@ export const getPreciseShapeSizeInfo = (
   };
   let [index, r, g, b, a] = [0, 0, 0, 0, 0];
   let minYFlag = false;
-  for (let y = imageOy; y < canvasHeight; y++) {
+  for (let y = imageOy - 2; y < canvasHeight; y++) {
     // console.log('minY', y)
     for (let x = 0; x < canvasWidth; x++) {
       index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
@@ -99,7 +109,7 @@ export const getPreciseShapeSizeInfo = (
       if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
         minYFlag = true;
         reduce.top = y;
-        console.log(`找到minY在第${y + 1}次循环`, y)
+        console.log(`找到minY在第${y - (imageOy - 2)}次循环`, y)
         break;
       }
     }
@@ -127,7 +137,7 @@ export const getPreciseShapeSizeInfo = (
   }
 
   let minXFlag = false;
-  for (let x = imageOx; x < canvasWidth; x++) {
+  for (let x = imageOx - 2; x < canvasWidth; x++) {
     for (let y = 0; y < canvasHeight; y++) {
       index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
       r = pixels![index];
@@ -135,7 +145,7 @@ export const getPreciseShapeSizeInfo = (
       b = pixels![index + 2];
       a = pixels![index + 3];
       if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
-        console.log(`找到了minX在第${x + 1}次循环`, x)
+        console.log(`找到了minX在第${x - imageOx}次循环`, x)
         minXFlag = true;
         reduce.left = x;
         break;
@@ -163,20 +173,16 @@ export const getPreciseShapeSizeInfo = (
   // const dx = reduce.left - COMPENSATE; // 实际跟 ox 的偏差距离
   // const dy = reduce.top - COMPENSATE; // 实际跟 oy 的偏差距离
   console.log('reduce', reduce);
-  console.log({
-    translateX,
-    translateY
-  })
   console.log('计算结果', {
-    ox: reduce.left - translateX,
-    oy: reduce.top - translateY,
-    width: reduce.right - reduce.left,
-    height: reduce.bottom - reduce.top
+    ox: reduce.left - translateX + 1,
+    oy: reduce.top - translateY + 1,
+    width: reduce.right - reduce.left - 1,
+    height: reduce.bottom - reduce.top - 1
   });
   return {
-    ox: reduce.left - translateX,
-    oy: reduce.top - translateY,
-    width: reduce.right - reduce.left,
-    height: reduce.bottom - reduce.top
+    ox: reduce.left - translateX + 1,
+    oy: reduce.top - translateY + 1,
+    width: reduce.right - reduce.left - 1,
+    height: reduce.bottom - reduce.top - 1
   }
 };

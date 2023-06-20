@@ -183,7 +183,7 @@ export const arc = (ctx: EngineCtx | OffEngineCtx) => {
     } = ctx;
     oldArc.call(ctx, x + dx, y + dy, radius, startAngle, endAngle, counterclockwise);
     if (!drawCoordinates) return;
-    const { set } = useLineWidthToCoordinateMap();
+    // const { set } = useLineWidthToCoordinateMap();
     let boundary!: Boundary;
     if (!((endAngle - startAngle) % 360 === 0)) {
       boundary = getArcBoundary(x, y, radius, radianToAngle(startAngle), radianToAngle(endAngle));
@@ -195,10 +195,10 @@ export const arc = (ctx: EngineCtx | OffEngineCtx) => {
         maxY: y + radius
       };
     }
-    const point1 = { x: boundary.minX, y: boundary.minY };
-    const point2 = { x: boundary.maxX, y: boundary.maxY };
+    const point1 = { x: boundary.minX - ctx.lineWidth, y: boundary.minY - ctx.lineWidth };
+    const point2 = { x: boundary.maxX + ctx.lineWidth, y: boundary.maxY + ctx.lineWidth };
     const points = [point1, point2];
-    set(ctx.lineWidth, points);
+    // set(ctx.lineWidth, points);
     drawCoordinates.push(...points);
     // oldArc.call(ctx, x, y, radius, startAngle, endAngle, counterclockwise);
     (ctx as EngineCtx).$arc = oldArc;

@@ -46,6 +46,7 @@ export const useModel: UseModel = (
             const coordinates: Point[] = [];
             ctx.drawCoordinates = coordinates;
             draw(ctx);
+            console.log(...coordinates)
             const boundary = getPreciseShapeSizeInfo(draw, getImpreciseShapeSizeInfo(coordinates));
             // const boundary = getImpreciseShapeSizeInfo(coordinates)
             elem.graphics = { ...boundary };

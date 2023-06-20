@@ -1,12 +1,12 @@
 import { getBoundary } from '../config/common';
-import { useLineWidthToCoordinateMap } from '../shape/coordinate';
+// import { useLineWidthToCoordinateMap } from '../shape/coordinate';
 import type { Point, EngineCtx, OffEngineCtx } from './type';
 
 export const quadraticCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
   const oldQuadraticCurveTo = ctx.quadraticCurveTo;
   (ctx as EngineCtx).$quadraticCurveTo = oldQuadraticCurveTo;
   return (cpx: number, cpy: number, x: number, y: number): void => {
-    const { set } = useLineWidthToCoordinateMap();
+    // const { set } = useLineWidthToCoordinateMap();
     const {
       drawCoordinates,
       drawOffset: { dx, dy }
@@ -30,6 +30,6 @@ export const quadraticCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
     }
     const points = [point1, point2];
     drawCoordinates.push(...points);
-    set(ctx.lineWidth, points);
+    // set(ctx.lineWidth, points);
   };
 };
