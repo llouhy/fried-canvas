@@ -72,6 +72,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
   shape.data = data;
   shape.index = index ?? index;
   shape.belongEngineId = engineId;
+  // console.log(shape)
   shape._graphics = getPureObject(shape.$model?.graphics as Graphics);
   shape.graphics = getPureObject(shape.$model?.graphics as Graphics);
   const draw = (ctx: EngineCtx, placePoint = { x: shape.graphics.ox, y: shape.graphics.oy }): string => {
@@ -91,7 +92,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     const { paddingLeft, paddingRight, paddingTop, paddingBottom, borderDash, borderWidth, borderColor } =
       shape.borderOptions;
     const strokeColor = borderColor ?? '#993f55';
-    const lineWidth = borderWidth || 2;
+    const lineWidth = borderWidth || 1;
     const lineDash = borderDash ?? [9, 2];
     const BORDER_PADDING = 0;
     const boundOx = shape.graphics.ox - (paddingLeft);
@@ -108,9 +109,15 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     // if () {}
     shape.ctx.save();
     shape.ctx.beginPath();
-    shape.ctx.strokeStyle = strokeColor;
-    shape.ctx.lineWidth = lineWidth;
+    shape.ctx.strokeStyle = 'teal';
+    shape.ctx.lineWidth = 1;
     shape.ctx.setLineDash(lineDash);
+    // (shape.ctx as any).$strokeRect(
+    //   shape.graphics.ox,
+    //   shape.graphics.oy,
+    //   shape.graphics.width,
+    //   shape.graphics.height
+    // );
     (shape.ctx as any).$strokeRect(
       boundOx,
       boundOy,
@@ -119,6 +126,12 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     );
     shape.ctx.setLineDash([0, 0]);
     shape.ctx.restore();
+    // console.log('边框', {
+    //   boundOx,
+    //   boundOy,
+    //   boundWidth,
+    //   boundHeight
+    // })
   }
   const isPointInTheShape = (event: any): boolean => {
     return true;

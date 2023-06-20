@@ -4,8 +4,9 @@ export const useOffCanvas = () => {
   const offCanvas = new OffscreenCanvas(0, 0);
   return {
     get: (width: number, height: number) => {
-      offCanvas.width = width;
-      offCanvas.height = height;
+      const dpr = window.devicePixelRatio;
+      offCanvas.width = Math.round(width * dpr);
+      offCanvas.height = Math.round(height * dpr);
       return offCanvas;
     }
   }
