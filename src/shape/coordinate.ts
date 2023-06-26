@@ -52,3 +52,8 @@ export const useLineWidthToCoordinateMap: UseLineWidthToCoordinateMap = () => {
     }
   };
 };
+
+const compensateMap = new Map
+export const useCompensate = () => {
+  
+};

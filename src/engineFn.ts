@@ -82,8 +82,8 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   const _width: number = width ?? DEFAULT_CANVAS_WIDTH;
   const _height: number = height ?? DEFAULT_CANVAS_HEIGHT;
 
-  reloadCtxFunction(ctx as CanvasRenderingContext2D, _id);
-  setCanvasSize(canvasDom, _width, _height);
+  reloadCtxFunction(ctx as CanvasRenderingContext2D);
+  setCanvasSize(canvasDom, _width, _height, ctx);
   const engineResult = getPureObject({
     engine: getPureObject({
       ctx,
@@ -122,18 +122,22 @@ const getTestModel1 = (): ModelOptions => {
     draw: (ctx: EngineCtx | OffEngineCtx) => {
       ctx.save();
       // ctx.lineWidth = 10;
-      ctx.strokeStyle = 'blue';
+      ctx.strokeStyle = 'Turquoise';
       ctx.beginPath();
-      ctx.moveTo(-200, -200);
-      ctx.lineTo(-200, -300);
-      ctx.lineTo(-100, -300);
+      ctx.moveTo(-200 + 600, -200 + 600);
+      ctx.lineTo(-200 + 600, -300 + 600);
+      ctx.lineTo(-100 + 600, -300 + 600);
       ctx.stroke();
       // ctx.strokeStyle = 'yellow';
-      ctx.quadraticCurveTo(-322, 600, -332, -128);
+      ctx.rotate(14 * Math.PI / 180)
+      ctx.quadraticCurveTo(-322 + 600, 600 + 600, -332 + 600, -128 + 600);
       // ctx.stroke();
-      ctx.bezierCurveTo(-150, -140, -188, -200, -90, -90);
-      ctx.arc(-500, -500, 44, angleToRadian(45), angleToRadian(270));
+      // ctx.rotate(10 * Math.PI / 180)
+      ctx.bezierCurveTo(-150 + 600, -140 + 600, -188 + 600, -200 + 600, -90 + 600, -90 + 600);
+      ctx.rotate(-20 * Math.PI / 180)
+      ctx.arc(-500 + 600, -500 + 600, 44, angleToRadian(45), angleToRadian(270));
       ctx.closePath();
+      ctx.lineWidth = 8;
       ctx.stroke();
       ctx.restore();
     }
@@ -144,25 +148,44 @@ const getTestModel2 = (): ModelOptions => {
     name: 'test2',
     draw: (ctx: EngineCtx | OffEngineCtx): void => {
       // console.log('%c画了2', 'color: orange')
+      // ctx.save();
+      // ctx.restore();
+      console.log(ctx.getTransform());
       ctx.save();
+      // ctx.scale(2,2);
+      ctx.rotate(16 * Math.PI / 180);
       ctx.lineWidth = 5;
-      ctx.strokeStyle = 'pink';
+      ctx.strokeStyle = 'orange';
+      // ctx.transform(1,0,0,1,200,0); 
       ctx.beginPath();
       ctx.moveTo(300, 60);
       ctx.lineTo(420, 420);
+      // ctx.lineTo(420, 450);
       ctx.closePath();
+      // console.log('%c看看吧', 'background: red;padding:20px;', ctx.getTransform())
       ctx.stroke();
+      // ctx.restore();
+      // return;
       ctx.beginPath();
+      // console.log('%c看看吧', 'background: green;padding:20px;', ctx.getTransform())
       ctx.arc(420, 420, 44, angleToRadian(45), angleToRadian(270));
+      ctx.stroke();
+      ctx.fillRect(100, 120, 20,20);
+      ctx.fillStyle = 'blue'
+      ctx.fillRect(100, 200, 20, 20);
+      ctx.beginPath();
+      ctx.strokeStyle = 'red';
+      ctx.moveTo(300, 80);
+      ctx.lineTo(240, 40);
       ctx.stroke();
       ctx.restore();
     }
     ,
     // borderOptions: {
-    //   paddingLeft: 20,
-    //   paddingRight: 30,
-    //   paddingTop: 30,
-    //   paddingBottom: 30,
+    //   paddingLeft: 10,
+    //   paddingRight: 10,
+    //   paddingTop: 20,
+    //   paddingBottom: 20,
     //   borderDash: [5, 5],
     //   borderWidth: 2
     // }
@@ -173,16 +196,27 @@ const getTestModel3 = () => {
     name: 'test3',
     draw: (ctx: EngineCtx | OffEngineCtx) => {
       // console.log('%c画了3', 'color: blue')
-      console.log('huale333')
+      // console.log('huale333')
+   
       ctx.save();
       ctx.beginPath();
-      ctx.strokeStyle = 'orange';
+      // ctx.scale(2, 2)
+      // ctx.lineWidth = 4;
+      // console.log(ctx.lineWidth)
+      const g = ctx.createLinearGradient(-50,-50,100,100);
+      g.addColorStop(0,"orange");
+      g.addColorStop(0.5,"blue");
+      g.addColorStop(1,"black");         
+      ctx.strokeStyle = g;
       ctx.moveTo(-50, -50);
       ctx.lineTo(100, 100);
+      // ctx.stroke();
+      // ctx.strokeStyle = '';
       ctx.lineTo(-50, 100);
       ctx.closePath();
       ctx.stroke();
       ctx.restore();
+      // ctx.putImageData()
     }
   }
 }
@@ -193,6 +227,7 @@ const getTestModel4 = () => {
       // console.log('%c画了4', 'color: red')
       ctx.save();
       ctx.beginPath();
+      ctx.rotate(-30 * Math.PI / 180);
       ctx.moveTo(600, 430);
       ctx.lineTo(500, 500);
       ctx.bezierCurveTo(500, 500, 874, 674, 732, 434);
@@ -203,23 +238,108 @@ const getTestModel4 = () => {
     }
   }
 };
-addModel(getTestModel2());
-addModel(getTestModel3());
-addModel(getTestModel4());
-console.log('%c1f', 'background:orange;padding:5px;')
-addModel(getTestModel1());
-console.log('%c1fff', 'background:orange;padding:5px;')
+const getTestModel5 = () => {
+  return {
+    name: 'test5',
+    draw: (ctx: EngineCtx | OffEngineCtx) => {
+      ctx.save();
+      ctx.strokeStyle = 'green';
+      ctx.strokeRect(500, 500, 1, 1);
+      ctx.restore();
+      ctx.save();
+      // ctx.transform(2,0,0,2,0,0)
+      ctx.fillStyle = 'grey';
+      // console.log(ctx.lineWidth)
+      ctx.lineWidth = 20;
+      ctx.strokeRect(500, 500, 100, 100);
+      ctx.moveTo(620, 600);
+      ctx.lineTo(630, 680);
+      ctx.lineTo(615, 690);
+      ctx.closePath();
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      // ctx.stroke();
+      // ctx.shadowColor = 'black'
+      // ctx.shadowBlur = 20;
+      // ctx.shadowOffsetX = 20;
+      // ctx.fillRect(500, 500, 100, 100);
+      ctx.restore();
+    }
+  }
+}
+const getTestModel6 = () => {
+  return {
+    name: 'test6',
+    draw: (ctx: EngineCtx | OffEngineCtx) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(100,100,100,100);
+      // ctx.strokeStyle = 'yellow';
+      console.log(ctx.strokeStyle);
+      ctx.stroke();
+      ctx.beginPath();
+      // ctx.transform(2,0.3,0.3,1,100,100);
+      ctx.rect(100,100,100,100);
+      ctx.strokeStyle = 'red';
+      ctx.stroke();
+      // ctx.fill();
+      ctx.transform(1,0,0,1.1,120,80);
+      // ctx.translate(100,100)
+      ctx.rotate(-45 * Math.PI / 180);
+      ctx.fillStyle = 'orange';
+      ctx.fillRect(100,100,100,100);
+      // ctx.fillRect(200,200,200,200);
+      ctx.restore();
+      // ctx.save();
+      // ctx.restore();
+    }
+  }
+};
+// ctx.$strokeRect(88,727,42,38);
+// addModel([getTestModel1(), getTestModel2(), getTestModel3(), getTestModel4(), getTestModel5(), getTestModel6()]);
+for (let i = 1; i <= 1; i++) {
+  console.log(`%caddModel${i}${i}${i}${i}${i}`, 'background:orange;padding:5px;');
+  addModel(eval(`getTestModel${i}()`));
+}
+const helloo =(window as any)['helloo'];
+ctx.strokeStyle = 'red';
+console.log(helloo)
+// ctx.$strokeRect(helloo.minX, helloo.minY, helloo.maxX - helloo.minX, helloo.maxY - helloo.minY);
+// console.log('%c11111', 'background:orange;padding:5px;')
+// addModel(getTestModel1());
+// console.log('%c22222', 'background:orange;padding:5px;')
+// addModel(getTestModel2());
+// console.log('%c33333', 'background:orange;padding:5px;')
+// addModel(getTestModel3());
+// console.log('%c44444', 'background:orange;padding:5px;')
+// addModel(getTestModel4());
+// console.log('%c55555', 'background:orange;padding:5px;')
+// addModel(getTestModel5());
+// console.log('%cend', 'background:orange;padding:5px;')
+// addModel(getTestModel6());
 const shape1 = createShape('test1');
 const shape2 = createShape('test2');
-const shape4 = createShape('test4');
-// console.log(shape4)
 const shape3 = createShape('test3');
-drawShape(shape1, { x: -200, y: 500 });
-drawShape(shape2, { x: 10, y: 10 });
-drawShape(shape3, { x: 0, y: -40 });
-drawShape(shape4)
+const shape4 = createShape('test4');
+const shape5 = createShape('test5');
+const shape6 = createShape('test6');
+// console.log(shape5)
+drawShape(shape1);
+// drawShape(shape2);
+// drawShape(shape3, { x: 100, y: 300 });
+// drawShape(shape4)
+// drawShape(shape5, { x: 800, y: 200 });
+// drawShape(shape6);
+// ctx.putImageData((window as any)[`testtest`], 600,500);
+// ctx.$strokeRect(100, 100, 551, 282)
 let idx = 0;
+// let id: string | number | NodeJS.Timer = undefined;
 let id = setInterval(() => {
+  // console.log(ctx.getTransform())
+  idx++
+  idx > 0 && clearInterval(id);
+  return;
+  // return;
   // drawShape(shape, { x: idx * 3 + 50, y: idx * 3 + 50 });
   idx += 1;
   idx >= 100 && clearInterval(id)
@@ -232,8 +352,8 @@ let id = setInterval(() => {
     // ctx.restore();
   }
 
-  idx < 100 && shape2.moveTo(idx * 5 + 100, idx * 5 + 100);
-  // shape4.moveTo(idx * 4 + 200, idx * 4 + 200);
+//   // idx < 100 && shape3.moveTo(idx * 5 + 100, idx * 5 + 100);
+//   // shape4.moveTo(idx * 4 + 200, idx * 4 + 200);
 }, 10);
 
 function callTranslate() {
@@ -241,7 +361,40 @@ function callTranslate() {
   let t = {};
   const id = setInterval(() => {
     idx++;
-    translate(12, 12, t)
-    idx >= 30 && clearInterval(id);
+    idx < 30 && translate(12, 12, t);
+    idx >= 38 && translate(-4, -8, t);
+    idx >= 60 && moveAShape() && clearInterval(id);
+  }, 20);
+}
+function moveAShape() {
+  // return;
+  // return 'ss'
+  let idx = 0;
+  let id = setInterval(() => {
+    idx++;
+    shape1.moveTo(idx * 3 - 20, idx * 4 - 20);
+    if (idx >= 20) {
+      clearInterval(id);
+      moveShape2();
+      ctx.save();
+      ctx.strokeStyle = 'orange';
+      ctx.$strokeRect(0, 0, 1500, 1500);
+      ctx.restore();
+    };
   }, 100);
+  return true;
+}
+function moveShape2() {
+  let idx = 0;
+  let id = setInterval(() => {
+    idx++;
+    
+    if (idx < 30) {
+      shape2.moveTo(shape2.graphics.ox + 4, shape2.graphics.oy - 5);
+    } else if (idx >= 30 && idx <= 60) {
+      shape2.moveTo(shape2.graphics.ox + 10, shape2.graphics.oy + 12);
+    } else {
+      clearInterval(id);
+    }
+  }, 100)
 }

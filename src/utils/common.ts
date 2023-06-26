@@ -1,18 +1,28 @@
 import { BorderOptions, Graphics } from "../graphOptions";
 import { Graph } from "../init/useGraph";
-import { Boundary } from "../rewriteFn/type";
+import { Boundary, EngineCtx } from "../rewriteFn/type";
 
 export const getTypeStr = (value: any) => {
   return Object.prototype.toString.call(value).slice(8, -1).toLowerCase();
 };
 
-export const setCanvasSize = (canvas: HTMLCanvasElement, width: number, height: number) => {
-  canvas.height = height;
-  canvas.width = width;
-  // canvas.setAttribute('width', width);
-  // canvas.setAttribute('height', height);
-  // canvas.style.width = width + 'px';
-  // canvas.style.height = height + 'px';
+export const setCanvasSize = (canvas: HTMLCanvasElement, width: number, height: number, ctx: EngineCtx) => {
+  // canvas.height = height;
+  // canvas.width = width;
+  console.log('ratio', window.devicePixelRatio);
+  const dpr = window.devicePixelRatio;
+  canvas.height = Math.round(width * dpr);
+  canvas.width = Math.round(height * dpr);
+  // canvas.height = height * 2;
+  // canvas.width = width * 2;
+  canvas.style.height = height + 'px';
+  canvas.style.width = width + 'px';
+  ctx.scale(dpr, dpr);
+  // ctx.translate(0.5, 0.5);
+};
+
+export const toHalfPixel = (pixel: number): number => {
+  return Math.round(pixel) + 0.5;
 };
 
 export const getPureObject = (obj: { [key: string]: any }) => {
@@ -40,7 +50,6 @@ export const graphicsToBoundary = (graphics: Graphics, graph: Partial<Graph> = {
 }
 
 export const getGraphicsWithBorder = (graphics: Graphics, borderOptions: BorderOptions): Graphics => {
-  // console.log(graphics, borderOptions)
   const { paddingLeft, paddingRight, paddingTop, paddingBottom, borderWidth } = borderOptions;
   const lineWidth = borderWidth ?? 2;
   const boundOx = graphics.ox - (paddingLeft ?? 4);

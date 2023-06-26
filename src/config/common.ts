@@ -12,6 +12,25 @@ export const getDefaultContextAttribute = () => {
   };
 };
 
+export const getTransBoundary = (matrix: any, points: Point[]) => {
+  const transBoundary = {
+    minX: Infinity,
+    maxX: -Infinity,
+    minY: Infinity,
+    maxY: -Infinity
+  };
+  for (const elem of points) {
+    const transPoint = matrix.transformPoint(elem);
+    elem.x = Math.round(transPoint.x);
+    elem.y = Math.round(transPoint.y);
+    transBoundary.minX >= elem.x && (transBoundary.minX = elem.x);
+    transBoundary.maxX <= elem.x && (transBoundary.maxX = elem.x);
+    transBoundary.minY >= elem.y && (transBoundary.minY = elem.y);
+    transBoundary.maxY <= elem.y && (transBoundary.maxY = elem.y);
+  }
+  return transBoundary;
+};
+
 export const generateRandomStr = (e: number): string => {
   e = e || 32;
   const t = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
@@ -98,10 +117,17 @@ export const getBoundary = (
   if (controlY.includes(minY)) {
     minY = sumBoundary({ minX, minY, maxX, maxY }, 'toBottom', ctx);
   }
+  // console.log({
+  //   minX,
+  //   minY,
+  //   maxX,
+  //   maxY
+  // })
   return {
     minX,
     minY,
     maxX,
     maxY
   };
+  (ctx as any).$strokeRect(minX, minY, maxX - minX, maxY - minY)
 };

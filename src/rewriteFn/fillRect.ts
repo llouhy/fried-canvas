@@ -1,3 +1,5 @@
+import { getTransBoundary } from '../config/common';
+import { toHalfPixel } from '../utils/common';
 import type { Point, EngineCtx, OffEngineCtx } from './type';
 export const fillRect = (ctx: EngineCtx | OffEngineCtx) => {
   const FillRect = ctx.fillRect;
@@ -5,22 +7,42 @@ export const fillRect = (ctx: EngineCtx | OffEngineCtx) => {
   return (x: number, y: number, width: number, height: number) => {
     const {
       drawCoordinates,
-      drawOffset: { dx, dy }
+      drawOffset: { dx, dy },
+      shadowBlur,
+      shadowOffsetX,
+      shadowOffsetY
     } = ctx;
-    FillRect.call(ctx, x + dx, y + dy, width, height);
+    const roundX = toHalfPixel(x);
+    const roundY = toHalfPixel(y);
+    const roundWidth = Math.round(width);
+    const roundHeight = Math.round(height);
+    FillRect.call(ctx, roundX + dx, roundY + dy, roundWidth, roundHeight);
     if (!drawCoordinates) return;
-    const boundary = {
-      minX: x,
-      minY: y,
-      maxX: x + width,
-      maxY: y + height
-    };
-
+    const matrix = ctx.getTransform();
+    const points = [
+      { x: roundX, y: roundY },
+      { x: roundX + roundWidth, y: roundY },
+      { x: roundX + roundWidth, y: roundY + roundHeight },
+      { x: roundX, y: roundY + roundHeight }
+    ];
+    const transBoundary = getTransBoundary(matrix, points);
+    // console.log('lall', JSON.parse(JSON.stringify(drawCoordinates)));
     drawCoordinates.push(
       ...[
-        { x: boundary.minX, y: boundary.minY },
-        { x: boundary.maxX, y: boundary.maxY }
+        {
+          x: transBoundary.minX,
+          y: transBoundary.minY,
+          dWidthX: Math.ceil(ctx.lineWidth / 2),
+          dWidthY: Math.ceil(ctx.lineWidth / 2)
+        },
+        {
+          x: transBoundary.maxX,
+          y: transBoundary.maxY,
+          dWidthX: Math.ceil(ctx.lineWidth / 2),
+          dWidthY: Math.ceil(ctx.lineWidth / 2)
+        },
       ]
     );
+    console.log(JSON.parse(JSON.stringify(drawCoordinates)));
   };
 };

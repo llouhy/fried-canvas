@@ -9,11 +9,10 @@ import { getDefaultContextAttribute } from '../config/common';
 type ReloadCtxResult<T> = T extends CanvasRenderingContext2D ? EngineCtx : OffEngineCtx;
 
 export const reloadCtxFunction = <T>(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  engineId: string
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
 ) => {
   // const coordinateStack = useCoordinateCache(engineId);
-  const { arc, arcTo, rect, fillRect, strokeRect, moveTo, lineTo, stroke } = useRewriteCtxFunction();
+  const { arc, arcTo, rect, fillRect, strokeRect, moveTo, lineTo, stroke, createLinearGradient } = useRewriteCtxFunction();
   ctx.arc = arc(ctx);
   ctx.arcTo = arcTo(ctx);
   ctx.rect = rect(ctx);
@@ -24,6 +23,8 @@ export const reloadCtxFunction = <T>(
   ctx.quadraticCurveTo = quadraticCurveTo(ctx);
   ctx.bezierCurveTo = bezierCurveTo(ctx);
   ctx.stroke = stroke(ctx);
+  ctx.createLinearGradient = createLinearGradient(ctx);
+  // ctx.globalCompositeOperation = 'destination-over';
 };
 
 export const initContext = (

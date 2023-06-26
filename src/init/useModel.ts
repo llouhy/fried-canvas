@@ -24,7 +24,7 @@ export const useModel: UseModel = (
     const { width, height } = engineById.get(engineId)!.engine;
     const offCanvas = useOffscreenCanvas().get(width, height);
     const offCtx = offCanvas!.getContext('2d') as OffscreenCanvasRenderingContext2D;
-    reloadCtxFunction<OffscreenCanvasRenderingContext2D>(offCtx, engineId);
+    reloadCtxFunction<OffscreenCanvasRenderingContext2D>(offCtx);
     for (const elem of models as ModelOptions[]) {
       const { draw } = elem;
       Object.defineProperty(elem, '__draw__', {
@@ -46,6 +46,7 @@ export const useModel: UseModel = (
             const coordinates: Point[] = [];
             ctx.drawCoordinates = coordinates;
             draw(ctx);
+            console.log(...coordinates)
             const boundary = getPreciseShapeSizeInfo(draw, getImpreciseShapeSizeInfo(coordinates));
             // const boundary = getImpreciseShapeSizeInfo(coordinates)
             elem.graphics = { ...boundary };

@@ -1,6 +1,7 @@
 import type { Point, EngineCtx, OffEngineCtx } from './type';
-import { useLineWidthToCoordinateMap } from '../shape/coordinate';
+// import { useLineWidthToCoordinateMap } from '../shape/coordinate';
 import Engine from '../engine';
+import { toHalfPixel } from '../utils/common';
 
 export const lineTo = (ctx: EngineCtx | OffEngineCtx) => {
   const oldLineTo = ctx.lineTo;
@@ -10,12 +11,10 @@ export const lineTo = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldLineTo.call(ctx, x + dx, y + dy);
+    oldLineTo.call(ctx, toHalfPixel(x) + dx, toHalfPixel(y) + dy);
     if (!drawCoordinates) return;
-    const { set } = useLineWidthToCoordinateMap();
-    const point = { x, y };
-
+    const { x: transX, y: transY } = ctx.getTransform().transformPoint({ x, y });
+    const point = { x: Math.round(transX), y: Math.round(transY) };
     drawCoordinates.push(point);
-    set(ctx.lineWidth, [point]);
   };
 };
