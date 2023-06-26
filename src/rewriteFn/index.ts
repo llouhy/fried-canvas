@@ -8,8 +8,6 @@ import { moveTo } from './moveTo';
 import { bezierCurveTo } from './bezierCurveTo';
 import { quadraticCurveTo } from './quadraticCurveTo';
 import { stroke } from './stroke';
-import { createLinearGradient } from './createLinearGradient';
-import { createRadialGradient } from './createRadialGradient';
 
 (window as any).RAF = (function () {
   return window.requestAnimationFrame
@@ -31,9 +29,7 @@ const useRewriteCtxFunction = () => {
     lineTo,
     bezierCurveTo,
     quadraticCurveTo,
-    stroke,
-    createLinearGradient,
-    createRadialGradient
+    stroke
   };
 };
 

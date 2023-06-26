@@ -1,6 +1,4 @@
-import { reloadCtxFunction } from '../init/context';
-import { useOffCanvas } from '../init/useOffCanvas';
-import type { Boundary, OffEngineCtx, Point } from '../rewriteFn/type';
+import type { Boundary, Point } from '../rewriteFn/type';
 import { getPureObject } from '../utils/common';
 const getInitBoundary = () => {
   return getPureObject({
@@ -19,40 +17,31 @@ export const getImpreciseShapeSizeInfo = (
   height: number;
 } => {
   const preBoundary: Boundary = getInitBoundary();
-  // const boundToLineWidth = new Map<keyof Boundary, number>();
-  console.log('精确计算开始')
-  let pxMin, pyMin, pxMax, pyMax;
+  const boundToLineWidth = new Map<keyof Boundary, number>();
   for (const item of coordinateStack) {
-    const { x, y, dWidth, dWidthX, dWidthY } = item; // the difference of stroke lineWidth and 1px
-    pxMin = x - (dWidthX || 0);
-    pyMin = y - (dWidthY || 0);
-    pxMax = x + (dWidthX || 0);
-    pyMax = y + (dWidthY || 0);
-    console.log({
-      pxMin, pxMax, pyMax, pyMin
-    })
-    if (preBoundary.minX > pxMin) {
-      preBoundary.minX = pxMin;
-      // boundToLineWidth.set('minX', dWidth || 0);
+    const { x, y, dWidth } = item; // the difference of stroke lineWidth and 1px
+    if (preBoundary.minX > x) {
+      preBoundary.minX = x;
+      boundToLineWidth.set('minX', dWidth ?? 0);
     }
-    if (preBoundary.maxX < pxMax) {
-      preBoundary.maxX = pxMax;
-      // boundToLineWidth.set('maxX', dWidth || 0);
+    if (preBoundary.maxX < x) {
+      preBoundary.maxX = x;
+      boundToLineWidth.set('maxX', dWidth ?? 0);
     }
-    if (preBoundary.minY > pyMin) {
-      preBoundary.minY = pyMin;
-      // boundToLineWidth.set('minY', dWidth || 0);
+    if (preBoundary.minY > y) {
+      preBoundary.minY = y;
+      boundToLineWidth.set('minY', dWidth ?? 0);
     }
-    if (preBoundary.maxY < pyMax) {
-      preBoundary.maxY = pyMax;
-      // boundToLineWidth.set('maxY', dWidth || 0);
+    if (preBoundary.maxY < y) {
+      preBoundary.maxY = y;
+      boundToLineWidth.set('maxY', dWidth ?? 0);
     }
   }
   const boundary = {
-    minX: preBoundary.minX,
-    maxX: preBoundary.maxX,
-    minY: preBoundary.minY,
-    maxY: preBoundary.maxY
+    minX: preBoundary.minX - (boundToLineWidth.get('minX') ?? 0),
+    maxX: preBoundary.maxX + (boundToLineWidth.get('maxX') ?? 0),
+    minY: preBoundary.minY - (boundToLineWidth.get('minY') ?? 0),
+    maxY: preBoundary.maxY + (boundToLineWidth.get('maxY') ?? 0)
   };
   return {
     ox: boundary.minX,
@@ -65,43 +54,32 @@ export const getImpreciseShapeSizeInfo = (
 export const getPreciseShapeSizeInfo = (
   drawFunc: any,
   info: { ox: number; oy: number; width: number; height: number }
-  ) => {
-  console.log('info', info)
-  // debugger
-  const { get: getCanvas } = useOffCanvas();
+) => {
+  // console.log(info)
   const { ox, oy, width, height } = info;
-  const COMPENSATE = 8;
-  const translateX = ox <= 0 ? Math.abs(ox) + COMPENSATE : COMPENSATE;
-  const translateY = oy <= 0 ? Math.abs(oy) + COMPENSATE : COMPENSATE;
-  const drawOffset = {
-    dx: translateX,
-    dy: translateY
-  };
-  const imageOx = ox + translateX;
-  const imageOy = oy + translateY;
-  const canvasWidth = Math.floor(imageOx + width + COMPENSATE);
-  const canvasHeight = Math.floor(imageOy + height + COMPENSATE);
-  // console.log({ drawOffset, imageOx, imageOy, canvasWidth, canvasHeight });
-  const offCanvas = getCanvas(canvasWidth, canvasHeight);
+  // const canvasWidth = Math.abs(ox) + width + 4;
+  // const canvasHeight = Math.abs(oy) + height + 4;
+  const offCanvas = new OffscreenCanvas(1, 1);
   const ctx = offCanvas.getContext('2d');
-  (ctx as any).drawOffset = drawOffset;
-  reloadCtxFunction(ctx);
   drawFunc(ctx);
-  // {ox: 298, oy: 59, width: 154, height: 407}
-  const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+  // const imageData = ctx?.getImageData(0, 0, canvasWidth, canvasHeight); // bug，负数计算错误
+  const COMPENSATE = 0;
+  const imageWidth = width + 2 * COMPENSATE;
+  const imageHeight = height + 2 * COMPENSATE;
+  const imageData = ctx?.getImageData(ox - COMPENSATE, oy - COMPENSATE, imageWidth, imageHeight);
   const pixels = imageData?.data;
+  // let [minX, minY, maxX, maxY] = [ox - COMPENSATE, oy - COMPENSATE, ox - COMPENSATE + imageWidth, oy - COMPENSATE + imageHeight];
   let reduce = {
     right: 0,
     left: 0,
     top: 0,
     bottom: 0
   };
-  let [index, r, g, b, a] = [0, 0, 0, 0, 0];
+  let [r, g, b, a] = [0, 0, 0, 0];
   let minYFlag = false;
-  for (let y = imageOy - 2; y < canvasHeight; y++) {
-    // console.log('minY', y)
-    for (let x = 0; x < canvasWidth; x++) {
-      index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
+  for (let y = 0; y < imageHeight; y++) {
+    for (let x = 0; x < imageWidth; x++) {
+      const index = (y * imageWidth + x) * 4; // 当前像素在pixels的起始位置
       r = pixels![index];
       g = pixels![index + 1];
       b = pixels![index + 2];
@@ -109,7 +87,6 @@ export const getPreciseShapeSizeInfo = (
       if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
         minYFlag = true;
         reduce.top = y;
-        console.log(`找到minY在第${y - (imageOy - 2)}次循环`, y)
         break;
       }
     }
@@ -117,19 +94,16 @@ export const getPreciseShapeSizeInfo = (
   }
 
   let maxYFlag = false;
-  for (let y = canvasHeight - 1; y >= 0; y--) {
-    // console.log('maxY', canvasHeight - y)
-    for (let x = 0; x < canvasWidth; x++) {
-      index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
+  for (let y = imageHeight; y > 0; y--) {
+    for (let x = 0; x < imageWidth; x++) {
+      const index = (y * imageWidth + x) * 4; // 当前像素在pixels的起始位置
       r = pixels![index];
       g = pixels![index + 1];
       b = pixels![index + 2];
       a = pixels![index + 3];
       if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
-        console.log(`找到了maxY在第${ canvasHeight - y + 1 }次循环`, y)
-        reduce.bottom = y;
+        reduce.bottom = imageHeight - y;
         maxYFlag = true;
-        // console.log('zhaodao')
         break;
       }
     }
@@ -137,15 +111,14 @@ export const getPreciseShapeSizeInfo = (
   }
 
   let minXFlag = false;
-  for (let x = imageOx - 2; x < canvasWidth; x++) {
-    for (let y = 0; y < canvasHeight; y++) {
-      index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
+  for (let x = 0; x < imageWidth; x++) {
+    for (let y = 0; y < imageHeight; y++) {
+      const index = (y * imageWidth + x) * 4; // 当前像素在pixels的起始位置
       r = pixels![index];
       g = pixels![index + 1];
       b = pixels![index + 2];
       a = pixels![index + 3];
       if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
-        console.log(`找到了minX在第${x - imageOx}次循环`, x)
         minXFlag = true;
         reduce.left = x;
         break;
@@ -154,35 +127,26 @@ export const getPreciseShapeSizeInfo = (
     if (minXFlag) break;
   }
   let maxXFlag = false;
-  for (let x = canvasWidth - 1; x >= 0; x--) {
-    for (let y = 0; y < canvasHeight; y++) {
-      index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
+  for (let x = imageWidth; x > 0; x--) {
+    for (let y = 0; y < imageHeight; y++) {
+      const index = (y * imageWidth + x) * 4; // 当前像素在pixels的起始位置
       r = pixels![index];
       g = pixels![index + 1];
       b = pixels![index + 2];
       a = pixels![index + 3];
       if (r !== 0 || g !== 0 || b !== 0 || a !== 0) {
-        console.log(`找到了maxX在第${canvasWidth - x + 1}次循环`, x)
-        reduce.right = x;
+        reduce.right = imageWidth - x;
         maxXFlag = true;
         break;
       }
     }
     if (maxXFlag) break;
   }
-  // const dx = reduce.left - COMPENSATE; // 实际跟 ox 的偏差距离
-  // const dy = reduce.top - COMPENSATE; // 实际跟 oy 的偏差距离
-  console.log('reduce', reduce);
-  console.log('计算结果', {
-    ox: reduce.left - translateX + 1,
-    oy: reduce.top - translateY + 1,
-    width: reduce.right - reduce.left - 1,
-    height: reduce.bottom - reduce.top - 1
-  });
+
   return {
-    ox: reduce.left - translateX + 1,
-    oy: reduce.top - translateY + 1,
-    width: reduce.right - reduce.left - 1,
-    height: reduce.bottom - reduce.top - 1
-  }
+    ox: ox - COMPENSATE + reduce.left,
+    oy: oy - COMPENSATE + reduce.top,
+    width: imageWidth - reduce.left - reduce.right,
+    height: imageHeight - reduce.top - reduce.bottom
+  };
 };

@@ -6,7 +6,7 @@ export const arcTo = (ctx: EngineCtx | OffEngineCtx) => {
   const oldArcTo = ctx.arcTo;
   (ctx as EngineCtx).$arcTo = oldArcTo;
   return (x1: number, y1: number, x2: number, y2: number, r: number) => {
-    // const { set } = useLineWidthToCoordinateMap();
+    const { set } = useLineWidthToCoordinateMap();
     const {
       drawCoordinates,
       drawOffset: { dx, dy }
@@ -30,6 +30,6 @@ export const arcTo = (ctx: EngineCtx | OffEngineCtx) => {
     }
     const points = [point1, point2];
     drawCoordinates.push(...points);
-    // set(ctx.lineWidth, points);
+    set(ctx.lineWidth, points);
   };
 };

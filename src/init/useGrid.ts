@@ -41,10 +41,7 @@ const generateGrid = (engineId: string, ctx: any, drawGrid?: boolean): { grid: G
     const isLeaf = idx === maxLevel - 1;
     const grid = getGrid({ minX: x, minY: y, maxX: x + width, maxY: y + height }, isLeaf);
     ctx?.$strokeRect(x, y, width, height);
-    if (isLeaf) {
-      xs.add(x) && ys.add(y);
-      return grid;
-    }
+    isLeaf && xs.add(x) && ys.add(y);
     if (idx < maxLevel) {
       grid.children = [];
       const subWidth = width / 2;
@@ -56,38 +53,29 @@ const generateGrid = (engineId: string, ctx: any, drawGrid?: boolean): { grid: G
     }
     return grid;
   }
-  const grid = createGrid(0, 0, getDivisibleNum(width, 2), getDivisibleNum(height, 2), 0);
-  // console.log(grid);
-  return { grid, divider: { xs: [...xs], ys: [...ys] } };
+  return { grid: createGrid(0, 0, getDivisibleNum(width * 2, 2), getDivisibleNum(height * 2, 2), 0), divider: { xs: [...xs], ys: [...ys] } };
 };
 
 export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
   const { grid, divider } = generateGrid(engineId, ctx);
   const getInfluencedGrid = (boundary: Boundary): GridIns[] => {
-    // console.log('%c调用', 'background: red;color:white;')
-    const { translateX, translateY } = graphByEngineId.get(engineId);
-    // console.log('translateX', translateX);
-    // console.log('translateY', translateY)
-    const bound = { left: boundary.minX + translateX, right: boundary.maxX + translateX, top: boundary.minY + translateY, bottom: boundary.maxY + translateY };
-    // console.log(divider)
-    // console.log('left', JSON.stringify(bound.left))
+    const bound = { left: boundary.minX, right: boundary.maxX, top: boundary.minY, bottom: boundary.maxY };
     for (const x of divider.xs) {
-      if (x < boundary.minX + translateX) {
+      if (x < boundary.minX) {
         bound.left = x;
-      } else if (x > bound.right) {
+      } else if (x > boundary.maxX) {
         bound.right = x;
         break;
       }
     }
     for (const y of divider.ys) {
-      if (y < boundary.minY + translateY) {
+      if (y < boundary.minY) {
         bound.top = y;
-      } else if (y > bound.bottom) {
+      } else if (y > boundary.maxY) {
         bound.bottom = y;
         break;
       }
     }
-    // console.log('bound', bound)
     const isDeepValid = (bound: { left: number; right: number; top: number; bottom: number; }, gridBoundary: Boundary): boolean => {
       return !(gridBoundary.minX > bound.right
         || gridBoundary.maxX < bound.left
@@ -122,18 +110,14 @@ export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
     return [...new Set(shapes)];
   };
   const updateShapeToGrid = (shape: Shape, graphics: Graphics) => {
-    // console.log('调用updateShapeToGrid', shape)
     const graph = graphByEngineId.get(engineId);
-    const grids = getInfluencedGrid(graphicsToBoundary(graphics));
-    [...shape.gridSet.values()].map(elem => elem.shapes = elem.shapes.filter(item => item !== shape));
-    shape.gridSet.clear();
+    const grids = getInfluencedGrid(graphicsToBoundary(graphics, graph));
     for (const elem of grids) {
       (elem.shapes || (elem.shapes = [])) && elem.shapes.push(shape);
       elem.shapes = [...new Set(elem.shapes)];
-      shape.gridSet.add(elem);
     }
   };
-  const updateAllShapeToGrid = (pointer: Object = {}) => {
+  const updateAllShapeToGrid = (pointer: Object) => {
     for (const elem of idToShape.values()) {
       updateShapeToGrid(elem, elem.graphicsWithBorder);
     };
