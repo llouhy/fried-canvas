@@ -1,4 +1,6 @@
 // import { useLineWidthToCoordinateMap } from '../shape/coordinate';
+import { getTransBoundary } from '../config/common';
+import { toHalfPixel } from '../utils/common';
 import type { Point, EngineCtx, OffEngineCtx } from './type';
 export const rect = (ctx: EngineCtx | OffEngineCtx) => {
   const oldRect = ctx.rect;
@@ -9,19 +11,32 @@ export const rect = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldRect.call(ctx, x + dx, y + dy, width, height);
+    const roundWidth = Math.round(width);
+    const roundHeight = Math.round(height);
+    oldRect.call(ctx, toHalfPixel(x), toHalfPixel(y), roundWidth, roundHeight);
     if (!drawCoordinates) return;
-    const boundary = {
-      minX: x,
-      minY: y,
-      maxX: x + width,
-      maxY: y + height
-    };
+    const matrix = ctx.getTransform();
+    const roundX = Math.round(x);
+    const roundY = Math.round(y);
     const points = [
-      { x: boundary.minX, y: boundary.minY },
-      { x: boundary.maxX, y: boundary.maxY }
+      { x: roundX, y: roundY },
+      { x: roundX + roundWidth, y: roundY },
+      { x: roundX + roundWidth, y: roundY + roundHeight },
+      { x: roundX, y: y + roundHeight }
     ];
-    drawCoordinates.push(...points);
+    const transBoundary = getTransBoundary(matrix, points);
+    drawCoordinates.push(
+      ...[
+        {
+          x: transBoundary.minX,
+          y: transBoundary.minY,
+        },
+        {
+          x: transBoundary.maxX,
+          y: transBoundary.maxY
+        },
+      ]
+    );
     // set(ctx.lineWidth, points);
   };
 };

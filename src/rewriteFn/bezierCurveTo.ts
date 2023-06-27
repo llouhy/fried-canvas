@@ -1,4 +1,4 @@
-import { getBoundary } from '../config/common';
+import { getBoundary, getTransBoundary } from '../config/common';
 import type { Point, EngineCtx, OffEngineCtx } from './type';
 // import { useLineWidthToCoordinateMap } from '../shape/coordinate';
 
@@ -11,37 +11,48 @@ export const bezierCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldBezierCurveTo.call(ctx, cp1x + dx, cp1y + dy, cp2x + dx, cp2y + dy, x + dx, y + dy);
+    oldBezierCurveTo.call(ctx, cp1x, cp1y, cp2x, cp2y, x, y);
     if (!drawCoordinates) return;
-    const prePoint = drawCoordinates.at(-1);
-    if (prePoint) {
-      const { minX, minY, maxX, maxY } = getBoundary(
-        [
-          { x: prePoint.x, y: prePoint.y },
-          { x, y }
-        ],
-        [
-          { x: cp1x, y: cp1y },
-          { x: cp2x, y: cp2y }
-        ],
-        ctx
-      );
-      const points = [
-        { x: minX, y: minY },
-        { x: maxX, y: maxY }
-      ];
-      // console.log({ minX, minY, maxX, maxY })
-      drawCoordinates.push(...points);
-      // set(ctx.lineWidth, points);
-    } else {
-      const points = [
-        { x: cp1x, y: cp1y },
-        { x: cp2x, y: cp2y },
-        { x, y }
-      ];
-      // console.log([...points])
-      drawCoordinates.push(...points);
-      // set(ctx.lineWidth, points);
-    }
+    const matrix = ctx.getTransform();
+    // const prePoint = drawCoordinates.at(-1);
+    // if (prePoint) {
+    //   console.log(prePoint)
+    //   const { minX, minY, maxX, maxY } = getBoundary(
+    //     [
+    //       { x: prePoint.x, y: prePoint.y },
+    //       { x, y }
+    //     ],
+    //     [
+    //       { x: cp1x, y: cp1y },
+    //       { x: cp2x, y: cp2y }
+    //     ],
+    //     ctx
+    //   );
+    //   const points = [
+    //     { x: minX, y: minY },
+    //     { x: maxX, y: minY },
+    //     { x: minX, y: maxY },
+    //     { x: maxX, y: maxY }
+    //   ];
+    //   const transBoundary = getTransBoundary(matrix, points);
+    //   const transPoints = [
+    //     { x: transBoundary.minX, y: transBoundary.minY },
+    //     { x: transBoundary.maxX, y: transBoundary.maxY }
+    //   ];
+    //   drawCoordinates.push(...transPoints);
+    // } else {
+
+    // }
+    const points = [
+      { x: cp1x, y: cp1y },
+      { x: cp2x, y: cp2y },
+      { x, y }
+    ];
+    const transBoundary = getTransBoundary(matrix, points);
+    const transPoints = [
+      { x: transBoundary.minX, y: transBoundary.minY },
+      { x: transBoundary.maxX, y: transBoundary.maxY }
+    ];
+    drawCoordinates.push(...transPoints);
   };
 };

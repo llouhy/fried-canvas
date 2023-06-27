@@ -1,5 +1,5 @@
 import { useLineWidthToCoordinateMap } from '../shape/coordinate';
-import { radianToAngle } from '../config/common';
+import { getTransBoundary, radianToAngle } from '../config/common';
 import type { Boundary, Point, EngineCtx, OffEngineCtx } from './type';
 
 const getQuadrant = (angle: number): number => {
@@ -181,9 +181,10 @@ export const arc = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldArc.call(ctx, x + dx, y + dy, radius, startAngle, endAngle, counterclockwise);
+    oldArc.call(ctx, x, y, radius, startAngle, endAngle, counterclockwise);
     if (!drawCoordinates) return;
     // const { set } = useLineWidthToCoordinateMap();
+    const matrix = ctx.getTransform();
     let boundary!: Boundary;
     if (!((endAngle - startAngle) % 360 === 0)) {
       boundary = getArcBoundary(x, y, radius, radianToAngle(startAngle), radianToAngle(endAngle));
@@ -195,9 +196,19 @@ export const arc = (ctx: EngineCtx | OffEngineCtx) => {
         maxY: y + radius
       };
     }
-    const point1 = { x: boundary.minX - ctx.lineWidth, y: boundary.minY - ctx.lineWidth };
-    const point2 = { x: boundary.maxX + ctx.lineWidth, y: boundary.maxY + ctx.lineWidth };
+    const boundPoints = [
+      { x: boundary.minX, y: boundary.minY },
+      { x: boundary.maxX, y: boundary.minY },
+      { x: boundary.minX, y: boundary.maxY },
+      { x: boundary.maxX, y: boundary.maxY }
+    ];
+    const transBoundary = getTransBoundary(matrix, boundPoints);
+    const point1 = { x: transBoundary.minX, y: transBoundary.minY };
+    const point2 = { x: transBoundary.maxX, y: transBoundary.maxY };
     const points = [point1, point2];
+    console.log('%carc计算', 'background: black; color:#fff;');
+    console.log(points);
+    (window as any)['helloo'] = transBoundary;
     // set(ctx.lineWidth, points);
     drawCoordinates.push(...points);
     // oldArc.call(ctx, x, y, radius, startAngle, endAngle, counterclockwise);

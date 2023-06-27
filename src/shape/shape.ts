@@ -52,7 +52,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
       paddingRight: 0,
       paddingTop: 0,
       paddingBottom: 0,
-      borderDash: [5, 5],
+      borderDash: [6, 6],
       borderWidth: 1,
       borderColor: 'tomato',
       radius: 0
@@ -77,7 +77,18 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
   shape.graphics = getPureObject(shape.$model?.graphics as Graphics);
   const draw = (ctx: EngineCtx, placePoint = { x: shape.graphics.ox, y: shape.graphics.oy }): string => {
       shape.ctx = ctx ?? engineById.get(shape.belongEngineId).engine.ctx;
+      const offset = {
+        dx: placePoint.x - shape._graphics.ox,
+        dy: placePoint.y - shape._graphics.oy
+      };
+      shape.ctx.save();
+      shape.ctx.translate(offset.dx, offset.dy);
       shape.$model?.draw?.(shape.ctx, placePoint);
+      shape.ctx.restore();
+      // console.log(shape.$model.imageData)
+      // const globalCompositeOperation = ctx.globalCompositeOperation;
+      // ctx.globalCompositeOperation = 'lighter';
+      // ctx.putImageData(shape.$model.imageData, placePoint.x, placePoint.y);
       shape.graphics = {
         ...shape.graphics,
         ox: placePoint.x,
@@ -86,6 +97,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
       shape.graphicsWithBorder = getGraphicsWithBorder(shape.graphics, shape.borderOptions);
       // console.log()
       shape.drawBoundary();
+      // ctx.globalCompositeOperation = globalCompositeOperation;
       return shape.id;
   }
   const drawBoundary = (): void => {
@@ -109,8 +121,8 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     // if () {}
     shape.ctx.save();
     shape.ctx.beginPath();
-    shape.ctx.strokeStyle = 'teal';
-    shape.ctx.lineWidth = 1;
+    shape.ctx.strokeStyle = borderColor;
+    shape.ctx.lineWidth = borderWidth;
     shape.ctx.setLineDash(lineDash);
     // (shape.ctx as any).$strokeRect(
     //   shape.graphics.ox,
@@ -119,8 +131,8 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     //   shape.graphics.height
     // );
     (shape.ctx as any).$strokeRect(
-      boundOx,
-      boundOy,
+      boundOx + 0.5,
+      boundOy + 0.5,
       boundWidth,
       boundHeight
     );
@@ -146,7 +158,9 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     repaintInfluencedShape(shape.graphicsWithBorder || getGraphicsWithBorder(shape.graphics, shape.borderOptions), new Set([shape])); // repaint应该
     shape.draw(shape.ctx, { x, y });
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
+    (window as any).ooo = true;
     updateShapeToGrid(shape, shape.graphicsWithBorder);
+    (window as any).ooo = false;
   }
   shape.draw = draw;
   shape.drawBoundary = drawBoundary;

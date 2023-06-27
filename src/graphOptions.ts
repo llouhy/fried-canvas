@@ -24,5 +24,6 @@ export type ModelOptions = {
   draw: (ctx: EngineCtx | OffEngineCtx, ...args: any[]) => any;
   borderOptions?: BorderOptions;
   graphics?: Graphics;
+  imageData?: ImageData;
   readonly __draw__?: (ctx: EngineCtx | OffEngineCtx, ...args: any[]) => any;
 };

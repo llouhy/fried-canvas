@@ -18,6 +18,11 @@ export const setCanvasSize = (canvas: HTMLCanvasElement, width: number, height: 
   canvas.style.height = height + 'px';
   canvas.style.width = width + 'px';
   ctx.scale(dpr, dpr);
+  // ctx.translate(0.5, 0.5);
+};
+
+export const toHalfPixel = (pixel: number): number => {
+  return Math.round(pixel) + 0.5;
 };
 
 export const getPureObject = (obj: { [key: string]: any }) => {
