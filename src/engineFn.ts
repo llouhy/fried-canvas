@@ -150,10 +150,9 @@ const getTestModel2 = (): ModelOptions => {
       // console.log('%c画了2', 'color: orange')
       // ctx.save();
       // ctx.restore();
-      console.log(ctx.getTransform());
+      // console.log(ctx.getTransform());
       ctx.save();
       // ctx.scale(2,2);
-      ctx.rotate(16 * Math.PI / 180);
       ctx.lineWidth = 5;
       ctx.strokeStyle = 'orange';
       // ctx.transform(1,0,0,1,200,0); 
@@ -174,6 +173,7 @@ const getTestModel2 = (): ModelOptions => {
       ctx.fillStyle = 'blue'
       ctx.fillRect(100, 200, 20, 20);
       ctx.beginPath();
+      ctx.rotate(16 * Math.PI / 180);
       ctx.strokeStyle = 'red';
       ctx.moveTo(300, 80);
       ctx.lineTo(240, 40);
@@ -227,10 +227,10 @@ const getTestModel4 = () => {
       // console.log('%c画了4', 'color: red')
       ctx.save();
       ctx.beginPath();
-      ctx.rotate(-30 * Math.PI / 180);
       ctx.moveTo(600, 430);
       ctx.lineTo(500, 500);
       ctx.bezierCurveTo(500, 500, 874, 674, 732, 434);
+      ctx.rotate(24 * Math.PI / 180);
       ctx.arc(603, 434, 24, angleToRadian(30), angleToRadian(150));
       ctx.closePath();
       ctx.stroke();
@@ -297,7 +297,7 @@ const getTestModel6 = () => {
 };
 // ctx.$strokeRect(88,727,42,38);
 // addModel([getTestModel1(), getTestModel2(), getTestModel3(), getTestModel4(), getTestModel5(), getTestModel6()]);
-for (let i = 1; i <= 1; i++) {
+for (let i = 1; i <= 6; i++) {
   console.log(`%caddModel${i}${i}${i}${i}${i}`, 'background:orange;padding:5px;');
   addModel(eval(`getTestModel${i}()`));
 }
@@ -324,23 +324,28 @@ const shape4 = createShape('test4');
 const shape5 = createShape('test5');
 const shape6 = createShape('test6');
 // console.log(shape5)
+const now = performance.now();
 drawShape(shape1);
-// drawShape(shape2);
-// drawShape(shape3, { x: 100, y: 300 });
-// drawShape(shape4)
-// drawShape(shape5, { x: 800, y: 200 });
-// drawShape(shape6);
+drawShape(shape2, { x: 500, y: 400 });
+drawShape(shape3, { x: 100, y: 300 });
+// const [rx, ry] = [Math.round(Math.random() * 1000), Math.round(Math.random() * 1000)];
+drawShape(shape4, { x: 480, y: 680 });
+// ctx.$strokeRect(rx, ry, 100, 100)
+drawShape(shape5, { x: 800, y: 200 });
+drawShape(shape6);
+const cur = performance.now();
+console.log(now, cur, cur - now);
 // ctx.putImageData((window as any)[`testtest`], 600,500);
 // ctx.$strokeRect(100, 100, 551, 282)
 let idx = 0;
 // let id: string | number | NodeJS.Timer = undefined;
 let id = setInterval(() => {
   // console.log(ctx.getTransform())
-  idx++
-  idx > 0 && clearInterval(id);
-  return;
+  // idx++
+  // idx > 0 && clearInterval(id);
   // return;
-  // drawShape(shape, { x: idx * 3 + 50, y: idx * 3 + 50 });
+  // return;
+  // shape4.moveTo(idx * 3 + 480, idx * 3 + 680);
   idx += 1;
   idx >= 100 && clearInterval(id)
   // idx >= 220 && ctx.translate(-100, -100);
@@ -364,7 +369,7 @@ function callTranslate() {
     idx < 30 && translate(12, 12, t);
     idx >= 38 && translate(-4, -8, t);
     idx >= 60 && moveAShape() && clearInterval(id);
-  }, 20);
+  }, 10);
 }
 function moveAShape() {
   // return;
@@ -381,9 +386,10 @@ function moveAShape() {
       ctx.$strokeRect(0, 0, 1500, 1500);
       ctx.restore();
     };
-  }, 100);
+  }, 10);
   return true;
 }
+const arr: any[] = [];
 function moveShape2() {
   let idx = 0;
   let id = setInterval(() => {
@@ -392,8 +398,19 @@ function moveShape2() {
     if (idx < 30) {
       shape2.moveTo(shape2.graphics.ox + 4, shape2.graphics.oy - 5);
     } else if (idx >= 30 && idx <= 60) {
+      if (idx >= 52) {
+        arr.push([shape2.graphics.ox + 10, shape2.graphics.oy + 12]);
+        (window as any)['lalala'] = [...arr];
+      }
       shape2.moveTo(shape2.graphics.ox + 10, shape2.graphics.oy + 12);
     } else {
+      ctx.save();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'green';
+      // for (const item of arr) {
+      //   ctx.$strokeRect(item[0], item[1], 300, 1);
+      // }
+      ctx.restore();
       clearInterval(id);
     }
   }, 100)

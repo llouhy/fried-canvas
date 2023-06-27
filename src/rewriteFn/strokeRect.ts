@@ -16,7 +16,7 @@ export const strokeRect = (ctx: EngineCtx | OffEngineCtx) => {
     const roundY = Math.round(y);
     const roundWidth = Math.round(width);
     const roundHeight = Math.round(height);
-    oldStrokeRect.call(ctx, toHalfPixel(x) + dx, toHalfPixel(y) + dy, roundWidth, roundHeight);
+    oldStrokeRect.call(ctx, toHalfPixel(x), toHalfPixel(y), roundWidth, roundHeight);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
     const points = [

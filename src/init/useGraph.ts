@@ -137,18 +137,6 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
       clearBoundary.minY - graph.translateY,
       clearBoundary.maxX - clearBoundary.minX,
       clearBoundary.maxY - clearBoundary.minY);
-    // ctx.save();
-    // ctx.strokeStyle = 'blue';
-    // ctx.$strokeRect(boundary.minX, boundary.minY, boundary.maxX - boundary.minX, boundary.maxY - boundary.minY);
-    // ctx.stroke();
-    // ctx.restore();    
-    // ctx.save();
-    // ctx.strokeStyle = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padEnd(6, '0');
-    // ctx.$strokeRect(clearBoundary.minX - graph.translateX, // clearBoundary是grid算出来的，gird坐标永远是canvas左上角为0,0
-    // clearBoundary.minY - graph.translateY,
-    // clearBoundary.maxX - clearBoundary.minX,
-    // clearBoundary.maxY - clearBoundary.minY)
-    // ctx.restore();
     for (const item of shapes) {
       !excludesSet.has(item) && item.draw(engineById.get(engineId).engine.ctx);
     }

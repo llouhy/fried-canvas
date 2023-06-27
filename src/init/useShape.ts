@@ -21,6 +21,7 @@ export const useShape: UseShape = (
     try {
       const { engine: { ctx } } = engineById.get(engineId);
       const { updateShapeToGrid } = useGrid(engineId);
+      // console.log('drawShape', ctx.getTransform())
       const shapeId = shape.draw(ctx, placePoint);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
       idToShape.set(shapeId, shape);

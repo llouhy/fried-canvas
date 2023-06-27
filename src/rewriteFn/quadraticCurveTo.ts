@@ -11,7 +11,7 @@ export const quadraticCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldQuadraticCurveTo.call(ctx, cpx + dx, cpy + dy, x + dx, y + dy);
+    oldQuadraticCurveTo.call(ctx, cpx, cpy, x, y);
     if (!drawCoordinates) return;
     const prePoint = drawCoordinates.at(-1);
     let point1 = { x: cpx, y: cpy };

@@ -9,7 +9,7 @@ export const moveTo = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldMoveTo.call(ctx, toHalfPixel(x) + dx, toHalfPixel(y) + dy);
+    oldMoveTo.call(ctx, toHalfPixel(x), toHalfPixel(y));
     if (!drawCoordinates) return;
     const { x: transX, y: transY } = ctx.getTransform().transformPoint({ x, y });
     const point = { x: Math.round(transX), y: Math.round(transY) };

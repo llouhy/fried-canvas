@@ -181,7 +181,7 @@ export const arc = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldArc.call(ctx, x + dx, y + dy, radius, startAngle, endAngle, counterclockwise);
+    oldArc.call(ctx, x, y, radius, startAngle, endAngle, counterclockwise);
     if (!drawCoordinates) return;
     // const { set } = useLineWidthToCoordinateMap();
     const matrix = ctx.getTransform();

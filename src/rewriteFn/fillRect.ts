@@ -16,7 +16,7 @@ export const fillRect = (ctx: EngineCtx | OffEngineCtx) => {
     const roundY = toHalfPixel(y);
     const roundWidth = Math.round(width);
     const roundHeight = Math.round(height);
-    FillRect.call(ctx, roundX + dx, roundY + dy, roundWidth, roundHeight);
+    FillRect.call(ctx, roundX, roundY, roundWidth, roundHeight);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
     const points = [

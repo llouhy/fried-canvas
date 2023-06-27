@@ -13,7 +13,7 @@ export const rect = (ctx: EngineCtx | OffEngineCtx) => {
     } = ctx;
     const roundWidth = Math.round(width);
     const roundHeight = Math.round(height);
-    oldRect.call(ctx, toHalfPixel(x) + dx, toHalfPixel(y) + dy, roundWidth, roundHeight);
+    oldRect.call(ctx, toHalfPixel(x), toHalfPixel(y), roundWidth, roundHeight);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
     const roundX = Math.round(x);

@@ -1,3 +1,4 @@
+import { Graphics } from '../graphOptions';
 import { reloadCtxFunction } from '../init/context';
 import { useOffCanvas } from '../init/useOffCanvas';
 import type { Boundary, OffEngineCtx, Point } from '../rewriteFn/type';
@@ -12,12 +13,7 @@ const getInitBoundary = () => {
 };
 export const getImpreciseShapeSizeInfo = (
   coordinateStack: Point[]
-): {
-  ox: number;
-  oy: number;
-  width: number;
-  height: number;
-} => {
+): Graphics => {
   const preBoundary: Boundary = getInitBoundary();
   // const boundToLineWidth = new Map<keyof Boundary, number>();
   console.log('精确计算开始')
@@ -187,22 +183,25 @@ export const getPreciseShapeSizeInfo = (
     width: reduce.right - reduce.left,
     height: reduce.bottom - reduce.top
   });
-    // console.log('reduce', reduce);
-    // console.log('计算结果', {
-    //   ox: reduce.left - translateX + 1,
-    //   oy: reduce.top - translateY + 1,
-    //   width: reduce.right - reduce.left - 1,
-    //   height: reduce.bottom - reduce.top - 1,
-    //   maxX: reduce.left - translateX + 1 + (reduce.right - reduce.left - 1),
-    //   maxY: reduce.top - translateY + 1 + (reduce.bottom - reduce.top - 1)
-    // });
-    (ctx as any).$strokeRect(reduce.left, reduce.top, reduce.right - reduce.left, reduce.bottom - reduce.top);
-  (window as any)[`testtest`] = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+  // console.log('reduce', reduce);
+  // console.log('计算结果', {
+  //   ox: reduce.left - translateX + 1,
+  //   oy: reduce.top - translateY + 1,
+  //   width: reduce.right - reduce.left - 1,
+  //   height: reduce.bottom - reduce.top - 1,
+  //   maxX: reduce.left - translateX + 1 + (reduce.right - reduce.left - 1),
+  //   maxY: reduce.top - translateY + 1 + (reduce.bottom - reduce.top - 1)
+  // });
+  // (ctx as any).$strokeRect(reduce.left, reduce.top, reduce.right - reduce.left, reduce.bottom - reduce.top);
+  // (window as any)[`testtest`] = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
   return {
-    ox: reduce.left - translateX,
-    oy: reduce.top - translateY,
-    width: reduce.right - reduce.left,
-    height: reduce.bottom - reduce.top
+    graphics: {
+      ox: reduce.left - translateX,
+      oy: reduce.top - translateY,
+      width: reduce.right - reduce.left,
+      height: reduce.bottom - reduce.top
+    },
+    imageData: ctx.getImageData(reduce.left, reduce.top, reduce.right - reduce.left, reduce.bottom - reduce.top)
   }
   // return {
   //   ox: reduce.left - translateX + 1,

@@ -11,7 +11,7 @@ export const arcTo = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldArcTo.call(ctx, x1 + dx, y1 + dy, x2 + dx, y2 + dy, r);
+    oldArcTo.call(ctx, x1, y1, x2, y2, r);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
     const prePoint = drawCoordinates.at(-1);

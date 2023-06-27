@@ -11,7 +11,7 @@ export const bezierCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
       drawCoordinates,
       drawOffset: { dx, dy }
     } = ctx;
-    oldBezierCurveTo.call(ctx, cp1x + dx, cp1y + dy, cp2x + dx, cp2y + dy, x + dx, y + dy);
+    oldBezierCurveTo.call(ctx, cp1x, cp1y, cp2x, cp2y, x, y);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
     // const prePoint = drawCoordinates.at(-1);
