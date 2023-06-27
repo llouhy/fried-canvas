@@ -1,3 +1,5 @@
+import { getTransBoundary } from '../config/common';
+import { toHalfPixel } from '../utils/common';
 import type { Point, EngineCtx, OffEngineCtx } from './type';
 // import { useLineWidthToCoordinateMap } from '../shape/coordinate';
 export const strokeRect = (ctx: EngineCtx | OffEngineCtx) => {
@@ -10,35 +12,35 @@ export const strokeRect = (ctx: EngineCtx | OffEngineCtx) => {
       drawOffset: { dx, dy },
       // scale
     } = ctx;
-    oldStrokeRect.call(ctx, x + dx, y + dy, width, height);
+    const roundX = Math.round(x);
+    const roundY = Math.round(y);
+    const roundWidth = Math.round(width);
+    const roundHeight = Math.round(height);
+    oldStrokeRect.call(ctx, toHalfPixel(x), toHalfPixel(y), roundWidth, roundHeight);
     if (!drawCoordinates) return;
-    const boundary = {
-      minX: x,
-      minY: y,
-      maxX: x + width,
-      maxY: y + height
-    };
-    const { a: scaleX, b: skewX, c: skewY, d: scaleY, e: tx, f: ty } = ctx.getTransform();
+    const matrix = ctx.getTransform();
     const points = [
-      {
-        x: boundary.minX,
-        y: boundary.minY,
-        dWidthX: Math.ceil((ctx.lineWidth - 1) / 2) + tx, 
-        dWidthY: Math.ceil((ctx.lineWidth - 1) / 2) + ty 
-      },
-      { 
-        x: boundary.maxX, 
-        y: boundary.maxY, 
-        dWidthX: Math.ceil((ctx.lineWidth - 1) / 2) + tx, 
-        dWidthY: Math.ceil((ctx.lineWidth - 1) / 2) + ty
-      }
+      { x: roundX, y: roundY },
+      { x: roundX + roundWidth, y: roundY },
+      { x: roundX + roundWidth, y: roundY + roundHeight },
+      { x: roundX, y: y + roundHeight }
     ];
-    // console.log(points)
-    // const points = [
-    //   { x: boundary.minX, y: boundary.minY },
-    //   { x: boundary.maxX, y: boundary.maxY }
-    // ];
-    drawCoordinates.push(...points);
-    // set(ctx.lineWidth, points);
+    const transBoundary = getTransBoundary(matrix, points);
+    drawCoordinates.push(
+      ...[
+        {
+          x: transBoundary.minX,
+          y: transBoundary.minY,
+          dWidthX: Math.ceil(ctx.lineWidth / 2),
+          dWidthY: Math.ceil(ctx.lineWidth / 2)
+        },
+        {
+          x: transBoundary.maxX,
+          y: transBoundary.maxY,
+          dWidthX: Math.ceil(ctx.lineWidth / 2),
+          dWidthY: Math.ceil(ctx.lineWidth / 2)
+        },
+      ]
+    );
   };
 };

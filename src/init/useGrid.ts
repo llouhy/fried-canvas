@@ -37,12 +37,13 @@ const generateGrid = (engineId: string, ctx: any, drawGrid?: boolean): { grid: G
   const maxLevel = 6;
   const xs: Set<number> = new Set();
   const ys: Set<number> = new Set();
+  xs.add(0) && ys.add(0) 
   function createGrid(x: number, y: number, width: number, height: number, idx: number) {
     const isLeaf = idx === maxLevel - 1;
     const grid = getGrid({ minX: x, minY: y, maxX: x + width, maxY: y + height }, isLeaf);
     ctx?.$strokeRect(x, y, width, height);
     if (isLeaf) {
-      xs.add(x) && ys.add(y);
+      xs.add(x + width) && ys.add(y + height);
       return grid;
     }
     if (idx < maxLevel) {
@@ -64,17 +65,14 @@ const generateGrid = (engineId: string, ctx: any, drawGrid?: boolean): { grid: G
 export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
   const { grid, divider } = generateGrid(engineId, ctx);
   const getInfluencedGrid = (boundary: Boundary): GridIns[] => {
-    // console.log('%c调用', 'background: red;color:white;')
     const { translateX, translateY } = graphByEngineId.get(engineId);
-    // console.log('translateX', translateX);
-    // console.log('translateY', translateY)
     const bound = { left: boundary.minX + translateX, right: boundary.maxX + translateX, top: boundary.minY + translateY, bottom: boundary.maxY + translateY };
-    // console.log(divider)
-    // console.log('left', JSON.stringify(bound.left))
+    !(window as any).ooo && (window as any).lalala && console.log(divider)
+    !(window as any).ooo && (window as any).lalala && console.log('%c图形的bound', 'background:pink;padding:20px', { ...bound })
     for (const x of divider.xs) {
       if (x < boundary.minX + translateX) {
         bound.left = x;
-      } else if (x > bound.right) {
+      } else if (x >= bound.right) {
         bound.right = x;
         break;
       }
@@ -82,11 +80,12 @@ export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
     for (const y of divider.ys) {
       if (y < boundary.minY + translateY) {
         bound.top = y;
-      } else if (y > bound.bottom) {
+      } else if (y >= bound.bottom) {
         bound.bottom = y;
         break;
       }
     }
+    !(window as any).ooo && (window as any).lalala && console.log('%c算出来清除bound', 'background:yellow;padding:20px', { ...bound })
     // console.log('bound', bound)
     const isDeepValid = (bound: { left: number; right: number; top: number; bottom: number; }, gridBoundary: Boundary): boolean => {
       return !(gridBoundary.minX > bound.right

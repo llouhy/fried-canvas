@@ -11,33 +11,13 @@ export const stroke = (ctx: EngineCtx | OffEngineCtx) => {
     } = ctx;
     oldStroke.apply(ctx, args);
     if (!drawCoordinates) return;
-    const { a: scaleX, b: skewX, c: skewY, d: scaleY, e: tx, f: ty } = ctx.getTransform();
     const { lineWidth, shadowBlur, shadowOffsetX, shadowOffsetY } = ctx;
-    // console.log(ctx.getTransform())
-    console.log(JSON.parse(JSON.stringify(drawCoordinates)), ctx.getTransform());
     for (const [key, point] of drawCoordinates.entries()) {
       if ('dWidthX' in point || 'dWidthY' in point) continue;
-      // point.x = point.x + tx;
-      // point.y = point.y + ty;
-      point.x = point.x;
-      point.y = point.y;
-      point.key = key;
-      point.dWidth = Math.ceil((lineWidth - 1) / 2) + Math.max(tx, ty);
+      point.dWidthX = Math.ceil((lineWidth - 1) / 2);
+      point.dWidthY = Math.ceil((lineWidth - 1) / 2);
+
     }
-    // console.log('strokeScale', scale);
     return;
-    // const { getAll, clear } = useLineWidthToCoordinateMap();
-    // const { lineWidth, shadowBlur, shadowOffsetX, shadowOffsetY } = ctx;
-    // if (lineWidth !== 1) {
-    //   const mapList = getAll();
-    //   for (const item of mapList) {
-    //     const points = item[1];
-    //     const dWidth = Math.ceil((lineWidth - 1) / 2);
-    //     for (const point of points) {
-    //       point.dWidth = dWidth;
-    //     }
-    //   }
-    // }
-    // clear();
   };
 };
