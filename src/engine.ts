@@ -1,5 +1,5 @@
 import useRewriteCtxFunction from './rewriteFn';
-import { generateRandomStr, getDefaultContextAttribute } from './config/common';
+import { getDefaultContextAttribute } from './config/common';
 import { useModelCache } from './config/useModel';
 import { useCoordinateCache } from './shape/coordinate';
 import { quadraticCurveTo } from './rewriteFn/quadraticCurveTo';
@@ -8,6 +8,7 @@ import type { ModelCache } from './config/useModel';
 import type { ModelOptions } from './graphOptions';
 import type { Shape } from './shape/shape';
 import type { EngineCtx } from './rewriteFn/type';
+import { generateRandomStr } from './utils/common';
 
 export type EngineOptions = {
   id?: string;

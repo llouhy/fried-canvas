@@ -89,7 +89,11 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     graph.top = -graph.translateY;
     graph.right = graph.left + width;
     graph.bottom = graph.top + height;
-    [...idToShape.values()].forEach(elem => isShapeInScreen(elem, graph) && elem.draw(ctx));
+    [...idToShape.values()].forEach(elem => {
+      if (isShapeInScreen(elem, graph)) {
+        (elem.rotateDeg && elem.draw(ctx, { x: elem.graphics.ox, y: elem.graphics.oy }, elem.rotateDeg)) || elem.draw(ctx);
+      }
+    });
     updateAllShapeToGrid();
     // ctx.putImageData(imageData, boundary.minX + graph.translateX, boundary.minY + graph.translateY);
   };
@@ -112,18 +116,14 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     ctx.restore();
   };
   const repaintInfluencedShape = (graphics: Graphics, excludesSet: Set<Shape> = new Set()) => {
+    // console.log(graphics)
     const { engine: { ctx } } = engineById.get(engineId);
     const graph = graphByEngineId.get(engineId);
     const { getInfluencedGrid, getInfluencedShape } = useGrid(engineId);
-    // const boundary = graphicsToBoundary(graphics, graphByEngineId.get(engineId));
     const boundary = graphicsToBoundary(graphics);
-    // console.log('boundary', boundary)
-    // console.log('graph', graphByEngineId.get(engineId))
     const grids = getInfluencedGrid(boundary);
-    // console.log('受影响的所有grid', grids)
     const shapes = getInfluencedShape(boundary, grids);
     const clearBoundary = grids.reduce((pre, cur) => {
-      // (ctx as any).$strokeRect()
       return {
         minX: Math.min(pre.minX, cur.boundary.minX),
         minY: Math.min(pre.minY, cur.boundary.minY),
@@ -131,14 +131,19 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
         maxY: Math.max(pre.maxY, cur.boundary.maxY)
       }
     }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
-    // console.log('clearBoundary', clearBoundary)
+    console.log('清除区域', clearBoundary);
     clearRect(
       clearBoundary.minX - graph.translateX, // clearBoundary是grid算出来的，gird坐标永远是canvas左上角为0,0
       clearBoundary.minY - graph.translateY,
       clearBoundary.maxX - clearBoundary.minX,
       clearBoundary.maxY - clearBoundary.minY);
-    for (const item of shapes) {
-      !excludesSet.has(item) && item.draw(engineById.get(engineId).engine.ctx);
+    for (const elem of shapes) {
+      if (!excludesSet.has(elem)) {
+        const ctx = engineById.get(engineId).engine.ctx;
+        (elem.rotateDeg && elem.draw(ctx, { x: elem.graphics.ox, y: elem.graphics.oy }, elem.rotateDeg)) || elem.draw(ctx);
+        // elem.draw(ctx);
+      }
+      // !excludesSet.has(elem) && ;
     }
   };
   return {

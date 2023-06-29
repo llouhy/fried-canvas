@@ -10,6 +10,7 @@ export const isArray = (value: any) => {
 };
 
 export const isString = (value: any) => {
+  // debugger
   return getTypeStr(value) === 'string';
 };
 
