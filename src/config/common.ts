@@ -12,7 +12,7 @@ export const getDefaultContextAttribute = () => {
   };
 };
 
-export const getTransBoundary = (matrix: any, points: Point[]) => {
+export const getTransBoundary = (matrix: any, points: Point[]): Boundary => {
   const transBoundary = {
     minX: Infinity,
     maxX: -Infinity,
@@ -29,25 +29,6 @@ export const getTransBoundary = (matrix: any, points: Point[]) => {
     transBoundary.maxY <= elem.y && (transBoundary.maxY = elem.y);
   }
   return transBoundary;
-};
-
-export const generateRandomStr = (e: number): string => {
-  e = e || 32;
-  const t = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
-  const length = t.length;
-  let str = '';
-  for (let i = 0; i < e; i++) {
-    str += t.charAt(Math.floor(Math.random() * length));
-  }
-  return str;
-};
-
-export const angleToRadian = (angle: number): number => {
-  return (Math.PI * angle) / 180;
-};
-
-export const radianToAngle = (radian: number): number => {
-  return (radian * 180) / Math.PI;
 };
 
 export const sumBoundary = (

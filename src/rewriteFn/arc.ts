@@ -1,6 +1,7 @@
 import { useLineWidthToCoordinateMap } from '../shape/coordinate';
-import { getTransBoundary, radianToAngle } from '../config/common';
+import { getTransBoundary } from '../config/common';
 import type { Boundary, Point, EngineCtx, OffEngineCtx } from './type';
+import { radianToAngle } from '../utils/common';
 
 const getQuadrant = (angle: number): number => {
   const absAngle = angle >= 0 ? angle % 360 : 360 + (angle % 360);
