@@ -9,7 +9,7 @@ export const strokeRect = (ctx: EngineCtx | OffEngineCtx) => {
     // const { set, getAll, clear } = useLineWidthToCoordinateMap();
     const {
       drawCoordinates,
-      drawOffset: { dx, dy },
+      // drawOffset: { dx, dy },
       // scale
     } = ctx;
     const roundX = Math.round(x);

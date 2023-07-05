@@ -1,5 +1,6 @@
-import { getTypeStr } from './common';
+import { getPureObject, getTypeStr } from './common';
 import { identifyMap } from '../definition/identify';
+import { setIdentify } from './setIdentify';
 
 export const isFunction = (value: any) => {
   return typeof value === 'function';
@@ -41,3 +42,13 @@ export const isModel = (value: any) => {
 export const isSuccess = (value: any) => {
   return !isError(value);
 };
+
+export const isCheckParams = (value: any) => {
+  return value.__isCheckParams__ === identifyMap.checkParams;
+}
+
+export const toCheckParams = (value: any) => {
+  return setIdentify(getPureObject({
+    value
+  }), 'checkParams');
+}

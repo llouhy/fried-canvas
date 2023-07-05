@@ -1,5 +1,5 @@
 import { angleToRadian, generateRandomStr } from '../utils/common';
-import { useModel } from '../init/useModel';
+import { ModelDrawFuncArgs, useModel } from '../init/useModel';
 import { getGraphicsWithBorder, getPureObject, setPropertyUnWritable } from '../utils/common';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
 import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
@@ -7,6 +7,7 @@ import { engineById } from '../engineFn';
 import { useGrid } from '../init/useGrid';
 import { GridIns } from '../definition/grid';
 import { setIdentify } from '../utils/setIdentify';
+// import { toCheckParams } from '../utils/is';
 
 export const allShapeBoundary = {
   minX: -Infinity,
@@ -29,7 +30,8 @@ export type Shape = {
   borderOptions: BorderOptions;
   gridSet: Set<GridIns>;
   boundary: Boundary;
-  readonly _graphics: Graphics;
+  drawArgs: ModelDrawFuncArgs[];
+  _graphics: Graphics;
   draw: (ctx: EngineCtx, placePoint?: Point, rotateDeg?: number) => string;
   drawBoundary: () => void;
   isPointInTheShape: (e: any) => boolean;
@@ -38,6 +40,7 @@ export type Shape = {
 };
 
 export const getShape = (modelName: string, engineId: string, data?: any, model?: ModelOptions, index?: number): Shape => {
+  // const { getModel } = engineById.get(engineId);
   const shape: any = getPureObject({
     belongEngineId: '',
     ctx: null,
@@ -50,10 +53,10 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     children: null,
     borderOptions: {
       needBorder: true,
-      paddingLeft: 4,
-      paddingRight: 4,
-      paddingTop: 4,
-      paddingBottom: 4,
+      paddingLeft: 0,
+      paddingRight: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
       borderDash: [6, 6],
       borderWidth: 1,
       borderColor: 'tomato',
@@ -65,6 +68,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
   });
 
   const { getModel } = useModel(engineId);
+  if (!getModel(modelName)) return;
   shape.$model = getModel(modelName) as ModelOptions;
   shape.borderOptions = {
     ...shape.borderOptions,
@@ -74,6 +78,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
   shape.data = data;
   shape.index = index ?? index;
   shape.belongEngineId = engineId;
+  shape.drawArgs = shape.$model.drawArgs;
   shape._graphics = getPureObject(shape.$model.graphics as Graphics);
   shape.graphics = getPureObject(shape.$model.graphics as Graphics);
 
@@ -91,7 +96,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
       };
       shape.ctx.save();
       shape.ctx.translate(offset.dx, offset.dy);
-      shape.$model.draw(shape.ctx, { x: -width >> 1, y: -height >> 1 });
+      shape.$model.draw(shape.ctx, ...shape.drawArgs);
       shape.ctx.restore();
       shape.drawBoundary({ ox: -width >> 1, oy: -height >> 1, width, height });
       shape.ctx.restore();
@@ -109,7 +114,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     };
     shape.ctx.save();
     shape.ctx.translate(offset.dx, offset.dy);
-    shape.$model?.draw?.(shape.ctx, placePoint);
+    shape.$model?.draw?.(shape.ctx, ...shape.drawArgs);
     shape.ctx.restore();
     shape.graphics = {
       ...shape.graphics,
