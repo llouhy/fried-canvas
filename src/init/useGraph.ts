@@ -141,7 +141,17 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
       if (!excludesSet.has(elem)) {
         const ctx = engineById.get(engineId).engine.ctx;
         (elem.rotateDeg && elem.draw(ctx, { x: elem.graphics.ox, y: elem.graphics.oy }, elem.rotateDeg)) || elem.draw(ctx);
+        ctx.save();
+        ctx.strokeStyle = 'blue';
+        ctx.$strokeRect(elem.graphicsWithBorder.ox, elem.graphicsWithBorder.oy, elem.graphicsWithBorder.width, elem.graphicsWithBorder.height);
+        ctx.restore();
         // elem.draw(ctx);
+      }
+      if (elem.$model.name === 'test1' && excludesSet.has(elem)) {
+        ctx.$strokeRect(clearBoundary.minX - graph.translateX, // clearBoundary是grid算出来的，gird坐标永远是canvas左上角为0,0
+          clearBoundary.minY - graph.translateY,
+          clearBoundary.maxX - clearBoundary.minX,
+          clearBoundary.maxY - clearBoundary.minY);
       }
       // !excludesSet.has(elem) && ;
     }

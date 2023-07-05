@@ -12,7 +12,7 @@ export const reloadCtxFunction = <T>(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
 ) => {
   // const coordinateStack = useCoordinateCache(engineId);
-  const { arc, arcTo, rect, fillRect, strokeRect, moveTo, lineTo, stroke, createLinearGradient } = useRewriteCtxFunction();
+  const { arc, arcTo, rect, fillRect, strokeRect, moveTo, lineTo, stroke, createLinearGradient, strokeText, fillText } = useRewriteCtxFunction();
   ctx.arc = arc(ctx);
   ctx.arcTo = arcTo(ctx);
   ctx.rect = rect(ctx);
@@ -24,6 +24,8 @@ export const reloadCtxFunction = <T>(
   ctx.bezierCurveTo = bezierCurveTo(ctx);
   ctx.stroke = stroke(ctx);
   ctx.createLinearGradient = createLinearGradient(ctx);
+  ctx.strokeText = strokeText(ctx);
+  ctx.fillText = fillText(ctx);
   // ctx.globalCompositeOperation = 'destination-over';
 };
 

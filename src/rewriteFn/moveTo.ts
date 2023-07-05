@@ -7,12 +7,13 @@ export const moveTo = (ctx: EngineCtx | OffEngineCtx) => {
   return (x: number, y: number) => {
     const {
       drawCoordinates,
-      drawOffset: { dx, dy }
+      // drawOffset: { dx, dy }
     } = ctx;
     oldMoveTo.call(ctx, toHalfPixel(x), toHalfPixel(y));
     if (!drawCoordinates) return;
     const { x: transX, y: transY } = ctx.getTransform().transformPoint({ x, y });
     const point = { x: Math.round(transX), y: Math.round(transY) };
+    console.log('moveTo', point);
     drawCoordinates.push(point);
   };
 };

@@ -9,7 +9,7 @@ export const arcTo = (ctx: EngineCtx | OffEngineCtx) => {
     // const { set } = useLineWidthToCoordinateMap();
     const {
       drawCoordinates,
-      drawOffset: { dx, dy }
+      // drawOffset: { dx, dy }
     } = ctx;
     oldArcTo.call(ctx, x1, y1, x2, y2, r);
     if (!drawCoordinates) return;

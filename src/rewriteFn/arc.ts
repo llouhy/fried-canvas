@@ -180,7 +180,7 @@ export const arc = (ctx: EngineCtx | OffEngineCtx) => {
   ) => {
     const {
       drawCoordinates,
-      drawOffset: { dx, dy }
+      // drawOffset: { dx, dy }
     } = ctx;
     oldArc.call(ctx, x, y, radius, startAngle, endAngle, counterclockwise);
     if (!drawCoordinates) return;
