@@ -7,7 +7,7 @@ export const stroke = (ctx: EngineCtx | OffEngineCtx) => {
     const {
       // scale,
       drawCoordinates,
-      drawOffset: { dx, dy }
+      // drawOffset: { dx, dy }
     } = ctx;
     oldStroke.apply(ctx, args);
     if (!drawCoordinates) return;
@@ -16,7 +16,6 @@ export const stroke = (ctx: EngineCtx | OffEngineCtx) => {
       if ('dWidthX' in point || 'dWidthY' in point) continue;
       point.dWidthX = Math.ceil((lineWidth - 1) / 2);
       point.dWidthY = Math.ceil((lineWidth - 1) / 2);
-
     }
     return;
   };

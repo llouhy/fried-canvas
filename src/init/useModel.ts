@@ -1,26 +1,46 @@
-import { isArray } from '../utils/is';
 import { engineById } from '../engineFn';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
 import { getPreciseShapeSizeInfo, getImpreciseShapeSizeInfo } from '../shape/getShapeSizeInfo';
-import type { ModelOptions } from '../graphOptions';
+import type { Graphics, ModelOptions } from '../graphOptions';
 import type { EngineCtx, OffEngineCtx, Point } from '../rewriteFn/type';
 import { setIdentify } from '../utils/setIdentify';
+import { setPropertyUnWritable } from '../utils/common';
+import { isCheckParams } from '../utils/is';
+
+export type checkParams = { value: ModelDrawFuncArgs; isCheckParams: symbol };
+
+export type ModelDrawFuncArgs = { [key: string]: any } | string | number | boolean | checkParams;
 
 export type UseModelRes = {
-  addModel: (x: ModelOptions | ModelOptions[]) => any;
+  addModel: (x: ModelOptions, ...args: ModelDrawFuncArgs[]) => any;
   getModel: (name: string) => undefined | ModelOptions;
   deleteModel: (name: string) => boolean;
+  updateModel: (name: string) => void;
 };
 export type UseModel = (engineId: string) => UseModelRes;
 
 const modelMap = new Map<string, ModelOptions>();
+
+export const sumModelGraphics = (ctx: EngineCtx | OffEngineCtx, drawFunc: (ctx: EngineCtx | OffEngineCtx, ...args: ModelDrawFuncArgs[]) => any, ...args: ModelDrawFuncArgs[]): {
+  graphics: Graphics,
+  imageData: ImageData
+} => {
+  const coordinates: Point[] = [];
+  ctx.drawCoordinates = coordinates;
+  drawFunc.apply(null, [ctx, ...args]);
+  const boundary = getPreciseShapeSizeInfo(drawFunc, getImpreciseShapeSizeInfo(coordinates), ...args);
+  console.log(boundary)
+  ctx.drawCoordinates = null;
+  return boundary;
+}
+
 export const useModel: UseModel = (
   engineId: string
 ): UseModelRes => {
   const prefix = engineId + ':';
-  const addModel = (modelOptions: ModelOptions | ModelOptions[]): any => {
-    const models = isArray(modelOptions) ? modelOptions : [modelOptions];
+  const addModel = (modelOptions: ModelOptions, ...args: ModelDrawFuncArgs[]): any => {
+    const models = [modelOptions];
     const { width, height } = engineById.get(engineId)!.engine;
     const offCanvas = useOffscreenCanvas().get(width, height);
     const offCtx = offCanvas!.getContext('2d') as OffscreenCanvasRenderingContext2D;
@@ -32,36 +52,35 @@ export const useModel: UseModel = (
         value: draw
       });
       setIdentify(elem, 'model');
-      elem.draw = (() => {
-        let isInitInfo = false;
-        return (ctx: EngineCtx | OffEngineCtx, placePoint?: Point) => {
-          const offset = {
-            dx: placePoint && elem.graphics ? placePoint.x - elem.graphics.ox : 0,
-            dy: placePoint && elem.graphics ? placePoint.y - elem.graphics.oy : 0
-          };
-          // console.log('ctx', ctx);
-          // console.log('offset', offset)
-          ctx.drawOffset = offset;
-          if (!isInitInfo) {
-            const coordinates: Point[] = [];
-            ctx.drawCoordinates = coordinates;
-            draw(ctx);
-            console.log(...coordinates)
-            const boundary = getPreciseShapeSizeInfo(draw, getImpreciseShapeSizeInfo(coordinates));
-            // const boundary = getImpreciseShapeSizeInfo(coordinates)
-            elem.graphics = { ...boundary.graphics };
-            elem.imageData = boundary.imageData;
-            isInitInfo = true;
-            ctx.drawCoordinates = null;
-          } else {
-            draw(ctx);
-          }
-        };
-      })();
+      const checkArgMap = new Map<number, ModelDrawFuncArgs>();
+      const checkArgs = [];
+      const modelArgs = [];
+      for (const [key, item] of args.entries()) {
+        if (isCheckParams(item)) {
+          checkArgMap.set(key, item);
+          checkArgs.push((item as checkParams).value);
+          modelArgs.push((item as checkParams).value);
+        } else {
+          modelArgs.push(item);
+        }
+      }
+      elem.draw = (ctx: EngineCtx | OffEngineCtx, ...args: ModelDrawFuncArgs[]) => { draw.apply(null, [ctx, ...args]); };
       modelMap.set(`${prefix}${elem.name}`, elem);
+      const { graphics, imageData } = sumModelGraphics(offCtx as OffEngineCtx, draw, ...modelArgs);
       offCtx?.clearRect(0, 0, width, height);
-      elem.draw(offCtx as OffEngineCtx);
+      elem.drawArgs = modelArgs;
+      elem.graphics = { ...graphics };
+      elem.imageData = imageData;
+      elem.checkArg = {
+        checkArgs,
+        checkArgMap,
+        hash: JSON.stringify(checkArgs)
+      };
+      elem.draw(offCtx as OffEngineCtx, ...modelArgs);
     }
+  };
+  const updateModel = (modelName: string) => {
+    const model = modelMap.get(`${prefix}${modelName}`);
   };
   const getModel = (modelName: string) => {
     return modelMap.get(`${prefix}${modelName}`);
@@ -72,6 +91,7 @@ export const useModel: UseModel = (
   return {
     addModel,
     getModel,
-    deleteModel
+    deleteModel,
+    updateModel
   };
 };

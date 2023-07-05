@@ -9,7 +9,7 @@ export const rect = (ctx: EngineCtx | OffEngineCtx) => {
     // const { set } = useLineWidthToCoordinateMap();
     const {
       drawCoordinates,
-      drawOffset: { dx, dy }
+      // drawOffset: { dx, dy }
     } = ctx;
     const roundWidth = Math.round(width);
     const roundHeight = Math.round(height);

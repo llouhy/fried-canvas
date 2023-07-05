@@ -10,6 +10,8 @@ import { quadraticCurveTo } from './quadraticCurveTo';
 import { stroke } from './stroke';
 import { createLinearGradient } from './createLinearGradient';
 import { createRadialGradient } from './createRadialGradient';
+import { strokeText } from './strokeText';
+import { fillText } from './fillText';
 
 (window as any).RAF = (function () {
   return window.requestAnimationFrame
@@ -33,7 +35,9 @@ const useRewriteCtxFunction = () => {
     quadraticCurveTo,
     stroke,
     createLinearGradient,
-    createRadialGradient
+    createRadialGradient,
+    strokeText,
+    fillText
   };
 };
 

@@ -1,4 +1,4 @@
-import { UseModelRes, useModel } from './init/useModel';
+import { ModelDrawFuncArgs, UseModelRes, useModel } from './init/useModel';
 import { UseShapeRes, useShape } from './init/useShape';
 import { UseGridRes, useGrid } from './init/useGrid';
 import { generateRandomStr } from './utils/common';
@@ -12,6 +12,7 @@ import { identifyMap } from './definition/identify';
 import { setCanvasSize, getPureObject, mergeObjectInList, useCollectReturn, omitObjectProperty, setPropertyUnWritable } from './utils/common';
 import { setIdentify } from './utils/setIdentify';
 import { UseGraphRes, useGraph } from './init/useGraph';
+import { toCheckParams } from './utils/is';
 
 export const isEngine = (value: any) => {
   return value === identifyMap.engine;
@@ -27,9 +28,10 @@ export type InitEngineResult = {
     readonly: boolean;
     repaintInfluencedShape: (graphics: Graphics, excludes: Set<Shape>) => void;
   };
-  addModel: (modelList: ModelOptions[] | ModelOptions) => any;
+  addModel: (modelList: ModelOptions, ...args: ModelDrawFuncArgs[]) => any;
   getModel: (modelName: string) => ModelOptions | undefined;
   deleteModel: (modelName: string) => boolean;
+  updateModel: (modelName: string) => void;
   createShape: (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => Shape;
   drawShape: (shape: Shape, placePoint?: Point) => string | undefined;
   getShape: (shapeId: string) => Shape | undefined;
@@ -108,7 +110,7 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 
 const engine = initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
 // console.log(engine)
-const { addModel, createShape, drawShape, getModel, engine: { ctx }, translate } = engine;
+const { addModel, createShape, drawShape, updateShape, engine: { ctx }, translate, updateModel } = engine;
 ctx.save();
 ctx.strokeStyle = 'orange';
 ctx.$strokeRect(0, 0, 1500, 1500);
@@ -119,27 +121,42 @@ const angleToRadian = (angle: number) => {
 const getTestModel1 = (): ModelOptions => {
   return {
     name: 'test1',
-    draw: (ctx: EngineCtx | OffEngineCtx) => {
+    draw: (ctx: EngineCtx | OffEngineCtx, p1, p2, p3) => {
       ctx.save();
-      // ctx.lineWidth = 10;
-      ctx.strokeStyle = 'Turquoise';
-      ctx.beginPath();
-      ctx.moveTo(-200 + 600, -200 + 600);
-      ctx.lineTo(-200 + 600, -300 + 600);
-      ctx.lineTo(-100 + 600, -300 + 600);
-      ctx.stroke();
-      // ctx.strokeStyle = 'yellow';
-      ctx.rotate(14 * Math.PI / 180)
-      ctx.quadraticCurveTo(-322 + 600, 600 + 600, -332 + 600, -128 + 600);
-      // ctx.stroke();
-      // ctx.rotate(10 * Math.PI / 180)
-      ctx.bezierCurveTo(-150 + 600, -140 + 600, -188 + 600, -200 + 600, -90 + 600, -90 + 600);
-      ctx.rotate(-20 * Math.PI / 180)
-      ctx.arc(-500 + 600, -500 + 600, 44, angleToRadian(45), angleToRadian(270));
-      ctx.closePath();
-      ctx.lineWidth = 8;
+      ctx.transform(1.2, 0.3,0.2, 1, 30, 60);
+      ctx.moveTo(100, 260);
+      ctx.quadraticCurveTo(899, 43, 450, 223);
+      ctx.bezierCurveTo(500, 20, 874, 674, 732, 40);
+      ctx.quadraticCurveTo(899, 43, 450, 223);
+      ctx.bezierCurveTo(500, 20, 874, 674, 732, 40);
       ctx.stroke();
       ctx.restore();
+      // ctx.save();
+      // // ctx.lineWidth = 10;
+      // ctx.strokeStyle = 'Turquoise';
+      // ctx.beginPath();
+      // ctx.moveTo(-200 + 600, -200 + 600);
+      // ctx.lineTo(-200 + 600, -300 + 600);
+      // ctx.lineTo(-100 + 600, -300 + 600);
+      // ctx.closePath();
+      // ctx.stroke();
+      // // ctx.strokeStyle = 'yellow';
+      // // ctx.beginPath();
+      // ctx.save();
+      // ctx.rotate(14 * Math.PI / 180)
+      // ctx.strokeStyle = 'red';
+      // ctx.quadraticCurveTo(-322 + 600, 600 + 600, -332 + 600, -128 + 600);
+      // ctx.stroke();
+      // ctx.restore();
+      // // ctx.stroke();
+      // // ctx.rotate(10 * Math.PI / 180)
+      // ctx.bezierCurveTo(-150 + 600, -140 + 600, -188 + 600, -200 + 600, -90 + 600, -90 + 600);
+      // ctx.rotate(-20 * Math.PI / 180)
+      // ctx.arc(-500 + 600, -500 + 600, 44, angleToRadian(45), angleToRadian(270));
+      // ctx.closePath();
+      // ctx.lineWidth = 8;
+      // ctx.stroke();
+      // ctx.restore();
     }
   }
 };
@@ -223,16 +240,18 @@ const getTestModel3 = () => {
 const getTestModel4 = () => {
   return {
     name: 'test4',
-    draw: (ctx: EngineCtx | OffEngineCtx) => {
+    draw: (ctx: EngineCtx | OffEngineCtx, p1: any, refParams: any) => {
       // console.log('%c画了4', 'color: red')
+      console.log(ctx, p1, refParams)
       ctx.save();
       ctx.beginPath();
-      ctx.moveTo(600, 430);
+      ctx.moveTo(600 - 2 * refParams, 430 - refParams);
       ctx.lineTo(500, 500);
       ctx.bezierCurveTo(500, 500, 874, 674, 732, 434);
       ctx.rotate(24 * Math.PI / 180);
       ctx.arc(603, 434, 24, angleToRadian(30), angleToRadian(150));
       ctx.closePath();
+      ctx.strokeStyle = p1 > 0.5 ? 'green' : 'red';
       ctx.stroke();
       ctx.restore();
     }
@@ -297,12 +316,14 @@ const getTestModel6 = () => {
 };
 // ctx.$strokeRect(88,727,42,38);
 // addModel([getTestModel1(), getTestModel2(), getTestModel3(), getTestModel4(), getTestModel5(), getTestModel6()]);
-for (let i = 1; i <= 6; i++) {
-  console.log(`%caddModel${i}${i}${i}${i}${i}`, 'background:orange;padding:5px;');
-  addModel(eval(`getTestModel${i}()`));
-}
+// for (let i = 4; i <= 4; i++) {
+//   console.log(`%caddModel${i}${i}${i}${i}${i}`, 'background:orange;padding:5px;');
+//   addModel(eval(`getTestModel${i}()`));
+// }
+addModel(getTestModel1());
 const helloo = (window as any)['helloo'];
 ctx.strokeStyle = 'red';
+// ctx.$strokeRect(570, 400, 100,100);
 console.log(helloo)
 // ctx.$strokeRect(helloo.minX, helloo.minY, helloo.maxX - helloo.minX, helloo.maxY - helloo.minY);
 // console.log('%c11111', 'background:orange;padding:5px;')
@@ -321,6 +342,7 @@ const shape1 = createShape('test1');
 const shape2 = createShape('test2');
 const shape3 = createShape('test3');
 const shape4 = createShape('test4');
+// const shape44 = createShape('test4');
 const shape5 = createShape('test5');
 const shape6 = createShape('test6');
 // console.log(shape5)
@@ -329,7 +351,8 @@ drawShape(shape1);
 drawShape(shape2, { x: 500, y: 400 });
 drawShape(shape3, { x: 100, y: 300 });
 // const [rx, ry] = [Math.round(Math.random() * 1000), Math.round(Math.random() * 1000)];
-drawShape(shape4, { x: 480, y: 680 });
+drawShape(shape4);
+// drawShape(shape44, { x: 500, y: 200 })
 // ctx.$strokeRect(rx, ry, 100, 100)
 drawShape(shape5, { x: 800, y: 200 });
 drawShape(shape6);
@@ -337,11 +360,12 @@ drawShape(shape6);
 let idd = 1;
 // ctx.save();
 let iddd = setInterval(() => {
-  shape3.rotate(idd * 2);
   idd = idd + 1;
-  if (idd >= 20) {
+  // shape4.rotate(idd * 2);
+  if (idd >= 60) {
+    // shape4.moveTo(shape4.graphics.ox + 6, shape4.graphics.oy + 4);
     clearInterval(iddd);
-    callARotateMove(shape3);
+    // callARotateMove(shape4);
   };
   // console.log(idd)
   // const { ox, oy, width, height } = shape4._graphics;
@@ -352,7 +376,7 @@ let iddd = setInterval(() => {
   // idd++;
   // idd > 30 && clearInterval(iddd);
   // ctx.restore();
-}, 20);
+}, 30);
 function callARotateMove(shape: Shape) {
   let idx = 0;
   let cid = setInterval(() => {
@@ -360,8 +384,9 @@ function callARotateMove(shape: Shape) {
       idx <= 100 && shape.moveTo(shape.graphics.ox + 10, shape.graphics.oy);
       idx >= 100 && shape.moveTo(shape.graphics.ox - 10, shape.graphics.oy - 4)
     }
-    if (idx > 200) {
+    if (idx > 160) {
       clearInterval(cid);
+      updateShape(shape4, 0.3, 60);
       callATranslate();
     };
   }, 20);
@@ -374,26 +399,25 @@ console.log(now, cur, cur - now);
 function callATranslate() {
   let idx = 0;
   let id = setInterval(() => {
-  // console.log(ctx.getTransform())
-  idx++
-  // idx > 0 && clearInterval(id);
-  // return;
-  // return;
-  // shape4.moveTo(idx * 3 + 480, idx * 3 + 680);
-  idx += 1;
-  idx >= 100 && clearInterval(id)
-  // idx >= 220 && ctx.translate(-100, -100);
-  if (idx === 100) {
-    callTranslate();
-    // ctx.save();
-    // ctx.strokeStyle = 'blue';
-    // ctx.$strokeRect(0, 0, 1500, 1500);
-    // ctx.restore();
-  }
+    // console.log(ctx.getTransform())
+    idx++;
+    // idx > 0 && clearInterval(id);
+    // return;
+    // return;
+    shape4.moveTo(idx * 3 + 480, idx * 3 + 680);
+    idx >= 100 && clearInterval(id)
+    // idx >= 220 && ctx.translate(-100, -100);
+    if (idx === 100) {
+      // callTranslate();
+      // ctx.save();
+      // ctx.strokeStyle = 'blue';
+      // ctx.$strokeRect(0, 0, 1500, 1500);
+      // ctx.restore();
+    }
 
-  //   // idx < 100 && shape3.moveTo(idx * 5 + 100, idx * 5 + 100);
-  //   // shape4.moveTo(idx * 4 + 200, idx * 4 + 200);
-}, 10);
+    //   // idx < 100 && shape3.moveTo(idx * 5 + 100, idx * 5 + 100);
+    //   // shape4.moveTo(idx * 4 + 200, idx * 4 + 200);
+  }, 10);
 }
 
 
@@ -404,23 +428,36 @@ function callTranslate() {
     idx++;
     idx < 30 && translate(12, 12, t);
     idx >= 38 && translate(-4, -8, t);
-    idx >= 60 && moveAShape() && clearInterval(id);
+    if (idx >= 60) {
+      clearInterval(id);
+      setTimeout(() => {
+        moveAShape();
+      }, 3000);
+    }
   }, 10);
 }
 function moveAShape() {
+  // return;
   // return;
   // return;
   // return 'ss'
   let idx = 0;
   let id = setInterval(() => {
     idx++;
-    shape1.moveTo(idx * 3 - 20, idx * 4 - 20);
-    if (idx >= 20) {
+    shape1.moveTo(idx * 3 - 30, idx * 4 - 30);
+    if (idx >= 2) {
       clearInterval(id);
       moveShape2();
       ctx.save();
-      ctx.strokeStyle = 'orange';
+      ctx.strokeStyle = 'green';
       ctx.$strokeRect(0, 0, 1500, 1500);
+      // ctx.strokeStyle = 'red';
+      // ctx.$moveTo(281, 187);
+      // ctx.$lineTo(796, 187);
+      // ctx.$lineTo(796, 1031);
+      // ctx.$lineTo(281, 1031);
+      // ctx.closePath();
+      // ctx.$stroke();
       ctx.restore();
     };
   }, 10);
@@ -428,6 +465,7 @@ function moveAShape() {
 }
 const arr: any[] = [];
 function moveShape2() {
+  return;
   let idx = 0;
   let id = setInterval(() => {
     idx++;

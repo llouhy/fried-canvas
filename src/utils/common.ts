@@ -1,7 +1,32 @@
 import { getTransBoundary } from "../config/common";
 import { BorderOptions, Graphics } from "../graphOptions";
 import { Graph } from "../init/useGraph";
-import { Boundary, EngineCtx } from "../rewriteFn/type";
+import { Boundary, EngineCtx, OffEngineCtx, Point } from "../rewriteFn/type";
+
+export const getTextOxOy = (x: number, y: number, text: string, ctx: EngineCtx | OffEngineCtx): Point => {
+  const align = ctx.textAlign;
+  const baseLine = ctx.textBaseline;
+  const width = ctx.measureText(text).width;
+  const height = Math.round(parseInt(ctx.font) * 1.2);
+  let ox, oy;
+  if (align === 'center') {
+    ox = Math.round(x - (width >> 1)); 
+  } else if (align === 'end' || align === 'right') {
+    ox = Math.round(x - width);
+  } else if (align === 'left' || align === 'start') {
+    ox = Math.round(x);
+  }
+  if (baseLine === 'top') {
+    oy = Math.round(y - 0.1 * height);
+  } else if (baseLine === 'hanging') {
+    oy = Math.round(y);
+  } else if (baseLine === 'bottom' || baseLine === 'alphabetic') {
+    oy = Math.round(y - height);
+  } else if (baseLine === 'middle') {
+    oy = Math.round(y - (height >> 1));
+  }
+  return { x: ox, y: oy }
+};
 
 const useCache = <P, T>(fn: ((...args: any[]) => T)) => {
   const map = new Map();

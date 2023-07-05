@@ -1,32 +1,32 @@
 import { getTransBoundary } from '../config/common';
-import { toHalfPixel } from '../utils/common';
+import { getTextOxOy, toHalfPixel } from '../utils/common';
 import type { Point, EngineCtx, OffEngineCtx } from './type';
-export const fillRect = (ctx: EngineCtx | OffEngineCtx) => {
-  const FillRect = ctx.fillRect;
-  (ctx as EngineCtx).$fillRect = FillRect;
-  return (x: number, y: number, width: number, height: number) => {
+// import { useLineWidthToCoordinateMap } from '../shape/coordinate';
+export const strokeText = (ctx: EngineCtx | OffEngineCtx) => {
+  const oldStrokeText = ctx.strokeText;
+  (ctx as EngineCtx).$strokeText = oldStrokeText;
+  return (text: string, x: number, y: number, maxWidth?: number) => {
+    // const { set, getAll, clear } = useLineWidthToCoordinateMap();
     const {
       drawCoordinates,
       // drawOffset: { dx, dy },
-      shadowBlur,
-      shadowOffsetX,
-      shadowOffsetY
+      // scale
     } = ctx;
-    const roundX = toHalfPixel(x);
-    const roundY = toHalfPixel(y);
-    const roundWidth = Math.round(width);
-    const roundHeight = Math.round(height);
-    FillRect.call(ctx, roundX, roundY, roundWidth, roundHeight);
+    oldStrokeText.call(ctx, text, toHalfPixel(x), toHalfPixel(y), maxWidth);
     if (!drawCoordinates) return;
+    const origin = getTextOxOy(x, y, text, ctx);
+    const roundX = origin.x;
+    const roundY = origin.y;
+    const roundWidth = Math.round(ctx.measureText(text).width);
+    const roundHeight = Math.round(parseInt(ctx.font) * 1.2);    
     const matrix = ctx.getTransform();
     const points = [
       { x: roundX, y: roundY },
       { x: roundX + roundWidth, y: roundY },
       { x: roundX + roundWidth, y: roundY + roundHeight },
-      { x: roundX, y: roundY + roundHeight }
+      { x: roundX, y: y + roundHeight }
     ];
     const transBoundary = getTransBoundary(matrix, points);
-    // console.log('lall', JSON.parse(JSON.stringify(drawCoordinates)));
     drawCoordinates.push(
       ...[
         {
@@ -43,6 +43,5 @@ export const fillRect = (ctx: EngineCtx | OffEngineCtx) => {
         },
       ]
     );
-    console.log(JSON.parse(JSON.stringify(drawCoordinates)));
   };
 };

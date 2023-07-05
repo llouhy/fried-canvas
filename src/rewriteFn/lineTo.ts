@@ -9,7 +9,7 @@ export const lineTo = (ctx: EngineCtx | OffEngineCtx) => {
   return (x: number, y: number) => {
     const {
       drawCoordinates,
-      drawOffset: { dx, dy }
+      // drawOffset: { dx, dy }
     } = ctx;
     oldLineTo.call(ctx, toHalfPixel(x), toHalfPixel(y));
     if (!drawCoordinates) return;

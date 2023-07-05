@@ -1,3 +1,4 @@
+import { ModelDrawFuncArgs } from './init/useModel';
 import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
 
 export type BorderOptions = {
@@ -26,4 +27,10 @@ export type ModelOptions = {
   graphics?: Graphics;
   imageData?: ImageData;
   readonly __draw__?: (ctx: EngineCtx | OffEngineCtx, ...args: any[]) => any;
+  checkArg?: {
+    checkArgMap: Map<number, ModelDrawFuncArgs>;
+    checkArgs: ModelDrawFuncArgs[];
+    hash: string;
+  };
+  drawArgs?: ModelDrawFuncArgs[];
 };
