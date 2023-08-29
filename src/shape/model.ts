@@ -1,7 +1,7 @@
 import type { ModelOptions } from '../graphOptions';
 import type { EngineCtx, OffEngineCtx } from '../rewriteFn/type';
 import { colorMap } from '../config/color';
-import { angleToRadian } from '../utils/common';
+import { angleToRadian } from '../utils/math';
 
 export type RectOptions = {
   width: number;

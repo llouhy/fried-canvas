@@ -1,3 +1,4 @@
+import { isCheckParams } from '../utils/is';
 import { engineById } from '../engineFn';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
@@ -5,18 +6,21 @@ import { getPreciseShapeSizeInfo, getImpreciseShapeSizeInfo } from '../shape/get
 import type { Graphics, ModelOptions } from '../graphOptions';
 import type { EngineCtx, OffEngineCtx, Point } from '../rewriteFn/type';
 import { setIdentify } from '../utils/setIdentify';
-import { setPropertyUnWritable } from '../utils/common';
-import { isCheckParams } from '../utils/is';
+import { useEvent } from './useEvent';
 
 export type checkParams = { value: ModelDrawFuncArgs; isCheckParams: symbol };
 
 export type ModelDrawFuncArgs = { [key: string]: any } | string | number | boolean | checkParams;
 
+export type AddModel = (x: ModelOptions, ...args: ModelDrawFuncArgs[]) => any;
+export type GetModel = (name: string) => undefined | ModelOptions;
+export type DeleteModel = (name: string) => boolean;
+export type UpdateModel = (name: string) => void;
 export type UseModelRes = {
-  addModel: (x: ModelOptions, ...args: ModelDrawFuncArgs[]) => any;
-  getModel: (name: string) => undefined | ModelOptions;
-  deleteModel: (name: string) => boolean;
-  updateModel: (name: string) => void;
+  addModel: AddModel;
+  getModel: GetModel;
+  deleteModel: DeleteModel;
+  updateModel: UpdateModel;
 };
 export type UseModel = (engineId: string) => UseModelRes;
 
@@ -28,10 +32,12 @@ export const sumModelGraphics = (ctx: EngineCtx | OffEngineCtx, drawFunc: (ctx: 
 } => {
   const coordinates: Point[] = [];
   ctx.drawCoordinates = coordinates;
+  ctx.pathCoordinates = [];
   drawFunc.apply(null, [ctx, ...args]);
   const boundary = getPreciseShapeSizeInfo(drawFunc, getImpreciseShapeSizeInfo(coordinates), ...args);
   console.log(boundary)
   ctx.drawCoordinates = null;
+  ctx.pathCoordinates = null;
   return boundary;
 }
 
@@ -39,7 +45,12 @@ export const useModel: UseModel = (
   engineId: string
 ): UseModelRes => {
   const prefix = engineId + ':';
-  const addModel = (modelOptions: ModelOptions, ...args: ModelDrawFuncArgs[]): any => {
+  const addModel: AddModel = (modelOptions, ...args) => {
+    const { callEventCallback, createEventData } = useEvent(engineId);
+    callEventCallback('before:modelAdd', createEventData('before:modelAdd', {
+      object: engineById.get(engineId),
+      modelOptions: [modelOptions, ...args]
+    }));
     const models = [modelOptions];
     const { width, height } = engineById.get(engineId)!.engine;
     const offCanvas = useOffscreenCanvas().get(width, height);
@@ -77,15 +88,19 @@ export const useModel: UseModel = (
         hash: JSON.stringify(checkArgs)
       };
       elem.draw(offCtx as OffEngineCtx, ...modelArgs);
+      callEventCallback('after:modelAdd', createEventData('after:modelAdd', {
+        object: engineById.get(engineId),
+        model: elem
+      }));
     }
   };
-  const updateModel = (modelName: string) => {
+  const updateModel: UpdateModel = (modelName) => {
     const model = modelMap.get(`${prefix}${modelName}`);
   };
-  const getModel = (modelName: string) => {
+  const getModel: GetModel = (modelName) => {
     return modelMap.get(`${prefix}${modelName}`);
   };
-  const deleteModel = (modelName: string) => {
+  const deleteModel: DeleteModel = (modelName) => {
     return modelMap.delete(`${prefix}${modelName}`);
   };
   return {

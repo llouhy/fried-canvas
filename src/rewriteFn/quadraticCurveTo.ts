@@ -8,12 +8,15 @@ export const quadraticCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
   return (cpx: number, cpy: number, x: number, y: number): void => {
     const {
       drawCoordinates,
+      pathCoordinates
       // drawOffset: { dx, dy }
     } = ctx;
     oldQuadraticCurveTo.call(ctx, cpx, cpy, x, y);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
-    const p1 = drawCoordinates.at(-1);
+    const p1 = pathCoordinates.at(-1);
+    const p2 = matrix.transformPoint({ x: cpx, y: cpy });
+    const p3 = matrix.transformPoint({ x, y });    
     if (!p1) {
       const points = [{ x: cpx, y: cpy }, { x, y }];
       const transBoundary = getTransBoundary(matrix, points);
@@ -21,11 +24,9 @@ export const quadraticCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
         { x: transBoundary.minX, y: transBoundary.minY },
         { x: transBoundary.maxX, y: transBoundary.maxY }
       ]);
+      pathCoordinates.push({ x: p3.x, y: p3.y });
       return;
     }
-    // const p1 = preP;
-    const p2 = matrix.transformPoint({ x: cpx, y: cpy });
-    const p3 = matrix.transformPoint({ x, y });
     const boundary = sumBezier2Boundary(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
     drawCoordinates.push(
       ...[
@@ -33,28 +34,7 @@ export const quadraticCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
         { x: boundary.maxX, y: boundary.maxY }
       ]
     );
-    return;
-    // const prePoint = drawCoordinates.at(-1);
-    // let point1 = { x: cpx, y: cpy };
-    // let point2 = { x: x, y: y };
-    // const points = [
-    //   { x: point1.x, y: point1.y },
-    //   { x: point2.x, y: point1.y },
-    //   { x: point2.x, y: point2.y },
-    //   { x: point1.x, y: point2.y }
-    // ];
-    // const transBoundary = getTransBoundary(ctx.getTransform(), points);
-    // drawCoordinates.push(
-    //   ...[
-    //     {
-    //       x: transBoundary.minX,
-    //       y: transBoundary.minY
-    //     },
-    //     {
-    //       x: transBoundary.maxX,
-    //       y: transBoundary.maxY
-    //     },
-    //   ]);
+    pathCoordinates.push({ x: p3.x, y: p3.y });
   };
 };
 

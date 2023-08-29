@@ -12,6 +12,7 @@ import { createLinearGradient } from './createLinearGradient';
 import { createRadialGradient } from './createRadialGradient';
 import { strokeText } from './strokeText';
 import { fillText } from './fillText';
+import { beginPath } from './beginPath';
 
 (window as any).RAF = (function () {
   return window.requestAnimationFrame
@@ -37,7 +38,8 @@ const useRewriteCtxFunction = () => {
     createLinearGradient,
     createRadialGradient,
     strokeText,
-    fillText
+    fillText,
+    beginPath
   };
 };
 

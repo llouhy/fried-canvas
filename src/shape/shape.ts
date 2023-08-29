@@ -1,13 +1,13 @@
-import { angleToRadian, generateRandomStr } from '../utils/common';
-import { ModelDrawFuncArgs, useModel } from '../init/useModel';
-import { getGraphicsWithBorder, getPureObject, setPropertyUnWritable } from '../utils/common';
-import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
-import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
 import { engineById } from '../engineFn';
 import { useGrid } from '../init/useGrid';
 import { GridIns } from '../definition/grid';
 import { setIdentify } from '../utils/setIdentify';
-// import { toCheckParams } from '../utils/is';
+import { getGraphicsWithBorder } from '../utils/math';
+import { ModelDrawFuncArgs, useModel } from '../init/useModel';
+import { angleToRadian, generateRandomStr } from '../utils/math';
+import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
+import { getPureObject, setPropertyUnWritable } from '../utils/common';
+import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
 
 export const allShapeBoundary = {
   minX: -Infinity,

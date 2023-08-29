@@ -3,11 +3,11 @@ import { InstanceType } from "../utils/setIdentify";
   export type IdentifyDescription = '__isError__' | '__isModel__' | '__isShape__' | '__isEngine__' | '__isGrid__' | '__isGraph__';
 
 export const identifyMap: { [key in InstanceType]: Symbol } = Object.freeze({
-  error: Symbol('__isError__'),
-  engine: Symbol('__isEngine__'),
-  shape: Symbol('__isShape__'),
-  model: Symbol('__isModel__'),
-  grid: Symbol('__isGrid__'),
-  graph: Symbol('__isGraph__'),
-  checkParams: Symbol('__isCheckParams__')
+  error: Symbol.for('__isError__'),
+  engine: Symbol.for('__isEngine__'),
+  shape: Symbol.for('__isShape__'),
+  model: Symbol.for('__isModel__'),
+  grid: Symbol.for('__isGrid__'),
+  graph: Symbol.for('__isGraph__'),
+  checkParams: Symbol.for('__isCheckParams__')
 });
