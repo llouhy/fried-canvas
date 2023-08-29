@@ -2,17 +2,21 @@ import { engineById } from '../engineFn';
 import type { ModelOptions } from '../graphOptions';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
 import { Shape, getShape as getShapeIns } from '../shape/shape';
-import { getGraphicsWithBorder } from '../utils/common';
+import { getGraphicsWithBorder } from '../utils/math';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
 import { useGrid } from './useGrid';
 import { ModelDrawFuncArgs, checkParams, sumModelGraphics } from './useModel';
 
+export type DrawShape = (shape: Shape, placePoint?: Point) => string | undefined;
+export type GetShape = (id?: string) => undefined | Shape | Shape[];
+export type UpdateShape = (shape: Shape, ...args: ModelDrawFuncArgs[]) => void;
+export type CreateShape = (modelName: string, data?: any, model?: ModelOptions, index?: number) => Shape;
 export type UseShapeRes = {
-  drawShape: (shape: Shape, placePoint?: Point) => string | undefined;
-  getShape: (id?: string) => undefined | Shape | Shape[];
-  updateShape: (shape: Shape, ...args: ModelDrawFuncArgs[]) => void;
-  createShape: (modelName: string, data?: any, model?: ModelOptions, index?: number) => Shape;
+  drawShape: DrawShape;
+  getShape: GetShape;
+  updateShape: UpdateShape;
+  createShape: CreateShape;
 };
 export type UseShape = (engineId: string) => UseShapeRes;
 
@@ -22,7 +26,7 @@ export const useShape: UseShape = (
   engineId: string
 ): UseShapeRes => {
   // const coordinateStack = useCoordinateCache(engineId);
-  const drawShape = (shape: Shape, placePoint?: Point) => {
+  const drawShape: DrawShape = (shape, placePoint) => {
     try {
       const { engine: { ctx } } = engineById.get(engineId);
       const { updateShapeToGrid } = useGrid(engineId);
@@ -36,7 +40,7 @@ export const useShape: UseShape = (
       console.warn(`create Shape error: unknown error`);
     }
   };
-  const getShape = (shapeId?: string) => {
+  const getShape: GetShape = (shapeId) => {
     if (!shapeId) {
       const result = [];
       for (const [key, val] of idToShape.entries()) {
@@ -47,13 +51,13 @@ export const useShape: UseShape = (
     }
     return idToShape.get(shapeId);
   };
-  const createShape = (modelName: string, options: { data?: any; model?: ModelOptions; index?: number }) => {
+  const createShape: CreateShape = (modelName, options) => {
     const shape = getShapeIns(modelName, engineId, options?.data, options?.model, options?.index);
     return shape;
   };
-  const updateShape = (shape: Shape, ...args: ModelDrawFuncArgs[]): void => {
+  const updateShape: UpdateShape = (shape, ...args) => {
     const $model = shape.$model;
-    const { engine: { width, height }, repaintInfluencedShape  } = engineById.get(engineId);
+    const { engine: { width, height }, repaintInfluencedShape } = engineById.get(engineId);
     const isResize = [...$model.checkArg.checkArgMap.keys()].some(elem => ($model.checkArg.checkArgMap.get(elem) as checkParams).value !== args[elem]);
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
     if (!isResize) {

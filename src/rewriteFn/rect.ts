@@ -1,19 +1,20 @@
 // import { useLineWidthToCoordinateMap } from '../shape/coordinate';
 import { getTransBoundary } from '../config/common';
-import { toHalfPixel } from '../utils/common';
-import type { Point, EngineCtx, OffEngineCtx } from './type';
+import { toHalfPixel } from '../utils/math';
+import type { EngineCtx, OffEngineCtx } from './type';
 export const rect = (ctx: EngineCtx | OffEngineCtx) => {
   const oldRect = ctx.rect;
   (ctx as EngineCtx).$rect = oldRect;
   return (x: number, y: number, width: number, height: number) => {
-    // const { set } = useLineWidthToCoordinateMap();
     const {
       drawCoordinates,
-      // drawOffset: { dx, dy }
+      pathCoordinates
     } = ctx;
     const roundWidth = Math.round(width);
     const roundHeight = Math.round(height);
-    oldRect.call(ctx, toHalfPixel(x), toHalfPixel(y), roundWidth, roundHeight);
+    const halfX = toHalfPixel(x);
+    const halfY = toHalfPixel(y);
+    oldRect.call(ctx, halfX, halfY, roundWidth, roundHeight);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
     const roundX = Math.round(x);
@@ -37,6 +38,7 @@ export const rect = (ctx: EngineCtx | OffEngineCtx) => {
         },
       ]
     );
-    // set(ctx.lineWidth, points);
+    const point = matrix.transformPoint({ x, y });
+    pathCoordinates.push({ x: point.x, y: point.y });
   };
 };

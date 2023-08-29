@@ -7,22 +7,24 @@ export const bezierCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
   return (cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void => {
     const {
       drawCoordinates,
+      pathCoordinates
       // drawOffset: { dx, dy }
     } = ctx;
     oldBezierCurveTo.call(ctx, cp1x, cp1y, cp2x, cp2y, x, y);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
-    const p0 = drawCoordinates.at(-1);
-    const p1 = { x: cp1x, y: cp1y };
-    const p2 = { x: cp2x, y: cp2y };
-    const p3 = { x, y };
+    const p0 = pathCoordinates.at(-1);
+    const transP1 = matrix.transformPoint({ x: cp1x, y: cp1y });
+    const transP2 = matrix.transformPoint({ x: cp2x, y: cp2y });
+    const transP3 = matrix.transformPoint({ x, y });
     // console.log();
     if (p0) {
-      const boundary = sumBezier3Boundary(p0, matrix.transformPoint(p1), matrix.transformPoint(p2), matrix.transformPoint(p3));
+      const boundary = sumBezier3Boundary(p0, { x: transP1.x, y: transP1.y }, { x: transP2.x, y: transP2.y }, { x: transP3.x, y: transP3.y });
       drawCoordinates.push(...[
         { x: boundary.minX, y: boundary.minY },
         { x: boundary.maxX, y: boundary.maxY }
       ]);
+      pathCoordinates.push({ ...transP3 });
       return;
     }
     const points = [
@@ -35,6 +37,7 @@ export const bezierCurveTo = (ctx: EngineCtx | OffEngineCtx) => {
       { x: transBoundary.minX, y: transBoundary.minY },
       { x: transBoundary.maxX, y: transBoundary.maxY }
     ];
+    pathCoordinates.push({ ...transP3 });
     drawCoordinates.push(...transPoints);
   };
 };

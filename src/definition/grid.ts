@@ -1,7 +1,7 @@
-import { generateRandomStr } from "../utils/common";
-import { Boundary } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
+import { Boundary } from "../rewriteFn/type";
 import { getPureObject } from "../utils/common";
+import { generateRandomStr } from "../utils/math";
 import { setIdentify } from "../utils/setIdentify";
 
 export type GridIns = {

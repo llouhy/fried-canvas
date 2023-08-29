@@ -8,7 +8,7 @@ import type { ModelCache } from './config/useModel';
 import type { ModelOptions } from './graphOptions';
 import type { Shape } from './shape/shape';
 import type { EngineCtx } from './rewriteFn/type';
-import { generateRandomStr } from './utils/common';
+import { generateRandomStr } from './utils/math';
 
 export type EngineOptions = {
   id?: string;
@@ -96,7 +96,7 @@ export default class Engine {
 
   reloadCtxFunction() {
     const coordinateStack = useCoordinateCache(this.id);
-    const { arc, arcTo, rect, fillRect, strokeRect, moveTo, lineTo, stroke } = useRewriteCtxFunction();
+    const { arc, arcTo, rect, fillRect, strokeRect, moveTo, lineTo, stroke, beginPath } = useRewriteCtxFunction();
     this.ctx.arc = arc(this.ctx);
     this.ctx.arcTo = arcTo(this.ctx);
     this.ctx.rect = rect(this.ctx);
@@ -107,6 +107,7 @@ export default class Engine {
     this.ctx.quadraticCurveTo = quadraticCurveTo(this.ctx);
     this.ctx.bezierCurveTo = bezierCurveTo(this.ctx);
     this.ctx.stroke = stroke(this.ctx);
+    this.ctx.beginPath = beginPath(this.ctx);
   }
 
   reInitCanvas(canvas: HTMLCanvasElement) {

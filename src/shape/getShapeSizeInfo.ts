@@ -1,9 +1,10 @@
 import { Graphics } from '../graphOptions';
+import { getPureObject } from '../utils/common';
+import { useOffCanvas } from '../init/useOffCanvas';
 import { reloadCtxFunction } from '../init/context';
 import { ModelDrawFuncArgs } from '../init/useModel';
-import { useOffCanvas } from '../init/useOffCanvas';
-import type { Boundary, OffEngineCtx, Point } from '../rewriteFn/type';
-import { getPureObject } from '../utils/common';
+import type { Boundary, Point } from '../rewriteFn/type';
+
 const getInitBoundary = () => {
   return getPureObject({
     minX: Infinity,

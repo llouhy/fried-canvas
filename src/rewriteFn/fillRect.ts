@@ -1,5 +1,5 @@
 import { getTransBoundary } from '../config/common';
-import { toHalfPixel } from '../utils/common';
+import { toHalfPixel } from '../utils/math';
 import type { Point, EngineCtx, OffEngineCtx } from './type';
 export const fillRect = (ctx: EngineCtx | OffEngineCtx) => {
   const FillRect = ctx.fillRect;

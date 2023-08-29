@@ -1,12 +1,13 @@
-import { Boundary, EngineCtx } from "../rewriteFn/type";
-import { isNumber } from "../utils/is";
-import { idToShape, useShape } from "./useShape";
-import { engineById } from "../engineFn";
-import { setIdentify } from "../utils/setIdentify";
-import { graphicsToBoundary, setCanvasSize } from "../utils/common";
-import { Shape } from "../shape/shape";
-import { Graphics } from "../graphOptions";
 import { useGrid } from "./useGrid";
+import { Shape } from "../shape/shape";
+import { isNumber } from "../utils/is";
+import { idToShape } from "./useShape";
+import { engineById } from "../engineFn";
+import { Graphics } from "../graphOptions";
+import { setCanvasSize } from "../utils/common";
+import { setIdentify } from "../utils/setIdentify";
+import { graphicsToBoundary } from "../utils/math";
+import { Boundary, EngineCtx } from "../rewriteFn/type";
 
 export const graphByEngineId = new Map<string, Graph>();
 
@@ -111,12 +112,9 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     ctx.clearRect(x, y, width, height);
     ctx.save();
     ctx.strokeStyle = 'pink';
-    // console.log(x, y, width, height)
-    // ctx.$strokeRect(x, y, width, height);
     ctx.restore();
   };
   const repaintInfluencedShape = (graphics: Graphics, excludesSet: Set<Shape> = new Set()) => {
-    // console.log(graphics)
     const { engine: { ctx } } = engineById.get(engineId);
     const graph = graphByEngineId.get(engineId);
     const { getInfluencedGrid, getInfluencedShape } = useGrid(engineId);
@@ -153,7 +151,6 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
           clearBoundary.maxX - clearBoundary.minX,
           clearBoundary.maxY - clearBoundary.minY);
       }
-      // !excludesSet.has(elem) && ;
     }
   };
   return {

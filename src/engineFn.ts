@@ -1,18 +1,20 @@
-import { ModelDrawFuncArgs, UseModelRes, useModel } from './init/useModel';
-import { UseShapeRes, useShape } from './init/useShape';
+import { AddModel, DeleteModel, GetModel, ModelDrawFuncArgs, UpdateModel, UseModelRes, useModel } from './init/useModel';
+import { DrawShape, GetShape, UseShapeRes, useShape } from './init/useShape';
 import { UseGridRes, useGrid } from './init/useGrid';
-import { generateRandomStr } from './utils/common';
+import { generateRandomStr } from './utils/math';
 import { initContext, reloadCtxFunction } from './init/context';
 import { Shape } from './shape/shape';
-import type { Graphics, ModelOptions } from './graphOptions';
-import type { EngineCtx, OffEngineCtx, Point } from './rewriteFn/type';
 import { isString } from './utils/is';
 import { getError } from './definition/error';
 import { identifyMap } from './definition/identify';
-import { setCanvasSize, getPureObject, mergeObjectInList, useCollectReturn, omitObjectProperty, setPropertyUnWritable } from './utils/common';
+// import { setCanvasSize, getPureObject, mergeObjects, useCollectReturn, omitObjectProperty, setPropertyUnWritable } from './utils/math';
 import { setIdentify } from './utils/setIdentify';
 import { UseGraphRes, useGraph } from './init/useGraph';
-import { toCheckParams } from './utils/is';
+import { OnEvent, RemoveAllEvent, RemoveEvent, UseEventRes, useEvent } from './init/useEvent';
+import type { Graphics, ModelOptions } from './graphOptions';
+import type { EngineCtx, OffEngineCtx, Point } from './rewriteFn/type';
+import { getPureObject, mergeObjects, microtask, omitObjectProperty, setCanvasSize, setPropertyUnWritable, useCollectReturn } from './utils/common';
+// import { arcTo } from './rewriteFn/arcTo';
 
 export const isEngine = (value: any) => {
   return value === identifyMap.engine;
@@ -28,15 +30,18 @@ export type InitEngineResult = {
     readonly: boolean;
     repaintInfluencedShape: (graphics: Graphics, excludes: Set<Shape>) => void;
   };
-  addModel: (modelList: ModelOptions, ...args: ModelDrawFuncArgs[]) => any;
-  getModel: (modelName: string) => ModelOptions | undefined;
-  deleteModel: (modelName: string) => boolean;
-  updateModel: (modelName: string) => void;
+  addModel: AddModel;
+  getModel: GetModel;
+  deleteModel: DeleteModel;
+  updateModel: UpdateModel;
   createShape: (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => Shape;
-  drawShape: (shape: Shape, placePoint?: Point) => string | undefined;
-  getShape: (shapeId: string) => Shape | undefined;
+  drawShape: DrawShape;
+  getShape: GetShape;
   resizeCanvas: (w: number, h: number) => void;
   clearRect: (x: number, y: number, width: number, height: number) => void;
+  onEvent: OnEvent;
+  removeEvent: RemoveEvent;
+  removeAllEvent: RemoveAllEvent;
   [key: string]: any;
 };
 export type InitEngine = (options: EngineOptions) => InitEngineResult;
@@ -71,7 +76,7 @@ export const engineById = new Map<string, InitEngineResult>();
 
 export const initEngine: InitEngine = (options): InitEngineResult => {
   const { id, width, height, canvas, modelList, readonly } = options;
-  const engineRes = engineById.get(id ?? '');
+  const engineRes = engineById.get(id || '');
   if (engineRes) return engineRes;
   const canvasDom =
     canvas instanceof HTMLCanvasElement ? canvas : isString(canvas) && document.querySelector(`#${canvas}`);
@@ -79,11 +84,10 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
     throw getError(`Create engine instance error: can't find a canvas dom by id ${canvas}`);
   }
   const ctx: CanvasRenderingContext2D = initContext('2d', canvasDom);
-  const _id: string = id ?? generateRandomStr(8);
+  const _id: string = id || generateRandomStr(8);
   const _readonly: boolean = readonly ?? false;
   const _width: number = width ?? DEFAULT_CANVAS_WIDTH;
   const _height: number = height ?? DEFAULT_CANVAS_HEIGHT;
-
   reloadCtxFunction(ctx as CanvasRenderingContext2D);
   setCanvasSize(canvasDom, _width, _height, ctx);
   const engineResult = getPureObject({
@@ -98,11 +102,18 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   });
   setIdentify(engineResult, 'engine');
   engineById.set(_id, engineResult);
-  const callUseResults: [UseModelRes, UseShapeRes, UseGridRes, UseGraphRes] = useCollectReturn(useModel, useShape, useGrid, useGraph)(_id);
-  const funcObject = mergeObjectInList<UseModelRes & UseShapeRes & UseGridRes & UseGraphRes>(callUseResults);
+
+  const coreInitObject: [UseModelRes, UseShapeRes, UseGridRes, UseGraphRes, UseEventRes] = useCollectReturn(useModel, useShape, useGrid, useGraph, useEvent)(_id);
+  const funcObject = mergeObjects<UseModelRes & UseShapeRes & UseGridRes & UseGraphRes & UseEventRes>(coreInitObject);
   Object.assign(engineResult, funcObject);
   setPropertyUnWritable(omitObjectProperty(engineResult, ['rootGrid']), Object.keys(funcObject));
-  modelList && engineResult.addModel(modelList);
+  microtask(() => {
+    const { callEventCallback, createEventData, addModel } = engineResult;
+    modelList && addModel(modelList);
+    callEventCallback('after:engineInit', createEventData('after:engineInit', {
+      object: engineResult
+    }))
+  });
   return engineResult;
 };
 
@@ -110,7 +121,16 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 
 const engine = initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
 // console.log(engine)
-const { addModel, createShape, drawShape, updateShape, engine: { ctx }, translate, updateModel } = engine;
+const { addModel, createShape, drawShape, updateShape, engine: { ctx }, translate, updateModel, onEvent } = engine;
+onEvent('after:engineInit', (data) => {
+  console.log('event', data)
+});
+onEvent('before:modelAdd', (data) => {
+  console.log('modalAdd', data)
+});
+onEvent('after:modelAdd', (data) => {
+  console.log('modalAdd', data)
+});
 ctx.save();
 ctx.strokeStyle = 'orange';
 ctx.$strokeRect(0, 0, 1500, 1500);
@@ -123,14 +143,25 @@ const getTestModel1 = (): ModelOptions => {
     name: 'test1',
     draw: (ctx: EngineCtx | OffEngineCtx, p1, p2, p3) => {
       ctx.save();
-      ctx.transform(1.2, 0.3,0.2, 1, 30, 60);
-      ctx.moveTo(100, 260);
-      ctx.quadraticCurveTo(899, 43, 450, 223);
-      ctx.bezierCurveTo(500, 20, 874, 674, 732, 40);
-      ctx.quadraticCurveTo(899, 43, 450, 223);
-      ctx.bezierCurveTo(500, 20, 874, 674, 732, 40);
+      ctx.moveTo(200, 40);
+      ctx.transform(1.4, 0, -0.3, 3, 290, 140);
+      ctx.strokeStyle = 'green';
+      ctx.quadraticCurveTo(200, 500, 400, 100);
+      // ctx.stroke();
+      // ctx.strokeStyle = 'yellow';
+      // ctx.translate(100, 100);
+      ctx.rotate(60 * Math.PI / 180)
+      ctx.transform(0.2, 0, 0, 0.3, -120, 100);
+      // ctx.arcTo(150, 20, 200, 400, 50);
+      ctx.stroke();
+      // ctx.strokeStyle = 'red';
+      ctx.quadraticCurveTo(200, 300, 600, 100);
+      // ctx.bezierCurveTo(500, 20, 874, 674, 732, 40);
+      // ctx.quadraticCurveTo(899, 43, 450, 223);
+      // ctx.bezierCurveTo(500, 20, 874, 674, 732, 40);
       ctx.stroke();
       ctx.restore();
+      // ctx.$strokeRect(680, 730, 100, 100)
       // ctx.save();
       // // ctx.lineWidth = 10;
       // ctx.strokeStyle = 'Turquoise';
@@ -348,14 +379,58 @@ const shape6 = createShape('test6');
 // console.log(shape5)
 const now = performance.now();
 drawShape(shape1);
-drawShape(shape2, { x: 500, y: 400 });
-drawShape(shape3, { x: 100, y: 300 });
+ctx.$beginPath();
+// const { x, y, width, height } = (window as any).tess;
+// ctx.$strokeRect(x, y, width, height);
+// for (const [idx, point] of (window as any)[`arcTest`].entries()) {
+//   console.log(point)
+//   if (!idx) {
+//     // ctx.$arc(point.x, point.y, 50, 0, 360 * Math.PI / 180);
+//     ctx.$moveTo(point.x, point.y);
+//     // ctx.$arc(point.x, point.y, (window as any)['transRadius'], 0, 2 * Math.PI);
+//   } else {
+//     ctx.$lineTo(point.x, point.y);
+//   }
+//   const map = {
+//     '0': 'black',
+//     '1': 'pink',
+//     '2': 'orange',
+//     '3': 'yellow'
+//   };
+//   // ctx.strokeStyle = (map as any)[idx];
+//   // ctx.$strokeRect(point.x, point.y, 1, 200);
+// }
+// ctx.closePath()
+ctx.$stroke();
+ctx.$beginPath();
+ctx.strokeStyle = 'pink';
+// for (const [idx, point] of (window as any).testtt.entries()) {
+//   if (!idx) {
+//     ctx.$moveTo(point.x, point.y);
+//   } else {
+//     ctx.$lineTo(point.x, point.y)
+//   }
+// }
+ctx.$stroke();
+
+// ctx.beginPath();
+// // ctx.$arc(184, 146, 50, 0, 360 * Math.PI / 180);
+// // ctx.$stroke();
+// // ctx.beginPath();
+// ctx.$moveTo(100, 70);
+// ctx.$lineTo(100, 20)
+// ctx.$lineTo(135, 35);
+// ctx.$lineTo(150, 70);
+// // ctx.closePath();
+// ctx.$stroke();
+// drawShape(shape2, { x: 500, y: 400 });
+// drawShape(shape3, { x: 100, y: 300 });
 // const [rx, ry] = [Math.round(Math.random() * 1000), Math.round(Math.random() * 1000)];
-drawShape(shape4);
+// drawShape(shape4);
 // drawShape(shape44, { x: 500, y: 200 })
 // ctx.$strokeRect(rx, ry, 100, 100)
-drawShape(shape5, { x: 800, y: 200 });
-drawShape(shape6);
+// drawShape(shape5, { x: 800, y: 200 });
+// drawShape(shape6);
 
 let idd = 1;
 // ctx.save();

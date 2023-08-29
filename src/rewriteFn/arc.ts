@@ -1,7 +1,13 @@
 import { useLineWidthToCoordinateMap } from '../shape/coordinate';
 import { getTransBoundary } from '../config/common';
 import type { Boundary, Point, EngineCtx, OffEngineCtx } from './type';
-import { radianToAngle } from '../utils/common';
+import { radianToAngle } from '../utils/math';
+
+const getClockwisePointOnCircle = (x0: number, y0: number, r: number, radian: number): Point => {
+  const x = x0 + r * Math.cos(-radian);
+  const y = y0 + r * Math.sin(-radian);
+  return { x, y };
+}
 
 const getQuadrant = (angle: number): number => {
   const absAngle = angle >= 0 ? angle % 360 : 360 + (angle % 360);
@@ -169,27 +175,29 @@ const getArcBoundary = (x: number, y: number, radius: number, startAngle: number
 
 // const getAngleY = (absAngle): number => {}
 export const arc = (ctx: EngineCtx | OffEngineCtx) => {
-  const oldArc = ctx.arc;
+  const oldArc = ctx.arc;    
+  (ctx as EngineCtx).$arc = oldArc;
   return (
     x: number,
     y: number,
     radius: number,
-    startAngle: number,
-    endAngle: number,
+    startRadian: number,
+    endRadian: number,
     counterclockwise?: boolean | undefined
   ) => {
     const {
       drawCoordinates,
+      pathCoordinates
       // drawOffset: { dx, dy }
     } = ctx;
-    oldArc.call(ctx, x, y, radius, startAngle, endAngle, counterclockwise);
+    oldArc.call(ctx, x, y, radius, startRadian, endRadian, counterclockwise);
     if (!drawCoordinates) return;
     // const { set } = useLineWidthToCoordinateMap();
     const matrix = ctx.getTransform();
     let boundary!: Boundary;
-    if (!((endAngle - startAngle) % 360 === 0)) {
-      boundary = getArcBoundary(x, y, radius, radianToAngle(startAngle), radianToAngle(endAngle));
-    } else if (endAngle > startAngle) {
+    if (!((endRadian - startRadian) % 360 === 0)) {
+      boundary = getArcBoundary(x, y, radius, radianToAngle(startRadian), radianToAngle(endRadian));
+    } else if (endRadian > startRadian) {
       boundary = {
         minX: x - radius,
         maxX: x + radius,
@@ -207,12 +215,8 @@ export const arc = (ctx: EngineCtx | OffEngineCtx) => {
     const point1 = { x: transBoundary.minX, y: transBoundary.minY };
     const point2 = { x: transBoundary.maxX, y: transBoundary.maxY };
     const points = [point1, point2];
-    console.log('%carc计算', 'background: black; color:#fff;');
-    console.log(points);
-    (window as any)['helloo'] = transBoundary;
-    // set(ctx.lineWidth, points);
+    const lastPoint = matrix.transformPoint(getClockwisePointOnCircle(x, y, radius, endRadian));
     drawCoordinates.push(...points);
-    // oldArc.call(ctx, x, y, radius, startAngle, endAngle, counterclockwise);
-    (ctx as EngineCtx).$arc = oldArc;
+    pathCoordinates.push(lastPoint);
   };
 };

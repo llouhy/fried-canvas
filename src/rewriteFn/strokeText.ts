@@ -1,5 +1,5 @@
 import { getTransBoundary } from '../config/common';
-import { getTextOxOy, toHalfPixel } from '../utils/common';
+import { getTextOxOy, toHalfPixel } from '../utils/math';
 import type { Point, EngineCtx, OffEngineCtx } from './type';
 // import { useLineWidthToCoordinateMap } from '../shape/coordinate';
 export const strokeText = (ctx: EngineCtx | OffEngineCtx) => {
