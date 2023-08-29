@@ -1,6 +1,10 @@
-import { getPureObject, getTypeStr } from './common';
 import { identifyMap } from '../definition/identify';
+import { getPureObject, getTypeStr } from './common';
 import { setIdentify } from './setIdentify';
+
+export const isObject = (value: any) => {
+  return getTypeStr(value) === 'object';
+}
 
 export const isFunction = (value: any) => {
   return typeof value === 'function';
@@ -11,7 +15,6 @@ export const isArray = (value: any) => {
 };
 
 export const isString = (value: any) => {
-  // debugger
   return getTypeStr(value) === 'string';
 };
 

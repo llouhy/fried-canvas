@@ -1,4 +1,10 @@
 import type { Boundary, Point, Direction } from '../rewriteFn/type';
+
+export const getTransPoint = (matrix: any, point: Point): Point => {
+  let transP = matrix.transformPoint(point);
+  return { x: transP.x, y: transP.y };
+}
+
 export const getDefaultContextAttribute = () => {
   return {
     alpha: true, // false will paint a black backgound
@@ -12,7 +18,7 @@ export const getDefaultContextAttribute = () => {
   };
 };
 
-export const getTransBoundary = (matrix: any, points: Point[]): Boundary => {
+export const getTransBoundary = (matrix: any, points: Point[], excludes?: Point[]): Boundary => {
   const transBoundary = {
     minX: Infinity,
     maxX: -Infinity,
@@ -20,7 +26,7 @@ export const getTransBoundary = (matrix: any, points: Point[]): Boundary => {
     maxY: -Infinity
   };
   for (const elem of points) {
-    const transPoint = matrix.transformPoint(elem);
+    const transPoint = excludes?.find(item => item === elem) || matrix.transformPoint(elem);
     elem.x = Math.round(transPoint.x);
     elem.y = Math.round(transPoint.y);
     transBoundary.minX >= elem.x && (transBoundary.minX = elem.x);
