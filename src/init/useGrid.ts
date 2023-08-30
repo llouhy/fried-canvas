@@ -5,7 +5,7 @@ import { Boundary } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
 import { getDivisibleNum, graphicsToBoundary } from "../utils/math";
 import { graphByEngineId, useGraph } from "./useGraph";
-import { idToShape } from "./useShape";
+import { shapeById } from "./useShape";
 
 export type UseGridRes = {
   getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
@@ -133,7 +133,7 @@ export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
     }
   };
   const updateAllShapeToGrid = (pointer: Object = {}) => {
-    for (const elem of idToShape.values()) {
+    for (const elem of shapeById.values()) {
       updateShapeToGrid(elem, elem.graphicsWithBorder);
     };
   };

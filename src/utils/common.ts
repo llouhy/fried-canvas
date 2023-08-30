@@ -2,7 +2,7 @@ import { EngineCtx } from "../rewriteFn/type";
 import { useCacheFunc } from "./cache";
 import { isFunction, isObject } from "./is";
 
-export const getTypeStr = (value: any) => {
+export const getType = (value: any) => {
   return Object.prototype.toString.call(value).slice(8, -1).toLowerCase();
 };
 
