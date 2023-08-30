@@ -1,24 +1,17 @@
-import { AddModel, DeleteModel, GetModel, ModelDrawFuncArgs, UpdateModel, UseModelRes, useModel } from './init/useModel';
-import { DrawShape, GetShape, UseShapeRes, useShape } from './init/useShape';
-import { UseGridRes, useGrid } from './init/useGrid';
-import { generateRandomStr } from './utils/math';
-import { initContext, reloadCtxFunction } from './init/context';
+import { isCanvas, isString } from './utils/is';
 import { Shape } from './shape/shape';
-import { isString } from './utils/is';
-import { getError } from './definition/error';
-import { identifyMap } from './definition/identify';
-// import { setCanvasSize, getPureObject, mergeObjects, useCollectReturn, omitObjectProperty, setPropertyUnWritable } from './utils/math';
-import { setIdentify } from './utils/setIdentify';
+import { UseGridRes, useGrid } from './init/useGrid';
 import { UseGraphRes, useGraph } from './init/useGraph';
+import { getError } from './definition/error';
+import { generateRandomStr } from './utils/math';
+import { setIdentify } from './utils/setIdentify';
+import { DrawShape, GetShape, UseShapeRes, useShape } from './init/useShape';
+import { initContext, reloadCtxFunction } from './init/context';
 import { OnEvent, RemoveAllEvent, RemoveEvent, UseEventRes, useEvent } from './init/useEvent';
+import { AddModel, DeleteModel, GetModel, UpdateModel, UseModelRes, useModel } from './init/useModel';
+import { getPureObject, microtask, omitObjectProperty, setCanvasSize, setPropertyUnWritable } from './utils/common';
 import type { Graphics, ModelOptions } from './graphOptions';
-import type { EngineCtx, OffEngineCtx, Point } from './rewriteFn/type';
-import { getPureObject, mergeObjects, microtask, omitObjectProperty, setCanvasSize, setPropertyUnWritable, useCollectReturn } from './utils/common';
-// import { arcTo } from './rewriteFn/arcTo';
-
-export const isEngine = (value: any) => {
-  return value === identifyMap.engine;
-};
+import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
 
 export type InitEngineResult = {
   engine: {
@@ -79,17 +72,17 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   const engineRes = engineById.get(id || '');
   if (engineRes) return engineRes;
   const canvasDom =
-    canvas instanceof HTMLCanvasElement ? canvas : isString(canvas) && document.querySelector(`#${canvas}`);
-  if (!(canvasDom instanceof HTMLCanvasElement)) {
-    throw getError(`Create engine instance error: can't find a canvas dom by id ${canvas}`);
+    isCanvas(canvas) ? canvas : (isString(canvas) && document.querySelector(`#${canvas}`));
+  if (!isCanvas(canvasDom)) {
+    throw getError(`Create engine instance error: cant find a canvas dom by id "${canvas}"`);
   }
-  const ctx: CanvasRenderingContext2D = initContext('2d', canvasDom);
+  const ctx: CanvasRenderingContext2D = initContext('2d', canvasDom as HTMLCanvasElement);
   const _id: string = id || generateRandomStr(8);
   const _readonly: boolean = readonly ?? false;
   const _width: number = width ?? DEFAULT_CANVAS_WIDTH;
   const _height: number = height ?? DEFAULT_CANVAS_HEIGHT;
   reloadCtxFunction(ctx as CanvasRenderingContext2D);
-  setCanvasSize(canvasDom, _width, _height, ctx);
+  setCanvasSize(canvasDom as HTMLCanvasElement, _width, _height, ctx);
   const engineResult = getPureObject({
     engine: getPureObject({
       ctx,
@@ -100,13 +93,14 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
       canvas: canvasDom
     })
   });
-  setIdentify(engineResult, 'engine');
-  engineById.set(_id, engineResult);
-
-  const coreInitObject: [UseModelRes, UseShapeRes, UseGridRes, UseGraphRes, UseEventRes] = useCollectReturn(useModel, useShape, useGrid, useGraph, useEvent)(_id);
-  const funcObject = mergeObjects<UseModelRes & UseShapeRes & UseGridRes & UseGraphRes & UseEventRes>(coreInitObject);
-  Object.assign(engineResult, funcObject);
-  setPropertyUnWritable(omitObjectProperty(engineResult, ['rootGrid']), Object.keys(funcObject));
+  engineById.set(_id, setIdentify(engineResult, 'engine'));
+  const modelCore: UseModelRes = useModel(_id),
+    shapeCore: UseShapeRes = useShape(_id),
+    gridCore: UseGridRes = useGrid(_id),
+    graphCore: UseGraphRes = useGraph(_id),
+    eventCore: UseEventRes = useEvent(_id);
+  const coreInstance = { ...modelCore, ...shapeCore, ...gridCore, ...graphCore, ...eventCore };
+  setPropertyUnWritable(omitObjectProperty(Object.assign(engineResult, coreInstance), ['rootGrid']), Object.keys(coreInstance));
   microtask(() => {
     const { callEventCallback, createEventData, addModel } = engineResult;
     modelList && addModel(modelList);
@@ -131,6 +125,15 @@ onEvent('before:modelAdd', (data) => {
 onEvent('after:modelAdd', (data) => {
   console.log('modalAdd', data)
 });
+onEvent('shape:click', (data) => {
+  console.log('shape.click', data)
+});
+onEvent('graph:click', (data) => {
+  console.log('graph.click', data)
+})
+onEvent('shape:mousedown', (data) => {
+  console.log('shape.mousedown', data)
+})
 ctx.save();
 ctx.strokeStyle = 'orange';
 ctx.$strokeRect(0, 0, 1500, 1500);

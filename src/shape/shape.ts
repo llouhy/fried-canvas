@@ -34,7 +34,7 @@ export type Shape = {
   _graphics: Graphics;
   draw: (ctx: EngineCtx, placePoint?: Point, rotateDeg?: number) => string;
   drawBoundary: () => void;
-  isPointInTheShape: (e: any) => boolean;
+  isPointInTheShape: (x: number, y: number) => boolean;
   moveTo: (x: number, y: number) => void;
   rotate: (rotateDeg: number) => void;
 };
@@ -76,7 +76,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
   };
   shape.id = `${engineId}:${generateRandomStr(8)}`;
   shape.data = data;
-  shape.index = index ?? index;
+  shape.index = +index || 0;
   shape.belongEngineId = engineId;
   shape.drawArgs = shape.$model.drawArgs;
   shape._graphics = getPureObject(shape.$model.graphics as Graphics);
@@ -104,7 +104,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
         ...shape.graphics,
         ox: placePoint.x,
         oy: placePoint.y
-      };       
+      };
       shape.graphicsWithBorder = getGraphicsWithBorder(shape.graphics, shape.borderOptions, rotateDeg);
       return shape.id;
     }
@@ -120,7 +120,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
       ...shape.graphics,
       ox: placePoint.x,
       oy: placePoint.y
-    };    
+    };
     shape.drawBoundary();
     shape.graphicsWithBorder = getGraphicsWithBorder(shape.graphics, shape.borderOptions);
     return shape.id;
@@ -165,7 +165,11 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     shape.ctx.setLineDash([0, 0]);
     shape.ctx.restore();
   }
-  const isPointInTheShape = (event: any): boolean => {
+  const isPointInTheShape = (x: number, y: number): boolean => {
+    const { ox, oy, width, height } = shape.graphicsWithBorder;
+    if (x < ox || y < oy || x > width + ox || y > height + oy) {
+      return false;
+    }
     return true;
   }
 
