@@ -1,11 +1,19 @@
-import type { IdentifyDescription } from '../definition/identify';
-import { identifyMap } from '../definition/identify';
+import { error, engine, shape, model, grid, graph, checkParams } from '../definition/identify';
 
 export type InstanceType = 'error' | 'model' | 'shape' | 'engine' | 'grid' | 'graph' | 'checkParams';
 export const setIdentify = (obj: any, type: InstanceType) => {
-  Object.defineProperty(obj, identifyMap[type].description as IdentifyDescription, {
-    value: identifyMap[type],
+  const identifyByType = {
+    error,
+    engine,
+    shape,
+    model,
+    grid,
+    graph,
+    checkParams
+  };
+  const identify = identifyByType[type];
+  return Object.defineProperty(obj, identify.description, {
+    value: identify,
     writable: false
   });
-  return obj;
 };

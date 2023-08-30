@@ -20,7 +20,7 @@ export type UseShapeRes = {
 };
 export type UseShape = (engineId: string) => UseShapeRes;
 
-export const idToShape = new Map<string, Shape>();
+export const shapeById = new Map<string, Shape>();
 export const useShape: UseShape = (
   // ctx: EngineCtx,
   engineId: string
@@ -33,7 +33,7 @@ export const useShape: UseShape = (
       // console.log('drawShape', ctx.getTransform())
       const shapeId = shape.draw(ctx, placePoint);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
-      idToShape.set(shapeId, shape);
+      shapeById.set(shapeId, shape);
       return shapeId;
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -43,13 +43,13 @@ export const useShape: UseShape = (
   const getShape: GetShape = (shapeId) => {
     if (!shapeId) {
       const result = [];
-      for (const [key, val] of idToShape.entries()) {
+      for (const [key, val] of shapeById.entries()) {
         if (key.split(':')[0] !== engineId) continue;
         result.push(val);
       }
       return result;
     }
-    return idToShape.get(shapeId);
+    return shapeById.get(shapeId);
   };
   const createShape: CreateShape = (modelName, options) => {
     const shape = getShapeIns(modelName, engineId, options?.data, options?.model, options?.index);
@@ -62,7 +62,6 @@ export const useShape: UseShape = (
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
     if (!isResize) {
       shape.drawArgs = args;
-      // shape.rotateDeg = 0;
       repaintInfluencedShape(shape.graphicsWithBorder, new Set([shape]));
       shape.draw(shape.ctx, { x: shape.graphics.ox, y: shape.graphics.oy }, shape.rotateDeg);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
@@ -73,7 +72,6 @@ export const useShape: UseShape = (
     let offCtx = offCanvas!.getContext('2d') as OffscreenCanvasRenderingContext2D;
     reloadCtxFunction<OffscreenCanvasRenderingContext2D>(offCtx);
     const { graphics, imageData } = sumModelGraphics(offCtx, shape.$model.__draw__, ...args);
-    // shape.rotateDeg = 0;
     shape._graphics = graphics;
     shape.graphics = { ...shape.graphics, width: shape._graphics.width, height: shape._graphics.height };
     shape.drawArgs = args;

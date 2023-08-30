@@ -1,7 +1,7 @@
 import { useGrid } from "./useGrid";
 import { Shape } from "../shape/shape";
 import { isNumber } from "../utils/is";
-import { idToShape } from "./useShape";
+import { shapeById } from "./useShape";
 import { engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
 import { setCanvasSize } from "../utils/common";
@@ -38,7 +38,7 @@ const getBoundary = (): Boundary => {
     minY: 0,
     maxY: 0
   };
-  for (const elem of idToShape.values()) {
+  for (const elem of shapeById.values()) {
     // console.log(elem)
     const { minX, minY, maxX, maxY } = imageBoundary;
     imageBoundary.minX = Math.min(elem.boundary.minX, minX);
@@ -90,7 +90,7 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     graph.top = -graph.translateY;
     graph.right = graph.left + width;
     graph.bottom = graph.top + height;
-    [...idToShape.values()].forEach(elem => {
+    [...shapeById.values()].forEach(elem => {
       if (isShapeInScreen(elem, graph)) {
         (elem.rotateDeg && elem.draw(ctx, { x: elem.graphics.ox, y: elem.graphics.oy }, elem.rotateDeg)) || elem.draw(ctx);
       }
