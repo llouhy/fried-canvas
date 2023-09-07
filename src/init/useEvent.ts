@@ -11,9 +11,10 @@ type EngineLifeCycle = 'after:engineInit';
 type ModelLifeCycle = 'before:modelAdd' | 'after:modelAdd';
 type ShapeLifeCycle = 'before:shapeCreate' | 'after:shapeCreate' | 'before:shapeUpdate' | 'after:shapeUpdate';
 type LifeCycle = EngineLifeCycle | ModelLifeCycle | ShapeLifeCycle;
-type DefaultEvent = 'mousedown' | 'mouseup' | 'click' | 'dbClick' | 'contextMenu';
-type GraphEvent = 'graph:mousedown' | 'graph:mouseup' | 'graph:click' | 'graph:dbClick' | 'graph:contextMenu';
-type ShapeEvent = 'shape:mousedown' | 'shape:mouseup' | 'shape:click' | 'shape:dbClick' | 'shape:contextMenu' | 'shape:rotateStart' | 'shape:rotateEnd' | 'shape:moveStart' | 'shape:moveEnd';
+type BrowserEvent = 'mousedown' | 'mouseup' | 'click' | 'dbClick' | 'contextMenu';
+type DefaultEvent = `${'graph' | 'shape'}:${BrowserEvent}`
+type GraphEvent = `graph:${BrowserEvent}`;
+type ShapeEvent = `shape:${BrowserEvent}` | 'shape:rotateStart' | 'shape:rotateEnd' | 'shape:moveStart' | 'shape:moveEnd';
 type EventType = GraphEvent | ShapeEvent | LifeCycle;
 type CallEventCallback = (eventType: EventType, eventData: EventData) => any;
 export type OnEvent = (eventType: EventType, func: Func) => void;
@@ -34,65 +35,63 @@ type EventData = {
   [key: string]: any;
 };
 
-const eventInsByEngineId = new Map();
+const eventCoreByEngineId = new WeakMap<InitEngineResult, UseEventRes>();
+const eventInsByEngineId = new Map<string, Map<EventType, Set<Func>>>();
 
 export const useEvent: UseEvent = (engineId: string): UseEventRes => {
-  const funcsByEvent = eventInsByEngineId.get(engineId) || eventInsByEngineId.set(engineId, new Map<EventType, Set<Func>>()).get(engineId);
-  const defaultEvent: { [key in DefaultEvent]: { shape: Func; graph: Func; } } = {
-    ['mousedown']: { shape: null, graph: null },
-    ['mouseup']: { shape: null, graph: null },
-    ['click']: { shape: null, graph: null },
-    ['dbClick']: { shape: null, graph: null },
-    ['contextMenu']: { shape: null, graph: null },
+  const engineInstance = engineById.get(engineId);
+  if (eventCoreByEngineId.get(engineInstance)) return eventCoreByEngineId.get(engineInstance);
+  const funcsByEvent = eventInsByEngineId.set(engineId, new Map<EventType, Set<Func>>()).get(engineId);
+  const defaultEvent: { [key in BrowserEvent]: Func } = {
+    ['mousedown']: null,
+    ['mouseup']: null,
+    ['click']: null,
+    ['dbClick']: null,
+    ['contextMenu']: null,
   };
-  const setDefaultEvent = (handleObject: 'graph' | 'shape', eventName: DefaultEvent) => {
-    const { engine } = engineById.get(engineId);
-    const getPositionInfo = ($event: MouseEvent) => {
-      const graph = graphByEngineId.get(engineId);
-      const { offsetX, offsetY } = $event;
-      return {
-        positionX: offsetX - graph.translateX,
-        positionY: offsetY - graph.translateY
+  const getPositionInfo = ($event: MouseEvent) => {
+    const graph = graphByEngineId.get(engineId);
+    const { offsetX, offsetY } = $event;
+    return {
+      positionX: offsetX - graph.translateX,
+      positionY: offsetY - graph.translateY
+    }
+  }
+  const getShapeInfo = (position: { positionX: number; positionY: number }) => {
+    let target = { index: -Infinity };
+    for (const elem of shapeById.values()) {
+      if (elem.isPointInTheShape(position.positionX, position.positionY) && elem.index > target.index) {
+        target = elem;
       }
     }
-    const getShapeInfo = (position: { positionX: number; positionY: number }) => {
-      let target = { index: -Infinity };
-      for (const elem of shapeById.values()) {
-        if (elem.isPointInTheShape(position.positionX, position.positionY) && elem.index > target.index) {
-          target = elem;
-        }
-      }
-      return isShape(target) ? { shape: target } : { shape: null };
-    };
-
+    return isShape(target) ? { shape: target } : { shape: null };
+  };
+  const setDefaultEvent = (eventName: BrowserEvent) => {
+    const { engine } = engineById.get(engineId);
     const callback = ($event: MouseEvent) => {
       const positionInfo = getPositionInfo($event);
       const shapeInfo = getShapeInfo(positionInfo);
-      const object = handleObject === 'graph' ? graphByEngineId.get(engineId) : shapeInfo.shape;
-      if (!object) return;
-      const eventData = createEventData(`${handleObject}:${eventName}`, {
+      const targetEvent: DefaultEvent = `${shapeInfo.shape ? 'shape' : 'graph'}:${eventName}`;
+      const eventData = createEventData(targetEvent, {
         $event,
-        object,
+        object: shapeInfo.shape || graphByEngineId.get(engineId),
         engine: engine,
         graph: graphByEngineId.get(engineId),
         ...positionInfo,
         ...shapeInfo
       });
-      // for (const elem of ['shape', 'graph']) {
-        callEventCallback(`${handleObject}:${eventName}` as EventType, eventData);
-      // }
+      callEventCallback(targetEvent, eventData);
     }
     engine.canvas.addEventListener(eventName, callback);
-    defaultEvent[eventName][handleObject] = callback;
+    defaultEvent[eventName] = callback;
   }
   const onEvent: OnEvent = (eventType: EventType, func: Func) => {
-    // debugger
     if (!isFunction(func)) return;
     const set: Set<Func> = funcsByEvent.get(eventType) || new Set();
     const [handleObject, eventName] = eventType.split(':');
     funcsByEvent.set(eventType, set.add(func));
-    if (eventName in defaultEvent && !defaultEvent[eventName as DefaultEvent][handleObject as 'shape' | 'graph']) {
-      setDefaultEvent(handleObject as 'graph' | 'shape', eventName as DefaultEvent);
+    if (eventName in defaultEvent && !defaultEvent[eventName as BrowserEvent]) {
+      setDefaultEvent(eventName as BrowserEvent);
     }
   }
   const removeEvent: RemoveEvent = (eventType: EventType, func: Func) => {
@@ -106,12 +105,8 @@ export const useEvent: UseEvent = (engineId: string): UseEventRes => {
       elem.clear();
     }
     for (const key in defaultEvent) {
-      for (const handleObject in defaultEvent[key as DefaultEvent]) {
-        const func = defaultEvent[key as DefaultEvent][handleObject as 'shape' | 'graph']
-        if (func) {
-          canvas.removeEventListener(key, func);
-        }
-      }
+      const func = defaultEvent[key as BrowserEvent];
+      canvas.removeEventListener(key, func);
     }
   }
   const callEventCallback: CallEventCallback = (eventType, eventData) => {
@@ -126,11 +121,11 @@ export const useEvent: UseEvent = (engineId: string): UseEventRes => {
       ...options
     }
   }
-  return {
+  return eventCoreByEngineId.set(engineInstance, {
     onEvent,
     removeEvent,
     removeAllEvent,
     createEventData,
     callEventCallback,
-  }
+  }).get(engineInstance);
 };

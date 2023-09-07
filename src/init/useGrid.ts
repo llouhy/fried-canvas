@@ -1,5 +1,5 @@
 import { GridIns, getGrid } from "../definition/grid";
-import { engineById } from "../engineFn";
+import { InitEngineResult, engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
 import { Boundary } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
@@ -7,16 +7,22 @@ import { getDivisibleNum, graphicsToBoundary } from "../utils/math";
 import { graphByEngineId, useGraph } from "./useGraph";
 import { shapeById } from "./useShape";
 
+export type Divider = { xs: number[]; ys: number[]; };
+export type GetGridShapes = (grid: GridIns) => Shape[];
+export type GenerateGrid = (engineId: string, ctx: any, drawGrid?: boolean) => { grid: GridIns; divider: Divider };
 export type UseGridRes = {
-  getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
+  divider: Divider;
+  rootGrid: GridIns;
+  updateAllShapeToGrid: () => void;
   getInfluencedGrid: (boundary: Boundary) => GridIns[];
   updateShapeToGrid: (shape: Shape, graphics: Graphics) => void;
+  getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
 }
 export type UseGrid = (engineId: string, ctx?: any) => UseGridRes;
 
-const gridByEngineId = new Map<string, { getInfluencedShape: (b: Boundary, g?: GridIns[]) => Shape[]; getInfluencedGrid: (b: Boundary) => GridIns[]; rootGrid: GridIns; divider: { xs: number[]; ys: number[] } }>();
+const gridCoreByEngineId = new WeakMap<InitEngineResult, UseGridRes>();
 
-const getGridShapes = (grid: GridIns): Shape[] => {
+const getGridShapes: GetGridShapes = (grid) => {
   const deep = (grid: GridIns, res: Shape[]) => {
     if (!grid.isLeaf) {
       for (const elem of grid.children) {
@@ -31,13 +37,14 @@ const getGridShapes = (grid: GridIns): Shape[] => {
   return [...new Set(result)];
 };
 
-const generateGrid = (engineId: string, ctx: any, drawGrid?: boolean): { grid: GridIns; divider: { xs: number[]; ys: number[] } } => {
-  if (gridByEngineId.get(engineId)) return { grid: gridByEngineId.get(engineId).rootGrid, divider: gridByEngineId.get(engineId).divider };
+const generateGrid: GenerateGrid = (engineId, ctx, drawGrid) => {
+  const engineInstance = engineById.get(engineId);
+  if (gridCoreByEngineId.get(engineInstance)) return { grid: gridCoreByEngineId.get(engineInstance).rootGrid, divider: gridCoreByEngineId.get(engineInstance).divider };
   const { engine: { width, height } } = engineById.get(engineId);
   const maxLevel = 6;
   const xs: Set<number> = new Set();
   const ys: Set<number> = new Set();
-  xs.add(0) && ys.add(0) 
+  xs.add(0) && ys.add(0)
   function createGrid(x: number, y: number, width: number, height: number, idx: number) {
     const isLeaf = idx === maxLevel - 1;
     const grid = getGrid({ minX: x, minY: y, maxX: x + width, maxY: y + height }, isLeaf);
@@ -58,11 +65,12 @@ const generateGrid = (engineId: string, ctx: any, drawGrid?: boolean): { grid: G
     return grid;
   }
   const grid = createGrid(0, 0, getDivisibleNum(width, 2), getDivisibleNum(height, 2), 0);
-  // console.log(grid);
   return { grid, divider: { xs: [...xs], ys: [...ys] } };
 };
 
-export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
+export const useGrid: UseGrid = (engineId, ctx) => {
+  const engineInstance = engineById.get(engineId);
+  if (gridCoreByEngineId.get(engineInstance)) return gridCoreByEngineId.get(engineInstance);
   const { grid, divider } = generateGrid(engineId, ctx);
   const getInfluencedGrid = (boundary: Boundary): GridIns[] => {
     const { translateX, translateY } = graphByEngineId.get(engineId);
@@ -132,12 +140,17 @@ export const useGrid: UseGrid = (engineId: string, ctx?: any): UseGridRes => {
       shape.gridSet.add(elem);
     }
   };
-  const updateAllShapeToGrid = (pointer: Object = {}) => {
+  const updateAllShapeToGrid = () => {
     for (const elem of shapeById.values()) {
       updateShapeToGrid(elem, elem.graphicsWithBorder);
     };
   };
-  const result = { getInfluencedShape, getInfluencedGrid, updateShapeToGrid, rootGrid: grid, divider, updateAllShapeToGrid };
-  gridByEngineId.set(engineId, result);
-  return result;
+  return gridCoreByEngineId.set(engineInstance, {
+    divider,
+    rootGrid: grid,
+    getInfluencedShape,
+    getInfluencedGrid,
+    updateShapeToGrid,
+    updateAllShapeToGrid
+  }).get(engineInstance);
 };
