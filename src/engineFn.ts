@@ -8,10 +8,12 @@ import { setIdentify } from './utils/setIdentify';
 import { DrawShape, GetShape, UseShapeRes, useShape } from './init/useShape';
 import { initContext, reloadCtxFunction } from './init/context';
 import { OnEvent, RemoveAllEvent, RemoveEvent, UseEventRes, useEvent } from './init/useEvent';
-import { AddModel, DeleteModel, GetModel, UpdateModel, UseModelRes, useModel } from './init/useModel';
+import { AddModel, DeleteModel, GetModel, UpdateModel, UseModelRes, checkParams, useModel } from './init/useModel';
 import { getPureObject, microtask, omitObjectProperty, setCanvasSize, setPropertyUnWritable } from './utils/common';
 import type { Graphics, ModelOptions } from './graphOptions';
 import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
+import { UseConfigRes, useConfig } from './init/useConfig';
+import { ToCheckParams, toCheckParams } from './utils/toCheckParams';
 
 export type InitEngineResult = {
   engine: {
@@ -23,20 +25,7 @@ export type InitEngineResult = {
     readonly: boolean;
     repaintInfluencedShape: (graphics: Graphics, excludes: Set<Shape>) => void;
   };
-  addModel: AddModel;
-  getModel: GetModel;
-  deleteModel: DeleteModel;
-  updateModel: UpdateModel;
-  createShape: (modelName: string, options?: { data?: any; model?: ModelOptions; index?: number }) => Shape;
-  drawShape: DrawShape;
-  getShape: GetShape;
-  resizeCanvas: (w: number, h: number) => void;
-  clearRect: (x: number, y: number, width: number, height: number) => void;
-  onEvent: OnEvent;
-  removeEvent: RemoveEvent;
-  removeAllEvent: RemoveAllEvent;
-  [key: string]: any;
-};
+} & UseConfigRes & UseEventRes & UseGraphRes & UseShapeRes & UseGridRes & UseModelRes;
 export type InitEngine = (options: EngineOptions) => InitEngineResult;
 
 export type EngineOptions = {
@@ -98,15 +87,16 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
     shapeCore: UseShapeRes = useShape(_id),
     gridCore: UseGridRes = useGrid(_id),
     graphCore: UseGraphRes = useGraph(_id),
-    eventCore: UseEventRes = useEvent(_id);
-  const coreInstance = { ...modelCore, ...shapeCore, ...gridCore, ...graphCore, ...eventCore };
+    eventCore: UseEventRes = useEvent(_id),
+    configCore: UseConfigRes = useConfig(_id);
+  const coreInstance = { ...modelCore, ...shapeCore, ...gridCore, ...graphCore, ...eventCore, ...configCore };
   setPropertyUnWritable(omitObjectProperty(Object.assign(engineResult, coreInstance), ['rootGrid']), Object.keys(coreInstance));
   microtask(() => {
     const { callEventCallback, createEventData, addModel } = engineResult;
     modelList && addModel(modelList);
     callEventCallback('after:engineInit', createEventData('after:engineInit', {
       object: engineResult
-    }))
+    }));
   });
   return engineResult;
 };
@@ -131,8 +121,11 @@ onEvent('shape:click', (data) => {
 onEvent('graph:click', (data) => {
   console.log('graph.click', data)
 })
-onEvent('shape:mousedown', (data) => {
-  console.log('shape.mousedown', data)
+onEvent('shape:mouseup', (data) => {
+  console.log('shape.mouseup', data)
+})
+onEvent('graph:mouseup', (data) => {
+  console.log('shape.mouseup', data)
 })
 ctx.save();
 ctx.strokeStyle = 'orange';
@@ -354,6 +347,7 @@ const getTestModel6 = () => {
 //   console.log(`%caddModel${i}${i}${i}${i}${i}`, 'background:orange;padding:5px;');
 //   addModel(eval(`getTestModel${i}()`));
 // }
+addModel(getTestModel4(), 0.6, toCheckParams(30))
 addModel(getTestModel1());
 const helloo = (window as any)['helloo'];
 ctx.strokeStyle = 'red';
@@ -382,6 +376,7 @@ const shape6 = createShape('test6');
 // console.log(shape5)
 const now = performance.now();
 drawShape(shape1);
+
 ctx.$beginPath();
 // const { x, y, width, height } = (window as any).tess;
 // ctx.$strokeRect(x, y, width, height);
@@ -426,24 +421,24 @@ ctx.$stroke();
 // ctx.$lineTo(150, 70);
 // // ctx.closePath();
 // ctx.$stroke();
-// drawShape(shape2, { x: 500, y: 400 });
-// drawShape(shape3, { x: 100, y: 300 });
+drawShape(shape2, { x: 500, y: 400 });
+drawShape(shape3, { x: 100, y: 300 });
 // const [rx, ry] = [Math.round(Math.random() * 1000), Math.round(Math.random() * 1000)];
-// drawShape(shape4);
-// drawShape(shape44, { x: 500, y: 200 })
+drawShape(shape4);
+// drawShape(shape4, { x: 500, y: 200 })
 // ctx.$strokeRect(rx, ry, 100, 100)
-// drawShape(shape5, { x: 800, y: 200 });
-// drawShape(shape6);
+drawShape(shape5, { x: 800, y: 200 });
+drawShape(shape6);
 
 let idd = 1;
 // ctx.save();
 let iddd = setInterval(() => {
   idd = idd + 1;
-  // shape4.rotate(idd * 2);
+  shape4.rotate(idd * 2);
   if (idd >= 60) {
-    // shape4.moveTo(shape4.graphics.ox + 6, shape4.graphics.oy + 4);
+    shape4.moveTo(shape4.graphics.ox + 6, shape4.graphics.oy + 4);
     clearInterval(iddd);
-    // callARotateMove(shape4);
+    callARotateMove(shape4);
   };
   // console.log(idd)
   // const { ox, oy, width, height } = shape4._graphics;
@@ -465,7 +460,7 @@ function callARotateMove(shape: Shape) {
     if (idx > 160) {
       clearInterval(cid);
       updateShape(shape4, 0.3, 60);
-      callATranslate();
+      // callATranslate();
     };
   }, 20);
 }

@@ -1,5 +1,5 @@
 import { isCheckParams } from '../utils/is';
-import { engineById } from '../engineFn';
+import { InitEngineResult, engineById } from '../engineFn';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
 import { getPreciseShapeSizeInfo, getImpreciseShapeSizeInfo } from '../shape/getShapeSizeInfo';
@@ -9,9 +9,7 @@ import { setIdentify } from '../utils/setIdentify';
 import { useEvent } from './useEvent';
 
 export type checkParams = { value: ModelDrawFuncArgs; isCheckParams: symbol };
-
 export type ModelDrawFuncArgs = { [key: string]: any } | string | number | boolean | checkParams;
-
 export type AddModel = (x: ModelOptions, ...args: ModelDrawFuncArgs[]) => any;
 export type GetModel = (name: string) => undefined | ModelOptions;
 export type DeleteModel = (name: string) => boolean;
@@ -24,7 +22,8 @@ export type UseModelRes = {
 };
 export type UseModel = (engineId: string) => UseModelRes;
 
-const modelMap = new Map<string, ModelOptions>();
+const modelById = new Map<string, ModelOptions>();
+const modelCoreByEngineId = new WeakMap<InitEngineResult, UseModelRes>();
 
 export const sumModelGraphics = (ctx: EngineCtx | OffEngineCtx, drawFunc: (ctx: EngineCtx | OffEngineCtx, ...args: ModelDrawFuncArgs[]) => any, ...args: ModelDrawFuncArgs[]): {
   graphics: Graphics,
@@ -35,15 +34,14 @@ export const sumModelGraphics = (ctx: EngineCtx | OffEngineCtx, drawFunc: (ctx: 
   ctx.pathCoordinates = [];
   drawFunc.apply(null, [ctx, ...args]);
   const boundary = getPreciseShapeSizeInfo(drawFunc, getImpreciseShapeSizeInfo(coordinates), ...args);
-  console.log(boundary)
   ctx.drawCoordinates = null;
   ctx.pathCoordinates = null;
   return boundary;
 }
 
-export const useModel: UseModel = (
-  engineId: string
-): UseModelRes => {
+export const useModel: UseModel = (engineId) => {
+  const engineInstance = engineById.get(engineId);
+  if (modelCoreByEngineId.get(engineInstance)) return modelCoreByEngineId.get(engineInstance);
   const prefix = engineId + ':';
   const addModel: AddModel = (modelOptions, ...args) => {
     const { callEventCallback, createEventData } = useEvent(engineId);
@@ -58,25 +56,24 @@ export const useModel: UseModel = (
     reloadCtxFunction<OffscreenCanvasRenderingContext2D>(offCtx);
     for (const elem of models as ModelOptions[]) {
       const { draw } = elem;
-      Object.defineProperty(elem, '__draw__', {
+      setIdentify(Object.defineProperty(elem, '__draw__', {
         writable: false,
         value: draw
-      });
-      setIdentify(elem, 'model');
-      const checkArgMap = new Map<number, ModelDrawFuncArgs>();
-      const checkArgs = [];
-      const modelArgs = [];
+      }), 'model');
+      const checkArgMap = new Map<number, checkParams>();
+      const checkArgs: checkParams[] = [];
+      const modelArgs: any[] = [];
       for (const [key, item] of args.entries()) {
         if (isCheckParams(item)) {
-          checkArgMap.set(key, item);
-          checkArgs.push((item as checkParams).value);
+          checkArgMap.set(key, item as checkParams);
+          checkArgs.push((item as checkParams));
           modelArgs.push((item as checkParams).value);
         } else {
           modelArgs.push(item);
         }
       }
       elem.draw = (ctx: EngineCtx | OffEngineCtx, ...args: ModelDrawFuncArgs[]) => { draw.apply(null, [ctx, ...args]); };
-      modelMap.set(`${prefix}${elem.name}`, elem);
+      modelById.set(`${prefix}${elem.name}`, elem);
       const { graphics, imageData } = sumModelGraphics(offCtx as OffEngineCtx, draw, ...modelArgs);
       offCtx?.clearRect(0, 0, width, height);
       elem.drawArgs = modelArgs;
@@ -95,18 +92,20 @@ export const useModel: UseModel = (
     }
   };
   const updateModel: UpdateModel = (modelName) => {
-    const model = modelMap.get(`${prefix}${modelName}`);
+    const model = modelById.get(`${prefix}${modelName}`);
   };
   const getModel: GetModel = (modelName) => {
-    return modelMap.get(`${prefix}${modelName}`);
+    return modelById.get(`${prefix}${modelName}`);
   };
   const deleteModel: DeleteModel = (modelName) => {
-    return modelMap.delete(`${prefix}${modelName}`);
+    return modelById.delete(`${prefix}${modelName}`);
   };
-  return {
+
+  return modelCoreByEngineId.set(engineInstance, {
     addModel,
     getModel,
     deleteModel,
     updateModel
-  };
+  }).get(engineInstance);
+
 };

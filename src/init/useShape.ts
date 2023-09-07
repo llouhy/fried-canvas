@@ -1,4 +1,4 @@
-import { engineById } from '../engineFn';
+import { InitEngineResult, engineById } from '../engineFn';
 import type { ModelOptions } from '../graphOptions';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
 import { Shape, getShape as getShapeIns } from '../shape/shape';
@@ -21,16 +21,14 @@ export type UseShapeRes = {
 export type UseShape = (engineId: string) => UseShapeRes;
 
 export const shapeById = new Map<string, Shape>();
-export const useShape: UseShape = (
-  // ctx: EngineCtx,
-  engineId: string
-): UseShapeRes => {
-  // const coordinateStack = useCoordinateCache(engineId);
+export const shapeCoreByEngineId = new WeakMap<InitEngineResult, UseShapeRes>();
+export const useShape: UseShape = (engineId) => {
+  const engineInstance = engineById.get(engineId);
+  if (shapeCoreByEngineId.get(engineInstance)) return shapeCoreByEngineId.get(engineInstance);
   const drawShape: DrawShape = (shape, placePoint) => {
     try {
-      const { engine: { ctx } } = engineById.get(engineId);
+      const { engine: { ctx } } = engineInstance;
       const { updateShapeToGrid } = useGrid(engineId);
-      // console.log('drawShape', ctx.getTransform())
       const shapeId = shape.draw(ctx, placePoint);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
       shapeById.set(shapeId, shape);
@@ -57,8 +55,8 @@ export const useShape: UseShape = (
   };
   const updateShape: UpdateShape = (shape, ...args) => {
     const $model = shape.$model;
-    const { engine: { width, height }, repaintInfluencedShape } = engineById.get(engineId);
-    const isResize = [...$model.checkArg.checkArgMap.keys()].some(elem => ($model.checkArg.checkArgMap.get(elem) as checkParams).value !== args[elem]);
+    const { engine: { width, height }, repaintInfluencedShape } = engineInstance;
+    const isResize = [...$model.checkArg.checkArgMap.keys()].some(elem => ($model.checkArg.checkArgMap.get(elem)).value !== args[elem]);
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
     if (!isResize) {
       shape.drawArgs = args;
@@ -81,10 +79,10 @@ export const useShape: UseShape = (
     offCanvas = null;
     offCtx = null;
   };
-  return {
+  return shapeCoreByEngineId.set(engineInstance, {
     createShape,
     updateShape,
     drawShape,
     getShape
-  };
+  }).get(engineInstance);
 };

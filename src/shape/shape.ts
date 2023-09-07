@@ -8,6 +8,8 @@ import { angleToRadian, generateRandomStr } from '../utils/math';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
 import { getPureObject, setPropertyUnWritable } from '../utils/common';
 import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
+import { useEvent } from '../init/useEvent';
+import { configByEngineId } from '../init/useConfig';
 
 export const allShapeBoundary = {
   minX: -Infinity,
@@ -59,7 +61,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
       paddingBottom: 0,
       borderDash: [6, 6],
       borderWidth: 1,
-      borderColor: 'tomato',
+      borderColor: configByEngineId.get(engineId).color.DEFAULT_BORDER,
       radius: 0
     },
     gridSet: new Set(),
@@ -129,7 +131,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     const shapeGraphics = graphics || shape.graphics;
     const { paddingLeft, paddingRight, paddingTop, paddingBottom, borderDash, borderWidth, borderColor } =
       shape.borderOptions;
-    const strokeColor = borderColor ?? '#993f55';
+    const strokeColor = borderColor;
     const lineWidth = borderWidth || 1;
     const lineDash = borderDash ?? [9, 2];
     const BORDER_PADDING = 0;
@@ -144,18 +146,11 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
       minY: boundOy - dlineWidth,
       maxY: boundOy + boundHeight + dlineWidth
     };
-    // if () {}
     shape.ctx.save();
     shape.ctx.beginPath();
-    shape.ctx.strokeStyle = borderColor;
+    shape.ctx.strokeStyle = strokeColor;
     shape.ctx.lineWidth = borderWidth;
     shape.ctx.setLineDash(lineDash);
-    // (shape.ctx as any).$strokeRect(
-    //   shape.graphics.ox,
-    //   shape.graphics.oy,
-    //   shape.graphics.width,
-    //   shape.graphics.height
-    // );
     (shape.ctx as any).$strokeRect(
       boundOx + 0.5,
       boundOy + 0.5,
@@ -165,6 +160,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
     shape.ctx.setLineDash([0, 0]);
     shape.ctx.restore();
   }
+
   const isPointInTheShape = (x: number, y: number): boolean => {
     const { ox, oy, width, height } = shape.graphicsWithBorder;
     if (x < ox || y < oy || x > width + ox || y > height + oy) {
@@ -182,23 +178,13 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
   }
 
   const rotate = (rotateDeg: number) => { // moveTo偏移量会导致清除失败，graphics不同步
+    // const { callEventCallback } = useEvent(shape.engineId);
+    // callEventCallback();
     shape.rotateDeg = rotateDeg;
     shape.moveTo(shape.graphics.ox, shape.graphics.oy);
     return;
-    // const { repaintInfluencedShape } = engineById.get(shape.belongEngineId);
-    // repaintInfluencedShape(shape.graphicsWithBorder, new Set([shape])); // repaint应该
-    // const { ox, oy, width, height } = shape.graphics;
-    // shape.ctx.save();
-    // shape.ctx.translate(ox + width / 2, oy + height / 2);
-    // shape.ctx.rotate(rotateDeg * Math.PI / 180);
-    // shape.draw(shape.ctx, { x: -width / 2, y: -height / 2 });
-    // shape.ctx.restore();
-    // shape.graphics = { ox, oy, width, height };
-    // const { updateShapeToGrid } = useGrid(shape.belongEngineId);
-    // shape.graphicsWithBorder = getGraphicsWithBorder(shape.graphics, shape.borderOptions, rotateDeg);
-    // shape.rotateDeg = rotateDeg;
-    // updateShapeToGrid(shape, shape.graphicsWithBorder);
   }
+
   shape.draw = draw;
   shape.drawBoundary = drawBoundary;
   shape.isPointInTheShape = isPointInTheShape;
