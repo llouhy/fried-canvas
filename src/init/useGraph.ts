@@ -2,14 +2,12 @@ import { useGrid } from "./useGrid";
 import { Shape } from "../shape/shape";
 import { isNumber } from "../utils/is";
 import { shapeById } from "./useShape";
-import { engineById } from "../engineFn";
+import { InitEngineResult, engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
 import { setCanvasSize } from "../utils/common";
 import { setIdentify } from "../utils/setIdentify";
 import { graphicsToBoundary } from "../utils/math";
 import { Boundary, EngineCtx } from "../rewriteFn/type";
-
-export const graphByEngineId = new Map<string, Graph>();
 
 export type Graph = {
   translateX: number;
@@ -26,7 +24,9 @@ export type UseGraphRes = {
   clearRect: (x: number, y: number, width: number, height: number) => void;
   repaintInfluencedShape: (graphics: Graphics, excludesSet: Set<Shape>) => void;
 }
-type UseGraph = (engineId: string) => UseGraphRes
+export type UseGraph = (engineId: string) => UseGraphRes;
+export const graphByEngineId = new Map<string, Graph>();
+export const graphCoreByEngineId = new WeakMap<InitEngineResult, UseGraphRes>();
 const useCache = <T>(fn: (...args: any[]) => any) => {
   const cacheDataByPointer = new WeakMap<Object, any>();
   return (pointer: Object, ...params: any[]): T => cacheDataByPointer.get(pointer) || cacheDataByPointer.set(pointer, fn(...params)).get(pointer);;
@@ -39,14 +39,12 @@ const getBoundary = (): Boundary => {
     maxY: 0
   };
   for (const elem of shapeById.values()) {
-    // console.log(elem)
     const { minX, minY, maxX, maxY } = imageBoundary;
     imageBoundary.minX = Math.min(elem.boundary.minX, minX);
     imageBoundary.maxX = Math.max(elem.boundary.maxX, maxX);
     imageBoundary.minY = Math.min(elem.boundary.minY, minY);
     imageBoundary.maxY = Math.max(elem.boundary.maxY, maxY);
   };
-  // console.log('sumBoundary', imageBoundary)
   return imageBoundary;
 };
 const getImageData = (imageBoundary: Boundary, ctx: EngineCtx) => {
@@ -57,14 +55,14 @@ const getImageData = (imageBoundary: Boundary, ctx: EngineCtx) => {
     imageBoundary.maxY - imageBoundary.minY);
   return data;
 };
-
 const isShapeInScreen = (shape: Shape, graph: Graph): boolean => {
   const { minX, minY, maxX, maxY } = shape.boundary;
   return !(maxX < graph.left || minX > graph.right || maxY < graph.top || minY > graph.bottom);
 }
-
-export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
-  graphByEngineId.get(engineId) || graphByEngineId.set(engineId, setIdentify({
+export const useGraph: UseGraph = (engineId) => {
+  const engineInstance = engineById.get(engineId);
+  if (graphCoreByEngineId.get(engineInstance)) return graphCoreByEngineId.get(engineInstance);
+  graphByEngineId.set(engineId, setIdentify({
     translateX: 0,
     translateY: 0,
     left: 0,
@@ -79,10 +77,7 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
     const graph = graphByEngineId.get(engineId);
     const boundary = useCache<Boundary>(getBoundary)(cachePointer);
     const imageData = useCache<ImageData>(getImageData)(cachePointer, boundary, ctx);
-    // clearRect(boundary.minX, boundary.minY, boundary.maxX - boundary.minX, boundary.maxY - boundary.minY);
     clearRect(graph.left, graph.top, width, height);
-    // const newTranslateX = graph.translateX + x;
-    // const newTranslateY = graph.translateY + y;
     ctx.translate(x, y);
     graph.translateX = graph.translateX + x;
     graph.translateY = graph.translateY + y;
@@ -96,7 +91,6 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
       }
     });
     updateAllShapeToGrid();
-    // ctx.putImageData(imageData, boundary.minX + graph.translateX, boundary.minY + graph.translateY);
   };
   const resizeCanvas = (width: number, height: number) => {
     if (!isNumber(width) || !isNumber(height)) return;
@@ -129,7 +123,6 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
         maxY: Math.max(pre.maxY, cur.boundary.maxY)
       }
     }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
-    console.log('清除区域', clearBoundary);
     clearRect(
       clearBoundary.minX - graph.translateX, // clearBoundary是grid算出来的，gird坐标永远是canvas左上角为0,0
       clearBoundary.minY - graph.translateY,
@@ -153,10 +146,10 @@ export const useGraph: UseGraph = (engineId: string): UseGraphRes => {
       }
     }
   };
-  return {
+  return graphCoreByEngineId.set(engineInstance, {
     translate,
     clearRect,
     resizeCanvas,
     repaintInfluencedShape
-  }
+  }).get(engineInstance);
 };

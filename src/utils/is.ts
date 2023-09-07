@@ -1,5 +1,4 @@
-import { setIdentify } from './setIdentify';
-import { getPureObject, getType } from './common';
+import { getType } from './common';
 import { checkParams, engine, error, model, shape } from '../definition/identify';
 
 export const isObject = (value: any) => {
@@ -43,7 +42,7 @@ export const isModel = (value: any) => {
 };
 
 export const isCheckParams = (value: any) => {
-  return value.__isCheckParams__ === checkParams;
+  return value?.__isCheckParams__ === checkParams;
 }
 
 export const isSuccess = (value: any) => {
@@ -52,10 +51,4 @@ export const isSuccess = (value: any) => {
 
 export const isCanvas = (value: any) => {
   return value instanceof HTMLCanvasElement;
-}
-
-export const toCheckParams = (value: any) => {
-  return setIdentify(getPureObject({
-    value
-  }), 'checkParams');
 }
