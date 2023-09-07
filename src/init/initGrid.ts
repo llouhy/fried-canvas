@@ -3,7 +3,8 @@ import { engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
 import { Boundary } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
-import { getDivisibleNum, graphicsToBoundary } from "../utils/common";
+import { getDivisibleNum, graphicsToBoundary } from "../utils/math";
+// import { getDivisibleNum, graphicsToBoundary } from "../utils/common";
 
 export type UseGridRes = {
   getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
