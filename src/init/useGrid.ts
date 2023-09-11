@@ -1,7 +1,7 @@
 import { GridIns, getGrid } from "../definition/grid";
 import { InitEngineResult, engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
-import { Boundary } from "../rewriteFn/type";
+import { Boundary, Point } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
 import { getDivisibleNum, graphicsToBoundary } from "../utils/math";
 import { graphByEngineId, useGraph } from "./useGraph";
@@ -14,13 +14,15 @@ export type UseGridRes = {
   divider: Divider;
   rootGrid: GridIns;
   updateAllShapeToGrid: () => void;
+  getPointInGrid: (point: Point) => GridIns;
   getInfluencedGrid: (boundary: Boundary) => GridIns[];
   updateShapeToGrid: (shape: Shape, graphics: Graphics) => void;
   getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
+  mergeGridBoundary: (grids: GridIns[]) => Boundary;
 }
 export type UseGrid = (engineId: string, ctx?: any) => UseGridRes;
 
-const gridCoreByEngineId = new WeakMap<InitEngineResult, UseGridRes>();
+export const gridCoreByEngineId = new WeakMap<InitEngineResult, UseGridRes>();
 
 const getGridShapes: GetGridShapes = (grid) => {
   const deep = (grid: GridIns, res: Shape[]) => {
@@ -75,8 +77,6 @@ export const useGrid: UseGrid = (engineId, ctx) => {
   const getInfluencedGrid = (boundary: Boundary): GridIns[] => {
     const { translateX, translateY } = graphByEngineId.get(engineId);
     const bound = { left: boundary.minX + translateX, right: boundary.maxX + translateX, top: boundary.minY + translateY, bottom: boundary.maxY + translateY };
-    !(window as any).ooo && (window as any).lalala && console.log(divider)
-    !(window as any).ooo && (window as any).lalala && console.log('%c图形的bound', 'background:pink;padding:20px', { ...bound })
     for (const x of divider.xs) {
       if (x < boundary.minX + translateX) {
         bound.left = x;
@@ -129,7 +129,6 @@ export const useGrid: UseGrid = (engineId, ctx) => {
     return [...new Set(shapes)];
   };
   const updateShapeToGrid = (shape: Shape, graphics: Graphics) => {
-    // console.log('调用updateShapeToGrid', shape)
     const graph = graphByEngineId.get(engineId);
     const grids = getInfluencedGrid(graphicsToBoundary(graphics));
     [...shape.gridSet.values()].map(elem => elem.shapes = elem.shapes.filter(item => item !== shape));
@@ -145,12 +144,42 @@ export const useGrid: UseGrid = (engineId, ctx) => {
       updateShapeToGrid(elem, elem.graphicsWithBorder);
     };
   };
+  const mergeGridBoundary = (grids: GridIns[]): Boundary => {
+    return grids.reduce((pre, cur) => {
+      return {
+        minX: Math.min(pre.minX, cur.boundary.minX),
+        minY: Math.min(pre.minY, cur.boundary.minY),
+        maxX: Math.max(pre.maxX, cur.boundary.maxX),
+        maxY: Math.max(pre.maxY, cur.boundary.maxY)
+      }
+    }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+  }
+  const getPointInGrid = (point: Point): GridIns => {
+    const isPointInGrid = (point: Point, grid: GridIns): boolean => {
+      const { boundary: { minX, minY, maxX, maxY }, isLeaf } = grid;
+      return !(point.x < minX || point.x > maxX || point.y < minY || point.y > maxY);
+    }
+    const deep = (point: Point, grids: GridIns[]): GridIns => {
+      for (const elem of grids) {
+        if (isPointInGrid(point, elem)) {
+          if (elem.isLeaf) {
+            return elem;
+          } else {
+            return deep(point, elem.children);
+          }
+        }
+      }
+    }
+    return deep(point, [grid]);
+  };
   return gridCoreByEngineId.set(engineInstance, {
     divider,
     rootGrid: grid,
+    getPointInGrid,
     getInfluencedShape,
     getInfluencedGrid,
     updateShapeToGrid,
-    updateAllShapeToGrid
+    mergeGridBoundary,
+    updateAllShapeToGrid,
   }).get(engineInstance);
 };

@@ -46,7 +46,7 @@ export const useModel: UseModel = (engineId) => {
   const addModel: AddModel = (modelOptions, ...args) => {
     const { callEventCallback, createEventData } = useEvent(engineId);
     callEventCallback('before:modelAdd', createEventData('before:modelAdd', {
-      object: engineById.get(engineId),
+      target: engineById.get(engineId),
       modelOptions: [modelOptions, ...args]
     }));
     const models = [modelOptions];
@@ -62,7 +62,7 @@ export const useModel: UseModel = (engineId) => {
       }), 'model');
       const checkArgMap = new Map<number, checkParams>();
       const checkArgs: checkParams[] = [];
-      const modelArgs: any[] = [];
+      const modelArgs: unknown[] = [];
       for (const [key, item] of args.entries()) {
         if (isCheckParams(item)) {
           checkArgMap.set(key, item as checkParams);
@@ -72,7 +72,10 @@ export const useModel: UseModel = (engineId) => {
           modelArgs.push(item);
         }
       }
-      elem.draw = (ctx: EngineCtx | OffEngineCtx, ...args: ModelDrawFuncArgs[]) => { draw.apply(null, [ctx, ...args]); };
+      elem.draw = (ctx: EngineCtx | OffEngineCtx, ...args: ModelDrawFuncArgs[]) => { 
+        ctx.$beginPath();
+        draw.apply(null, [ctx, ...args]);
+      };
       modelById.set(`${prefix}${elem.name}`, elem);
       const { graphics, imageData } = sumModelGraphics(offCtx as OffEngineCtx, draw, ...modelArgs);
       offCtx?.clearRect(0, 0, width, height);
@@ -86,7 +89,7 @@ export const useModel: UseModel = (engineId) => {
       };
       elem.draw(offCtx as OffEngineCtx, ...modelArgs);
       callEventCallback('after:modelAdd', createEventData('after:modelAdd', {
-        object: engineById.get(engineId),
+        target: engineById.get(engineId),
         model: elem
       }));
     }

@@ -225,3 +225,14 @@ export function getAngle(x1: number, y1: number, x2: number, y2: number, x3: num
 export function getSlope(p1: Point, p2: Point): number {
   return (p1.y - p2.y) / (p1.x - p2.x);
 }
+
+export function mergeBoundary(bounds: Boundary[]) {
+  bounds.reduce((pre, cur) => {
+    return {
+      minX: Math.min(pre.minX, cur.minX),
+      minY: Math.min(pre.minY, cur.minY),
+      maxX: Math.max(pre.maxX, cur.maxX),
+      maxY: Math.max(pre.maxY, cur.maxY)
+    }
+  }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+}

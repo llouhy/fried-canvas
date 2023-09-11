@@ -10,8 +10,7 @@ type ReloadCtxResult<T> = T extends CanvasRenderingContext2D ? EngineCtx : OffEn
 
 export const reloadCtxFunction = <T>(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
-) => {
-  // const coordinateStack = useCoordinateCache(engineId);
+): EngineCtx => {
   const { arc, arcTo, rect, fillRect, strokeRect, moveTo, lineTo, stroke, createLinearGradient, strokeText, fillText, beginPath } = useRewriteCtxFunction();
   ctx.arc = arc(ctx);
   ctx.arcTo = arcTo(ctx);
@@ -27,7 +26,7 @@ export const reloadCtxFunction = <T>(
   ctx.strokeText = strokeText(ctx);
   ctx.fillText = fillText(ctx);
   ctx.beginPath = beginPath(ctx);
-  // ctx.globalCompositeOperation = 'destination-over';
+  return ctx as EngineCtx;
 };
 
 export const initContext = (
@@ -38,9 +37,8 @@ export const initContext = (
   // if (!canvasIns || !(canvasIns instanceof HTMLCanvasElement)) {
   //   throw new _Error('$o.canvas not a HTMLCanvasElement, call the function reInitCanvas');
   // }
-  const ctx = canvasIns.getContext(contextType, {
+  return canvasIns.getContext(contextType, {
     ...getDefaultContextAttribute(),
     ...contextAttributes
   }) as CanvasRenderingContext2D;
-  return ctx;
 };
