@@ -178,8 +178,6 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
   }
 
   const rotate = (rotateDeg: number) => { // moveTo偏移量会导致清除失败，graphics不同步
-    // const { callEventCallback } = useEvent(shape.engineId);
-    // callEventCallback();
     shape.rotateDeg = rotateDeg;
     shape.moveTo(shape.graphics.ox, shape.graphics.oy);
     return;
