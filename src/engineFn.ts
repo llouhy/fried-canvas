@@ -14,6 +14,7 @@ import type { Graphics, ModelOptions } from './graphOptions';
 import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
 import { UseConfigRes, useConfig } from './init/useConfig';
 import { ToCheckParams, toCheckParams } from './utils/toCheckParams';
+import { UseLayerRes, useLayer } from './init/useLayer';
 
 export type InitEngineResult = {
   engine: {
@@ -23,9 +24,10 @@ export type InitEngineResult = {
     ctx: EngineCtx;
     canvas: HTMLCanvasElement;
     readonly: boolean;
+    canvasWrapDom: HTMLDivElement;
     repaintInfluencedShape: (graphics: Graphics, excludes: Set<Shape>) => void;
   };
-} & UseConfigRes & UseEventRes & UseGraphRes & UseShapeRes & UseGridRes & UseModelRes;
+} & UseConfigRes & UseEventRes & UseGraphRes & UseShapeRes & UseGridRes & UseModelRes & UseLayerRes;
 export type InitEngine = (options: EngineOptions) => InitEngineResult;
 
 export type EngineOptions = {
@@ -33,7 +35,8 @@ export type EngineOptions = {
   id?: string;
   width?: number;
   height?: number;
-  canvas: HTMLCanvasElement | string;
+  canvas?: HTMLCanvasElement | string;
+  mountDom: HTMLElement;
   modelList?: ModelOptions[];
 };
 export type CanvasIns = {
@@ -57,14 +60,14 @@ const DEFAULT_CANVAS_HEIGHT = 300;
 export const engineById = new Map<string, InitEngineResult>();
 
 export const initEngine: InitEngine = (options): InitEngineResult => {
-  const { id, width, height, canvas, modelList, readonly } = options;
+  const { id, width, height, canvas, modelList, readonly, mountDom } = options;
   const engineRes = engineById.get(id || '');
   if (engineRes) return engineRes;
-  const canvasDom =
-    isCanvas(canvas) ? canvas : (isString(canvas) && document.querySelector(`#${canvas}`));
-  if (!isCanvas(canvasDom)) {
-    throw getError(`Create engine instance error: cant find a canvas dom by id "${canvas}"`);
-  }
+  const canvasWrapDom = document.createElement('div'), canvasDom = document.createElement('canvas');
+  // canvasDom.classList.add('hello');
+  mountDom.innerHTML = '';
+  mountDom.appendChild(canvasWrapDom).setAttribute('style', 'position:relative');
+  canvasWrapDom.appendChild(canvasDom);
   const ctx: CanvasRenderingContext2D = initContext('2d', canvasDom as HTMLCanvasElement),
     _id: string = id || generateRandomStr(8),
     _readonly: boolean = readonly || false,
@@ -79,17 +82,19 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
       width: _width,
       height: _height,
       readonly: _readonly,
-      canvas: canvasDom
+      canvas: canvasDom,
+      canvasWrapDom: canvasWrapDom
     })
   });
   engineById.set(_id, setIdentify(engineResult, 'engine'));
-  const modelCore = useModel(_id),
+  const layerCore = useLayer(_id),
+    modelCore = useModel(_id),
     shapeCore = useShape(_id),
     gridCore = useGrid(_id),
     graphCore = useGraph(_id),
     eventCore = useEvent(_id),
     configCore = useConfig(_id);
-  const coreInstance = { ...modelCore, ...shapeCore, ...gridCore, ...graphCore, ...eventCore, ...configCore };
+  const coreInstance = { ...layerCore, ...modelCore, ...shapeCore, ...gridCore, ...graphCore, ...eventCore, ...configCore };
   setPropertyUnWritable(omitObjectProperty(Object.assign(engineResult, coreInstance), ['rootGrid']), Object.keys(coreInstance));
   microtask(() => {
     const { callEventCallback, createEventData, addModel } = engineResult;
@@ -104,9 +109,9 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 
 (window as any)['dogdog'] = { initEngine };
 
-const engine = initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
+const engine = initEngine({ mountDom: document.getElementById('canvas-wrap'), width: 1500, height: 1500 });
 // console.log(engine)
-const { addModel, createShape, drawShape, updateShape, engine: { ctx }, translate, updateModel, onEvent } = engine;
+const { addModel, createShape, drawShape, updateShape, createLayer, engine: { ctx }, translate, updateModel, onEvent } = engine;
 // onEvent('after:engineInit', (data) => {
 //   console.log('event', data)
 // });
@@ -134,12 +139,12 @@ const { addModel, createShape, drawShape, updateShape, engine: { ctx }, translat
 // onEvent('graph:mouseleave', (data) => {
 //   console.log('graph.mouseleave', data);
 // })
-onEvent('shape:mouseenter', (data) => {
-  console.log('shape.mouseenter', data);
-})
-onEvent('shape:mouseleave', (data) => {
-  console.log('shape.mouseleave', data);
-})
+// onEvent('shape:mouseenter', (data) => {
+//   console.log('shape.mouseenter', data);
+// })
+// onEvent('shape:mouseleave', (data) => {
+//   console.log('shape.mouseleave', data);
+// })
 // onEvent('graph:mousemove', (data) => {
 //   console.log('graph:mousemove', data);
 // })
@@ -254,7 +259,7 @@ const getTestModel4 = () => {
     name: 'test4',
     draw: (ctx: EngineCtx | OffEngineCtx, p1: any, refParams: any) => {
       // console.log('%c画了4', 'color: red')
-      console.log(ctx, p1, refParams)
+      // console.log(ctx, p1, refParams)
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(600 - 2 * refParams, 430 - refParams);
@@ -299,7 +304,7 @@ const getTestModel6 = () => {
       ctx.beginPath();
       ctx.rect(100, 100, 100, 100);
       // ctx.strokeStyle = 'yellow';
-      console.log(ctx.strokeStyle);
+      // console.log(ctx.strokeStyle);
       ctx.stroke();
       ctx.beginPath();
       // ctx.transform(2,0.3,0.3,1,100,100);
@@ -333,7 +338,7 @@ addModel(getTestModel5());
 const helloo = (window as any)['helloo'];
 ctx.strokeStyle = 'red';
 // ctx.$strokeRect(570, 400, 100,100);
-console.log(helloo)
+// console.log(helloo)
 // ctx.$strokeRect(helloo.minX, helloo.minY, helloo.maxX - helloo.minX, helloo.maxY - helloo.minY);
 // console.log('%c11111', 'background:orange;padding:5px;')
 // addModel(getTestModel1());
@@ -347,10 +352,11 @@ console.log(helloo)
 // addModel(getTestModel5());
 // console.log('%cend', 'background:orange;padding:5px;')
 // addModel(getTestModel6());
+const newLayer = createLayer(1, false);
 const shape1 = createShape('test1');
 const shape2 = createShape('test2');
 const shape3 = createShape('test3');
-const shape4 = createShape('test4');
+const shape4 = createShape('test4', { layer: newLayer });
 // const shape44 = createShape('test4');
 const shape5 = createShape('test5');
 const shape6 = createShape('test6');
@@ -415,11 +421,11 @@ let idd = 1;
 // ctx.save();
 let iddd = setInterval(() => {
   idd = idd + 1;
-  // shape4.rotate(idd * 2);
-  if (idd >= 0) {
-    // shape4.moveTo(shape4.graphics.ox + 6, shape4.graphics.oy + 4);
+  shape4.rotate(idd * 2);
+  if (idd >= 60) {
+    shape4.moveTo(shape4.graphics.ox + 6, shape4.graphics.oy + 4);
     clearInterval(iddd);
-    // callARotateMove(shape4);
+    callARotateMove(shape4);
   };
   // console.log(idd)
   // const { ox, oy, width, height } = shape4._graphics;
@@ -446,7 +452,7 @@ function callARotateMove(shape: Shape) {
   }, 20);
 }
 const cur = performance.now();
-console.log(now, cur, cur - now);
+// console.log(now, cur, cur - now);
 // ctx.putImageData((window as any)[`testtest`], 600,500);
 // ctx.$strokeRect(100, 100, 551, 282)
 // let id: string | number | NodeJS.Timer = undefined;
@@ -484,6 +490,13 @@ function callTranslate() {
     idx >= 38 && translate(-4, -8, t);
     if (idx >= 60) {
       clearInterval(id);
+      console.log({
+        'newLayerCtx': newLayer.ctx,
+        'oldLayerCtx': ctx,
+        'newLayer': newLayer.ctx.getTransform(),
+        'oldLayer': ctx.getTransform()
+      })
+      // console.log(newLayer, ctx)
       setTimeout(() => {
         moveAShape();
       }, 3000);
@@ -501,7 +514,7 @@ function moveAShape() {
     shape1.moveTo(idx * 3 - 30, idx * 4 - 30);
     if (idx >= 2) {
       clearInterval(id);
-      moveShape2();
+      // moveShape2();
       ctx.save();
       ctx.strokeStyle = 'green';
       ctx.$strokeRect(0, 0, 1500, 1500);

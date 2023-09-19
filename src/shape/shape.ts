@@ -10,6 +10,15 @@ import { getPureObject, setPropertyUnWritable } from '../utils/common';
 import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
 import { useEvent } from '../init/useEvent';
 import { configByEngineId } from '../init/useConfig';
+import { LayerIns } from '../definition/layer';
+
+type GetShape = (o: {
+  modelName: string;
+  engineId: string;
+  data?: any;
+  model?: ModelOptions;
+  index?: number;
+}) => Shape;
 
 export const allShapeBoundary = {
   minX: -Infinity,
@@ -19,6 +28,7 @@ export const allShapeBoundary = {
 };
 
 export type Shape = {
+  layer: LayerIns;
   belongEngineId: string;
   ctx: CanvasRenderingContext2D;
   id: string;
@@ -40,11 +50,13 @@ export type Shape = {
   moveTo: (x: number, y: number) => void;
   rotate: (rotateDeg: number) => void;
 };
-
-export const getShape = (modelName: string, engineId: string, data?: any, model?: ModelOptions, index?: number): Shape => {
+// modelName: string, engineId: string, data?: any, model?: ModelOptions, index?: number
+export const getShape: GetShape = (options) => {
+  const { modelName, engineId, data, model, index } = options;
   // const { getModel } = engineById.get(engineId);
   const shape: any = getPureObject({
     belongEngineId: '',
+    layer: null,
     ctx: null,
     id: '',
     index: 0,
@@ -85,7 +97,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
   shape.graphics = getPureObject(shape.$model.graphics as Graphics);
 
   const draw = (ctx: EngineCtx, placePoint = { x: shape.graphics.ox, y: shape.graphics.oy }, rotateDeg?: number): string => {
-    shape.ctx = ctx || engineById.get(shape.belongEngineId).engine.ctx;
+    shape.ctx = ctx || shape.ctx;
     if (rotateDeg) {
       const { width, height } = shape.graphics;
       const { x: ox, y: oy } = placePoint;
@@ -171,7 +183,7 @@ export const getShape = (modelName: string, engineId: string, data?: any, model?
 
   const moveTo = (x: number, y: number) => { // moveTo偏移量会导致清除失败，graphics不同步
     const { repaintInfluencedShape } = engineById.get(shape.belongEngineId);
-    repaintInfluencedShape(shape.graphicsWithBorder || getGraphicsWithBorder(shape.graphics, shape.borderOptions), new Set([shape])); // repaint应该
+    repaintInfluencedShape(shape.graphicsWithBorder || getGraphicsWithBorder(shape.graphics, shape.borderOptions), shape); // repaint应该
     shape.draw(shape.ctx, { x, y }, shape.rotateDeg || null);
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
     updateShapeToGrid(shape, shape.graphicsWithBorder);

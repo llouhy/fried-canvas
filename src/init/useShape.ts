@@ -1,3 +1,5 @@
+import { layer } from '../definition/identify';
+import { LayerIns } from '../definition/layer';
 import { InitEngineResult, engineById } from '../engineFn';
 import type { ModelOptions } from '../graphOptions';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
@@ -6,12 +8,14 @@ import { getGraphicsWithBorder } from '../utils/math';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
 import { useGrid } from './useGrid';
+import { layersByEngine } from './useLayer';
 import { ModelDrawFuncArgs, checkParams, sumModelGraphics } from './useModel';
 
 export type DrawShape = (shape: Shape, placePoint?: Point) => string | undefined;
 export type GetShape = (id?: string) => undefined | Shape | Shape[];
 export type UpdateShape = (shape: Shape, ...args: ModelDrawFuncArgs[]) => void;
-export type CreateShape = (modelName: string, data?: any, model?: ModelOptions, index?: number) => Shape;
+// modelName: string, data?: any, model?: ModelOptions, index?: number
+export type CreateShape = (modelName: string, o?: { data?: any; model?: ModelOptions; index?: number; layer?: LayerIns; }) => Shape;
 export type UseShapeRes = {
   drawShape: DrawShape;
   getShape: GetShape;
@@ -27,9 +31,8 @@ export const useShape: UseShape = (engineId) => {
   if (shapeCoreByEngineId.get(engineInstance)) return shapeCoreByEngineId.get(engineInstance);
   const drawShape: DrawShape = (shape, placePoint) => {
     try {
-      const { engine: { ctx } } = engineInstance;
       const { updateShapeToGrid } = useGrid(engineId);
-      const shapeId = shape.draw(ctx, placePoint);
+      const shapeId = shape.draw(shape.ctx, placePoint);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
       shapeById.set(shapeId, shape);
       return shapeId;
@@ -49,8 +52,9 @@ export const useShape: UseShape = (engineId) => {
     }
     return shapeById.get(shapeId);
   };
-  const createShape: CreateShape = (modelName, options) => {
-    const shape = getShapeIns(modelName, engineId, options?.data, options?.model, options?.index);
+  const createShape: CreateShape = (modelName, options = {}) => {
+    const shape = getShapeIns({ modelName, engineId, data: options.data, model: options.model, index: options.index });
+    engineInstance.appendToLayer(shape, options.layer || layersByEngine.get(engineInstance).find(elem => elem.isDefault));
     return shape;
   };
   const updateShape: UpdateShape = (shape, ...args) => {
@@ -60,20 +64,19 @@ export const useShape: UseShape = (engineId) => {
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
     if (!isResize) {
       shape.drawArgs = args;
-      repaintInfluencedShape(shape.graphicsWithBorder, new Set([shape]));
+      repaintInfluencedShape(shape.graphicsWithBorder, shape);
       shape.draw(shape.ctx, { x: shape.graphics.ox, y: shape.graphics.oy }, shape.rotateDeg);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
       return;
     }
-    console.log('isResize', isResize)
-    let offCanvas = useOffscreenCanvas().get(width, height);
-    let offCtx = offCanvas!.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    let offCanvas = useOffscreenCanvas().get(width, height),
+      offCtx = offCanvas!.getContext('2d') as OffscreenCanvasRenderingContext2D;
     reloadCtxFunction<OffscreenCanvasRenderingContext2D>(offCtx);
-    const { graphics, imageData } = sumModelGraphics(offCtx, shape.$model.__draw__, ...args);
+    const { graphics } = sumModelGraphics(offCtx, shape.$model.__draw__, ...args);
     shape._graphics = graphics;
     shape.graphics = { ...shape.graphics, width: shape._graphics.width, height: shape._graphics.height };
     shape.drawArgs = args;
-    repaintInfluencedShape(shape.graphicsWithBorder || getGraphicsWithBorder(shape.graphics, shape.borderOptions), new Set([shape]));
+    repaintInfluencedShape(shape.graphicsWithBorder || getGraphicsWithBorder(shape.graphics, shape.borderOptions), shape);
     shape.draw(shape.ctx, { x: shape.graphics.ox, y: shape.graphics.oy }, shape.rotateDeg);
     updateShapeToGrid(shape, shape.graphicsWithBorder);
     offCanvas = null;
