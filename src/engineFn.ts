@@ -14,6 +14,7 @@ import type { Graphics, ModelOptions } from './graphOptions';
 import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
 import { UseConfigRes, useConfig } from './init/useConfig';
 import { ToCheckParams, toCheckParams } from './utils/toCheckParams';
+import { UseLayerRes, useLayer } from './init/useLayer';
 
 export type InitEngineResult = {
   engine: {
@@ -23,9 +24,10 @@ export type InitEngineResult = {
     ctx: EngineCtx;
     canvas: HTMLCanvasElement;
     readonly: boolean;
+    canvasWrapDom: HTMLDivElement;
     repaintInfluencedShape: (graphics: Graphics, excludes: Set<Shape>) => void;
   };
-} & UseConfigRes & UseEventRes & UseGraphRes & UseShapeRes & UseGridRes & UseModelRes;
+} & UseConfigRes & UseEventRes & UseGraphRes & UseShapeRes & UseGridRes & UseModelRes & UseLayerRes;
 export type InitEngine = (options: EngineOptions) => InitEngineResult;
 
 export type EngineOptions = {
@@ -33,7 +35,8 @@ export type EngineOptions = {
   id?: string;
   width?: number;
   height?: number;
-  canvas: HTMLCanvasElement | string;
+  canvas?: HTMLCanvasElement | string;
+  mountDom: HTMLElement;
   modelList?: ModelOptions[];
 };
 export type CanvasIns = {
@@ -57,19 +60,19 @@ const DEFAULT_CANVAS_HEIGHT = 300;
 export const engineById = new Map<string, InitEngineResult>();
 
 export const initEngine: InitEngine = (options): InitEngineResult => {
-  const { id, width, height, canvas, modelList, readonly } = options;
+  const { id, width, height, canvas, modelList, readonly, mountDom } = options;
   const engineRes = engineById.get(id || '');
   if (engineRes) return engineRes;
-  const canvasDom =
-    isCanvas(canvas) ? canvas : (isString(canvas) && document.querySelector(`#${canvas}`));
-  if (!isCanvas(canvasDom)) {
-    throw getError(`Create engine instance error: cant find a canvas dom by id "${canvas}"`);
-  }
-  const ctx: CanvasRenderingContext2D = initContext('2d', canvasDom as HTMLCanvasElement);
-  const _id: string = id || generateRandomStr(8);
-  const _readonly: boolean = readonly ?? false;
-  const _width: number = width ?? DEFAULT_CANVAS_WIDTH;
-  const _height: number = height ?? DEFAULT_CANVAS_HEIGHT;
+  const canvasWrapDom = document.createElement('div'), canvasDom = document.createElement('canvas');
+  // canvasDom.classList.add('hello');
+  mountDom.innerHTML = '';
+  mountDom.appendChild(canvasWrapDom).setAttribute('style', 'position:relative');
+  canvasWrapDom.appendChild(canvasDom);
+  const ctx: CanvasRenderingContext2D = initContext('2d', canvasDom as HTMLCanvasElement),
+    _id: string = id || generateRandomStr(8),
+    _readonly: boolean = readonly || false,
+    _width: number = width ?? DEFAULT_CANVAS_WIDTH,
+    _height: number = height ?? DEFAULT_CANVAS_HEIGHT;
   reloadCtxFunction(ctx as CanvasRenderingContext2D);
   setCanvasSize(canvasDom as HTMLCanvasElement, _width, _height, ctx);
   const engineResult = getPureObject({
@@ -79,23 +82,26 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
       width: _width,
       height: _height,
       readonly: _readonly,
-      canvas: canvasDom
+      canvas: canvasDom,
+      canvasWrapDom: canvasWrapDom
     })
   });
   engineById.set(_id, setIdentify(engineResult, 'engine'));
-  const modelCore: UseModelRes = useModel(_id),
-    shapeCore: UseShapeRes = useShape(_id),
-    gridCore: UseGridRes = useGrid(_id),
-    graphCore: UseGraphRes = useGraph(_id),
-    eventCore: UseEventRes = useEvent(_id),
-    configCore: UseConfigRes = useConfig(_id);
-  const coreInstance = { ...modelCore, ...shapeCore, ...gridCore, ...graphCore, ...eventCore, ...configCore };
+  const layerCore = useLayer(_id),
+    modelCore = useModel(_id),
+    shapeCore = useShape(_id),
+    gridCore = useGrid(_id),
+    graphCore = useGraph(_id),
+    eventCore = useEvent(_id),
+    configCore = useConfig(_id);
+  const coreInstance = { ...layerCore, ...modelCore, ...shapeCore, ...gridCore, ...graphCore, ...eventCore, ...configCore };
   setPropertyUnWritable(omitObjectProperty(Object.assign(engineResult, coreInstance), ['rootGrid']), Object.keys(coreInstance));
   microtask(() => {
     const { callEventCallback, createEventData, addModel } = engineResult;
     modelList && addModel(modelList);
     callEventCallback('after:engineInit', createEventData('after:engineInit', {
-      object: engineResult
+      object: engineResult,
+      target: engineResult
     }));
   });
   return engineResult;
@@ -103,30 +109,48 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 
 (window as any)['dogdog'] = { initEngine };
 
-const engine = initEngine({ canvas: 'canvas', width: 1500, height: 1500 });
+const engine = initEngine({ mountDom: document.getElementById('canvas-wrap'), width: 1500, height: 1500 });
 // console.log(engine)
-const { addModel, createShape, drawShape, updateShape, engine: { ctx }, translate, updateModel, onEvent } = engine;
-onEvent('after:engineInit', (data) => {
-  console.log('event', data)
-});
-onEvent('before:modelAdd', (data) => {
-  console.log('modalAdd', data)
-});
-onEvent('after:modelAdd', (data) => {
-  console.log('modalAdd', data)
-});
-onEvent('shape:click', (data) => {
-  console.log('shape.click', data)
-});
-onEvent('graph:click', (data) => {
-  console.log('graph.click', data)
-})
-onEvent('shape:mouseup', (data) => {
-  console.log('shape.mouseup', data)
-})
-onEvent('graph:mouseup', (data) => {
-  console.log('shape.mouseup', data)
-})
+const { addModel, createShape, drawShape, updateShape, createLayer, engine: { ctx }, translate, updateModel, onEvent } = engine;
+// onEvent('after:engineInit', (data) => {
+//   console.log('event', data)
+// });
+// onEvent('before:modelAdd', (data) => {
+//   console.log('modalAdd', data)
+// });
+// onEvent('after:modelAdd', (data) => {
+//   console.log('modalAdd', data)
+// });
+// onEvent('shape:click', (data) => {
+//   console.log('shape.click', data)
+// });
+// onEvent('graph:click', (data) => {
+//   console.log('graph.click', data)
+// })
+// onEvent('shape:mouseup', (data) => {
+//   console.log('shape.mouseup', data)
+// })
+// onEvent('graph:mouseup', (data) => {
+//   console.log('shape.mouseup', data)
+// })
+// onEvent('graph:mouseenter', (data) => {
+//   console.log('graph.mouseenter', data);
+// })
+// onEvent('graph:mouseleave', (data) => {
+//   console.log('graph.mouseleave', data);
+// })
+// onEvent('shape:mouseenter', (data) => {
+//   console.log('shape.mouseenter', data);
+// })
+// onEvent('shape:mouseleave', (data) => {
+//   console.log('shape.mouseleave', data);
+// })
+// onEvent('graph:mousemove', (data) => {
+//   console.log('graph:mousemove', data);
+// })
+// onEvent('shape:mousemove', (data) => {
+//   console.log('shape.mousemove', data);
+// })
 ctx.save();
 ctx.strokeStyle = 'orange';
 ctx.$strokeRect(0, 0, 1500, 1500);
@@ -138,52 +162,18 @@ const getTestModel1 = (): ModelOptions => {
   return {
     name: 'test1',
     draw: (ctx: EngineCtx | OffEngineCtx, p1, p2, p3) => {
+      // ctx.beginPath();
       ctx.save();
       ctx.moveTo(200, 40);
       ctx.transform(1.4, 0, -0.3, 3, 290, 140);
       ctx.strokeStyle = 'green';
       ctx.quadraticCurveTo(200, 500, 400, 100);
-      // ctx.stroke();
-      // ctx.strokeStyle = 'yellow';
-      // ctx.translate(100, 100);
       ctx.rotate(60 * Math.PI / 180)
       ctx.transform(0.2, 0, 0, 0.3, -120, 100);
-      // ctx.arcTo(150, 20, 200, 400, 50);
       ctx.stroke();
-      // ctx.strokeStyle = 'red';
       ctx.quadraticCurveTo(200, 300, 600, 100);
-      // ctx.bezierCurveTo(500, 20, 874, 674, 732, 40);
-      // ctx.quadraticCurveTo(899, 43, 450, 223);
-      // ctx.bezierCurveTo(500, 20, 874, 674, 732, 40);
       ctx.stroke();
       ctx.restore();
-      // ctx.$strokeRect(680, 730, 100, 100)
-      // ctx.save();
-      // // ctx.lineWidth = 10;
-      // ctx.strokeStyle = 'Turquoise';
-      // ctx.beginPath();
-      // ctx.moveTo(-200 + 600, -200 + 600);
-      // ctx.lineTo(-200 + 600, -300 + 600);
-      // ctx.lineTo(-100 + 600, -300 + 600);
-      // ctx.closePath();
-      // ctx.stroke();
-      // // ctx.strokeStyle = 'yellow';
-      // // ctx.beginPath();
-      // ctx.save();
-      // ctx.rotate(14 * Math.PI / 180)
-      // ctx.strokeStyle = 'red';
-      // ctx.quadraticCurveTo(-322 + 600, 600 + 600, -332 + 600, -128 + 600);
-      // ctx.stroke();
-      // ctx.restore();
-      // // ctx.stroke();
-      // // ctx.rotate(10 * Math.PI / 180)
-      // ctx.bezierCurveTo(-150 + 600, -140 + 600, -188 + 600, -200 + 600, -90 + 600, -90 + 600);
-      // ctx.rotate(-20 * Math.PI / 180)
-      // ctx.arc(-500 + 600, -500 + 600, 44, angleToRadian(45), angleToRadian(270));
-      // ctx.closePath();
-      // ctx.lineWidth = 8;
-      // ctx.stroke();
-      // ctx.restore();
     }
   }
 };
@@ -269,7 +259,7 @@ const getTestModel4 = () => {
     name: 'test4',
     draw: (ctx: EngineCtx | OffEngineCtx, p1: any, refParams: any) => {
       // console.log('%c画了4', 'color: red')
-      console.log(ctx, p1, refParams)
+      // console.log(ctx, p1, refParams)
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(600 - 2 * refParams, 430 - refParams);
@@ -293,9 +283,7 @@ const getTestModel5 = () => {
       ctx.strokeRect(500, 500, 1, 1);
       ctx.restore();
       ctx.save();
-      // ctx.transform(2,0,0,2,0,0)
       ctx.fillStyle = 'grey';
-      // console.log(ctx.lineWidth)
       ctx.lineWidth = 20;
       ctx.strokeRect(500, 500, 100, 100);
       ctx.moveTo(620, 600);
@@ -304,11 +292,6 @@ const getTestModel5 = () => {
       ctx.closePath();
       ctx.lineWidth = 4;
       ctx.stroke();
-      // ctx.stroke();
-      // ctx.shadowColor = 'black'
-      // ctx.shadowBlur = 20;
-      // ctx.shadowOffsetX = 20;
-      // ctx.fillRect(500, 500, 100, 100);
       ctx.restore();
     }
   }
@@ -321,7 +304,7 @@ const getTestModel6 = () => {
       ctx.beginPath();
       ctx.rect(100, 100, 100, 100);
       // ctx.strokeStyle = 'yellow';
-      console.log(ctx.strokeStyle);
+      // console.log(ctx.strokeStyle);
       ctx.stroke();
       ctx.beginPath();
       // ctx.transform(2,0.3,0.3,1,100,100);
@@ -349,10 +332,13 @@ const getTestModel6 = () => {
 // }
 addModel(getTestModel4(), 0.6, toCheckParams(30))
 addModel(getTestModel1());
+addModel(getTestModel2());
+addModel(getTestModel3());
+addModel(getTestModel5());
 const helloo = (window as any)['helloo'];
 ctx.strokeStyle = 'red';
 // ctx.$strokeRect(570, 400, 100,100);
-console.log(helloo)
+// console.log(helloo)
 // ctx.$strokeRect(helloo.minX, helloo.minY, helloo.maxX - helloo.minX, helloo.maxY - helloo.minY);
 // console.log('%c11111', 'background:orange;padding:5px;')
 // addModel(getTestModel1());
@@ -366,10 +352,11 @@ console.log(helloo)
 // addModel(getTestModel5());
 // console.log('%cend', 'background:orange;padding:5px;')
 // addModel(getTestModel6());
+const newLayer = createLayer(1, false);
 const shape1 = createShape('test1');
 const shape2 = createShape('test2');
 const shape3 = createShape('test3');
-const shape4 = createShape('test4');
+const shape4 = createShape('test4', { layer: newLayer });
 // const shape44 = createShape('test4');
 const shape5 = createShape('test5');
 const shape6 = createShape('test6');
@@ -377,7 +364,7 @@ const shape6 = createShape('test6');
 const now = performance.now();
 drawShape(shape1);
 
-ctx.$beginPath();
+// ctx.$beginPath();
 // const { x, y, width, height } = (window as any).tess;
 // ctx.$strokeRect(x, y, width, height);
 // for (const [idx, point] of (window as any)[`arcTest`].entries()) {
@@ -399,9 +386,9 @@ ctx.$beginPath();
 //   // ctx.$strokeRect(point.x, point.y, 1, 200);
 // }
 // ctx.closePath()
-ctx.$stroke();
-ctx.$beginPath();
-ctx.strokeStyle = 'pink';
+// ctx.$stroke();
+// ctx.$beginPath();
+// ctx.strokeStyle = 'pink';
 // for (const [idx, point] of (window as any).testtt.entries()) {
 //   if (!idx) {
 //     ctx.$moveTo(point.x, point.y);
@@ -409,7 +396,7 @@ ctx.strokeStyle = 'pink';
 //     ctx.$lineTo(point.x, point.y)
 //   }
 // }
-ctx.$stroke();
+// ctx.$stroke();
 
 // ctx.beginPath();
 // // ctx.$arc(184, 146, 50, 0, 360 * Math.PI / 180);
@@ -460,12 +447,12 @@ function callARotateMove(shape: Shape) {
     if (idx > 160) {
       clearInterval(cid);
       updateShape(shape4, 0.3, 60);
-      // callATranslate();
+      callATranslate();
     };
   }, 20);
 }
 const cur = performance.now();
-console.log(now, cur, cur - now);
+// console.log(now, cur, cur - now);
 // ctx.putImageData((window as any)[`testtest`], 600,500);
 // ctx.$strokeRect(100, 100, 551, 282)
 // let id: string | number | NodeJS.Timer = undefined;
@@ -481,7 +468,7 @@ function callATranslate() {
     idx >= 100 && clearInterval(id)
     // idx >= 220 && ctx.translate(-100, -100);
     if (idx === 100) {
-      // callTranslate();
+      callTranslate();
       // ctx.save();
       // ctx.strokeStyle = 'blue';
       // ctx.$strokeRect(0, 0, 1500, 1500);
@@ -503,6 +490,13 @@ function callTranslate() {
     idx >= 38 && translate(-4, -8, t);
     if (idx >= 60) {
       clearInterval(id);
+      console.log({
+        'newLayerCtx': newLayer.ctx,
+        'oldLayerCtx': ctx,
+        'newLayer': newLayer.ctx.getTransform(),
+        'oldLayer': ctx.getTransform()
+      })
+      // console.log(newLayer, ctx)
       setTimeout(() => {
         moveAShape();
       }, 3000);
@@ -520,7 +514,7 @@ function moveAShape() {
     shape1.moveTo(idx * 3 - 30, idx * 4 - 30);
     if (idx >= 2) {
       clearInterval(id);
-      moveShape2();
+      // moveShape2();
       ctx.save();
       ctx.strokeStyle = 'green';
       ctx.$strokeRect(0, 0, 1500, 1500);
@@ -538,7 +532,7 @@ function moveAShape() {
 }
 const arr: any[] = [];
 function moveShape2() {
-  return;
+  // return;
   let idx = 0;
   let id = setInterval(() => {
     idx++;

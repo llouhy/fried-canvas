@@ -1,6 +1,6 @@
-import { error, engine, shape, model, grid, graph, checkParams } from '../definition/identify';
+import { error, engine, shape, model, grid, graph, checkParams, layer } from '../definition/identify';
 
-export type InstanceType = 'error' | 'model' | 'shape' | 'engine' | 'grid' | 'graph' | 'checkParams';
+export type InstanceType = 'error' | 'model' | 'shape' | 'engine' | 'grid' | 'graph' | 'checkParams' | 'layer';
 export const setIdentify = (obj: any, type: InstanceType) => {
   const identifyByType = {
     error,
@@ -9,6 +9,7 @@ export const setIdentify = (obj: any, type: InstanceType) => {
     model,
     grid,
     graph,
+    layer,
     checkParams
   };
   const identify = identifyByType[type];
