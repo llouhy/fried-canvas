@@ -1,4 +1,6 @@
 import { GridIns, getGrid } from "../definition/grid";
+import { layer } from "../definition/identify";
+import { LayerIns } from "../definition/layer";
 import { InitEngineResult, engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
 import { Boundary, Point } from "../rewriteFn/type";
@@ -17,7 +19,7 @@ export type UseGridRes = {
   getPointInGrid: (point: Point) => GridIns;
   getInfluencedGrid: (boundary: Boundary) => GridIns[];
   updateShapeToGrid: (shape: Shape, graphics: Graphics) => void;
-  getInfluencedShape: (boundary: Boundary, influenceGrids?: GridIns[]) => Shape[];
+  getInfluencedShape: (boundary: Boundary, o: { influenceGrids?: GridIns[]; layerSet?: Set<LayerIns> }) => Shape[];
   mergeGridBoundary: (grids: GridIns[]) => Boundary;
 }
 export type UseGrid = (engineId: string, ctx?: any) => UseGridRes;
@@ -93,7 +95,7 @@ export const useGrid: UseGrid = (engineId, ctx) => {
         break;
       }
     }
-    !(window as any).ooo && (window as any).lalala && console.log('%c算出来清除bound', 'background:yellow;padding:20px', { ...bound })
+    // !(window as any).ooo && (window as any).lalala && console.log('%c算出来清除bound', 'background:yellow;padding:20px', { ...bound })
     // console.log('bound', bound)
     const isDeepValid = (bound: { left: number; right: number; top: number; bottom: number; }, gridBoundary: Boundary): boolean => {
       return !(gridBoundary.minX > bound.right
@@ -121,12 +123,14 @@ export const useGrid: UseGrid = (engineId, ctx) => {
     deep([grid], result);
     return result;
   };
-  const getInfluencedShape = (boundary: Boundary, influenceGrids?: GridIns[]): Shape[] => {
+  const getInfluencedShape = (boundary: Boundary, options: { influenceGrids?: GridIns[]; layerSet?: Set<LayerIns>; } = {}): Shape[] => {
+    const { influenceGrids, layerSet } = options;
     const grids = influenceGrids || getInfluencedGrid(boundary);
-    const shapes = grids.reduce((pre, cur) => {
+    const shapes: Shape[] = grids.reduce((pre, cur) => {
       return [...pre, ...(getGridShapes(cur))];
     }, []);
-    return [...new Set(shapes)];
+    if (!layerSet) return [...new Set(shapes)];
+    return [...new Set(shapes)].filter(elem => layerSet.has(elem.layer));
   };
   const updateShapeToGrid = (shape: Shape, graphics: Graphics) => {
     const graph = graphByEngineId.get(engineId);

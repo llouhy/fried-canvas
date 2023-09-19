@@ -72,7 +72,7 @@ export const useEvent: UseEvent = (engineId: string): UseEventRes => {
     }
     return isShape(target) ? { shape: target } : { shape: null };
   };
-  const setEnterAndLeaveEvent = (eventName: BrowserMoveEvent) => {
+  const setMoveEvent = (eventName: BrowserMoveEvent) => {
     const { engine } = engineById.get(engineId), mouseInShapeSet = new Set();
     let isMouseInGraph = false;
     const callback = ($event: MouseEvent) => {
@@ -81,6 +81,19 @@ export const useEvent: UseEvent = (engineId: string): UseEventRes => {
       let isGraphMove = false;
       if (shape) {
         let isEnter = false;
+        for (const elem of mouseInShapeSet.values()) {
+          if (elem !== shape) {
+            callEventCallback('shape:mouseleave', createEventData('shape:mouseleave', {
+              engine,
+              $event,
+              shape: elem,
+              target: elem,
+              graph: graphByEngineId.get(engineId),
+              ...positionInfo
+            }));
+            mouseInShapeSet.delete(elem);
+          }
+        }
         if (!mouseInShapeSet.has(shape)) {
           mouseInShapeSet.add(shape);
           callEventCallback('shape:mouseenter', createEventData('shape:mouseenter', {
@@ -152,7 +165,7 @@ export const useEvent: UseEvent = (engineId: string): UseEventRes => {
   }
   const setDefaultEvent = (eventName: BrowserEvent) => {
     if (['mouseenter', 'mouseleave', 'mousemove'].includes(eventName)) {
-      defaultEvent['mousemove'] || setEnterAndLeaveEvent(eventName as BrowserMoveEvent);
+      defaultEvent['mousemove'] || setMoveEvent(eventName as BrowserMoveEvent);
       return;
     }
     const { engine } = engineById.get(engineId);

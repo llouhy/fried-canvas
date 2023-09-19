@@ -18,11 +18,15 @@ export type Graph = {
   bottom: number;
   zoom: number;
 };
+type Translate = (x: number, y: number, cachePointer: Object) => void;
+type ResizeCanvas = (width: number, height: number) => void;
+type ClearRect = (ctx: EngineCtx, x: number, y: number, width: number, height: number) => void;
+type RepaintInfluencedShape = (graphics: Graphics, shape: Shape) => void;
 export type UseGraphRes = {
-  translate: (x: number, y: number, cachePointer: Object) => void;
-  resizeCanvas: (width: number, height: number) => void;
-  clearRect: (x: number, y: number, width: number, height: number) => void;
-  repaintInfluencedShape: (graphics: Graphics, excludesSet: Set<Shape>) => void;
+  translate: Translate;
+  resizeCanvas: ResizeCanvas;
+  clearRect: ClearRect;
+  repaintInfluencedShape: RepaintInfluencedShape;
 }
 export type UseGraph = (engineId: string) => UseGraphRes;
 export const graphByEngineId = new Map<string, Graph>();
@@ -31,10 +35,6 @@ export type UseClipPath = (ctx: EngineCtx) => [
   (x: number, y: number, width: number, height: number) => void,
   () => void
 ];
-const useCache = <T>(fn: (...args: any[]) => any) => {
-  const cacheDataByPointer = new WeakMap<Object, any>();
-  return (pointer: Object, ...params: any[]): T => cacheDataByPointer.get(pointer) || cacheDataByPointer.set(pointer, fn(...params)).get(pointer);;
-}
 const getBoundary = (): Boundary => {
   const imageBoundary = {
     minX: 0,
@@ -68,7 +68,6 @@ const useClipPath: UseClipPath = (ctx) => {
     ctx.save();
     ctx.$rect(x, y, width, height);
     ctx.clip();
-    // ctx.$beginPath();
   }
   const destroy = () => {
     ctx.restore();
@@ -87,37 +86,39 @@ export const useGraph: UseGraph = (engineId) => {
     bottom: engineById.get(engineId).engine.height,
     zoom: 1,
   }, 'graph')).get(engineId);
-  const translate = (x: number, y: number, cachePointer: Object = {}) => {
+  const translate: Translate = (x, y, cachePointer = {}) => {
     if (!isNumber(x) || !isNumber(y)) return;
-    const { clearRect, updateAllShapeToGrid, engine: { ctx, width, height } } = engineById.get(engineId);
-    clearRect(graph.left, graph.top, width, height);
-    ctx.translate(x, y);
-    Object.assign(graph, {
-      translateX: graph.translateX + x,
-      translateY: graph.translateY + y,
-      left: -graph.translateX,
-      top: -graph.translateY,
-      right: graph.left + width,
-      bottom: graph.top + height
-    });
-    for (const elem of [...shapeById.values()]) {
+    const { clearRect, updateAllShapeToGrid, engine: { width, height }, getAllLayer } = engineInstance;
+    for (const layer of getAllLayer()) {
+      clearRect(layer.ctx, graph.left, graph.top, width, height);
+      layer.ctx.translate(x, y);
+    }
+    const translateX = graph.translateX + x,
+      translateY = graph.translateY + y,
+      left = -translateX,
+      top = -translateY,
+      right = left + width,
+      bottom = top + height;
+    Object.assign(graph, { translateX, translateY, left, top, right, bottom });
+    for (const elem of shapeById.values()) {
       if (isShapeInScreen(elem, graph)) {
-        (elem.rotateDeg && elem.draw(ctx, { x: elem.graphics.ox, y: elem.graphics.oy }, elem.rotateDeg)) || elem.draw(ctx);
+        (elem.rotateDeg && elem.draw(elem.ctx, { x: elem.graphics.ox, y: elem.graphics.oy }, elem.rotateDeg)) || elem.draw(elem.ctx);
       }
     }
     updateAllShapeToGrid();
   };
-  const resizeCanvas = (width: number, height: number) => {
+  const resizeCanvas: ResizeCanvas = (width, height) => {
     if (!isNumber(width) || !isNumber(height)) return;
-    const { engine } = engineById.get(engineId);
-    const boundary = getBoundary();
-    const imageData = getImageData(boundary, engine.ctx);
-    setCanvasSize(engine.canvas, width, height, engine.ctx);
-    Object.assign(engine, { width, height });
-    engine.ctx.putImageData(imageData, boundary.minX, boundary.minY);
+    const { getAllLayer } = engineInstance;
+    for (const layer of getAllLayer()) {
+      const boundary = getBoundary();
+      const imageData = getImageData(boundary, layer.ctx);
+      setCanvasSize(layer.canvas, width, height, layer.ctx);
+      Object.assign(engineInstance.engine, { width, height });
+      layer.ctx.putImageData(imageData, boundary.minX, boundary.minY);
+    }
   };
-  const clearRect = (x: number, y: number, width: number, height: number) => {
-    const { engine: { ctx } } = engineById.get(engineId);
+  const clearRect: ClearRect = (ctx, x, y, width, height) => {
     ctx.clearRect(x, y, width, height);
   };
   const gridToGraph = (boundary: Boundary): Boundary & { width: number; height: number; } => {
@@ -134,28 +135,38 @@ export const useGraph: UseGraph = (engineId) => {
       maxY: y + height
     }
   }
-  const repaintInfluencedShape = (graphics: Graphics, excludesSet: Set<Shape> = new Set()) => {
-    const { engine: { ctx }, mergeGridBoundary } = engineById.get(engineId);
+  const repaintInfluencedShape: RepaintInfluencedShape = (graphics, shape) => {
+    // console.log(shape, layersByEngine.get(engineInstance));
+    const excludesSet = new Set([shape]) || new Set(), layers = [shape.layer];
+    const { mergeGridBoundary } = engineById.get(engineId);
     const { getInfluencedGrid, getInfluencedShape } = useGrid(engineId);
-    const boundary = graphicsToBoundary(graphics);
-    const grids = getInfluencedGrid(boundary);
-    const shapes = getInfluencedShape(boundary, grids);
-    const gridClearBoundary = mergeGridBoundary(grids);
-    const canvasClearBoundary = gridToGraph(gridClearBoundary);
-    const [setClip, destroyClip] = useClipPath(ctx);
-    setClip(canvasClearBoundary.minX, canvasClearBoundary.minY, canvasClearBoundary.width, canvasClearBoundary.height);
-    clearRect(
-      canvasClearBoundary.minX, // clearBoundary是grid算出来的，gird坐标永远是canvas左上角为0,0
-      canvasClearBoundary.minY,
-      canvasClearBoundary.width,
-      canvasClearBoundary.height);
+    const boundary = graphicsToBoundary(graphics),
+      grids = getInfluencedGrid(boundary),
+      shapes = getInfluencedShape(boundary, { influenceGrids: grids, layerSet: new Set(layers) }),
+      gridClearBoundary = mergeGridBoundary(grids),
+      canvasClearBoundary = gridToGraph(gridClearBoundary),
+      destroyClips = [];
+    // console.log('影响的shapes', shapes);
+    // console.log('canvasClearBoundary', canvasClearBoundary)
+    for (const elem of layers) {
+      const [setClip, destroyClip] = useClipPath(elem.ctx);
+      destroyClips.push(destroyClip);
+      setClip(canvasClearBoundary.minX, canvasClearBoundary.minY, canvasClearBoundary.width, canvasClearBoundary.height);
+      clearRect(
+        elem.ctx,
+        canvasClearBoundary.minX, // clearBoundary是grid算出来的，gird坐标永远是canvas左上角为0,0
+        canvasClearBoundary.minY,
+        canvasClearBoundary.width,
+        canvasClearBoundary.height);
+    }
     for (const elem of shapes) {
       if (!excludesSet.has(elem)) {
-        const ctx = engineById.get(engineId).engine.ctx;
-        (elem.rotateDeg && elem.draw(ctx, { x: elem.graphics.ox, y: elem.graphics.oy }, elem.rotateDeg)) || elem.draw(ctx);
+        (elem.rotateDeg && elem.draw(elem.ctx, { x: elem.graphics.ox, y: elem.graphics.oy }, elem.rotateDeg)) || elem.draw(elem.ctx);
       }
     }
-    destroyClip();
+    for (const elem of destroyClips) {
+      elem();
+    }
   };
   return graphCoreByEngineId.set(engineInstance, {
     translate,
