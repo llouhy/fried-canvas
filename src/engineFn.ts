@@ -15,7 +15,7 @@ import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
 import { UseConfigRes, useConfig } from './init/useConfig';
 import { ToCheckParams, toCheckParams } from './utils/toCheckParams';
 import { UseLayerRes, useLayer } from './init/useLayer';
-import { presetShape } from './shape/line';
+import { presetShape } from './shape/preset';
 
 export type InitEngineResult = {
   engine: {
@@ -89,14 +89,22 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
     })
   });
   engineById.set(_id, setIdentify(engineResult, 'engine'));
-  const layerCore = useLayer(_id),
-    modelCore = useModel(_id),
-    shapeCore = useShape(_id),
-    gridCore = useGrid(_id),
-    graphCore = useGraph(_id),
-    eventCore = useEvent(_id),
-    configCore = useConfig(_id);
-  const coreInstance = { ...layerCore, ...modelCore, ...shapeCore, ...gridCore, ...graphCore, ...eventCore, ...configCore };
+  // const layerCore = useLayer(_id),
+  //   modelCore = useModel(_id),
+  //   shapeCore = useShape(_id),
+  //   gridCore = useGrid(_id),
+  //   graphCore = useGraph(_id),
+  //   eventCore = useEvent(_id),
+  //   configCore = useConfig(_id);
+  const coreInstance = {
+    ...useLayer(_id),
+    ...useModel(_id),
+    ...useShape(_id),
+    ...useGrid(_id),
+    ...useGraph(_id),
+    ...useEvent(_id),
+    ...useConfig(_id) 
+  };
   setPropertyUnWritable(omitObjectProperty(Object.assign(engineResult, coreInstance), ['rootGrid']), Object.keys(coreInstance));
   microtask(() => {
     const { callEventCallback, createEventData, addModel } = engineResult;
@@ -119,7 +127,7 @@ onEvent('after:engineInit', (data) => {
   console.log('event', data)
   // const control = createShape('controlPoint');
   const line = createShape('line');
-  const arrow = createShape('arrow:point');
+  const arrow = createShape('arrow:normal');
   // drawShape(control);
   drawShape(line);
   drawShape(arrow);

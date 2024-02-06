@@ -7,7 +7,7 @@ import type { Graphics, ModelOptions } from '../graphOptions';
 import type { EngineCtx, OffEngineCtx, Point } from '../rewriteFn/type';
 import { setIdentify } from '../utils/setIdentify';
 import { useEvent } from './useEvent';
-import { presetShape } from '../shape/line';
+import { presetShape } from '../shape/preset';
 
 export type checkParams = { value: ModelDrawFuncArgs; isCheckParams: symbol };
 export type ModelDrawFuncArgs = { [key: string]: any } | string | number | boolean | checkParams;
