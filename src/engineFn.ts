@@ -15,6 +15,7 @@ import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
 import { UseConfigRes, useConfig } from './init/useConfig';
 import { ToCheckParams, toCheckParams } from './utils/toCheckParams';
 import { UseLayerRes, useLayer } from './init/useLayer';
+import { presetShape } from './shape/line';
 
 export type InitEngineResult = {
   engine: {
@@ -56,7 +57,8 @@ export type ContextAttributes = {
 
 const DEFAULT_CANVAS_WIDTH = 300;
 const DEFAULT_CANVAS_HEIGHT = 300;
-
+const img: any = document.getElementById('image-test');
+img.crossOrigin = '';
 export const engineById = new Map<string, InitEngineResult>();
 
 export const initEngine: InitEngine = (options): InitEngineResult => {
@@ -98,6 +100,7 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   setPropertyUnWritable(omitObjectProperty(Object.assign(engineResult, coreInstance), ['rootGrid']), Object.keys(coreInstance));
   microtask(() => {
     const { callEventCallback, createEventData, addModel } = engineResult;
+    presetShape(_id);
     modelList && addModel(modelList);
     callEventCallback('after:engineInit', createEventData('after:engineInit', {
       object: engineResult,
@@ -112,14 +115,23 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 const engine = initEngine({ mountDom: document.getElementById('canvas-wrap'), width: 1500, height: 1500 });
 // console.log(engine)
 const { addModel, createShape, drawShape, updateShape, createLayer, engine: { ctx }, translate, updateModel, onEvent } = engine;
-// onEvent('after:engineInit', (data) => {
-//   console.log('event', data)
-// });
+onEvent('after:engineInit', (data) => {
+  console.log('event', data)
+  // const control = createShape('controlPoint');
+  const line = createShape('line');
+  const arrow = createShape('arrow:point');
+  // drawShape(control);
+  drawShape(line);
+  drawShape(arrow);
+  updateShape(arrow, { x: 200, y: 280 });
+  updateShape(line, [{ x: 30, y: 30 }, { x: 60, y: 50 }, { x: 130, y: 200 }, { x: 200, y: 280 }], { lineWidth: 4 });
+});
 // onEvent('before:modelAdd', (data) => {
 //   console.log('modalAdd', data)
 // });
 // onEvent('after:modelAdd', (data) => {
 //   console.log('modalAdd', data)
+
 // });
 // onEvent('shape:click', (data) => {
 //   console.log('shape.click', data)
@@ -249,6 +261,8 @@ const getTestModel3 = () => {
       ctx.lineTo(-50, 100);
       ctx.closePath();
       ctx.stroke();
+      console.log(img)
+      // ctx.drawImage(img, 200, 200);
       ctx.restore();
       // ctx.putImageData()
     }
@@ -448,6 +462,9 @@ function callARotateMove(shape: Shape) {
       clearInterval(cid);
       updateShape(shape4, 0.3, 60);
       callATranslate();
+      setTimeout(() => {
+        updateShape(shape4, 0.6, 30);
+      }, 2000);
     };
   }, 20);
 }

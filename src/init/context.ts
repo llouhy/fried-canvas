@@ -5,6 +5,7 @@ import { quadraticCurveTo } from '../rewriteFn/quadraticCurveTo';
 import type { EngineCtx, OffEngineCtx } from '../rewriteFn/type';
 import { useCoordinateCache } from '../shape/coordinate';
 import { getDefaultContextAttribute } from '../config/common';
+import { drawImage } from '../rewriteFn/drawImage';
 
 type ReloadCtxResult<T> = T extends CanvasRenderingContext2D ? EngineCtx : OffEngineCtx;
 
@@ -26,6 +27,7 @@ export const reloadCtxFunction = <T>(
   ctx.strokeText = strokeText(ctx);
   ctx.fillText = fillText(ctx);
   ctx.beginPath = beginPath(ctx);
+  ctx.drawImage = drawImage(ctx);
   return ctx as EngineCtx;
 };
 

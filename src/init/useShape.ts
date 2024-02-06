@@ -60,7 +60,7 @@ export const useShape: UseShape = (engineId) => {
   const updateShape: UpdateShape = (shape, ...args) => {
     const $model = shape.$model;
     const { engine: { width, height }, repaintInfluencedShape } = engineInstance;
-    const isResize = [...$model.checkArg.checkArgMap.keys()].some(elem => ($model.checkArg.checkArgMap.get(elem)).value !== args[elem]);
+    const isResize = [...$model.checkArg.checkArgMap.keys()].some(idx => shape.drawArgs[idx] !== args[idx]);
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
     if (!isResize) {
       shape.drawArgs = args;

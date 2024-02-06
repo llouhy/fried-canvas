@@ -43,6 +43,5 @@ export const fillRect = (ctx: EngineCtx | OffEngineCtx) => {
         },
       ]
     );
-    console.log(JSON.parse(JSON.stringify(drawCoordinates)));
   };
 };

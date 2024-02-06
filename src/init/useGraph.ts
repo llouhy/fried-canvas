@@ -138,8 +138,7 @@ export const useGraph: UseGraph = (engineId) => {
   const repaintInfluencedShape: RepaintInfluencedShape = (graphics, shape) => {
     // console.log(shape, layersByEngine.get(engineInstance));
     const excludesSet = new Set([shape]) || new Set(), layers = [shape.layer];
-    const { mergeGridBoundary } = engineById.get(engineId);
-    const { getInfluencedGrid, getInfluencedShape } = useGrid(engineId);
+    const { getInfluencedGrid, getInfluencedShape, mergeGridBoundary } = useGrid(engineId);
     const boundary = graphicsToBoundary(graphics),
       grids = getInfluencedGrid(boundary),
       shapes = getInfluencedShape(boundary, { influenceGrids: grids, layerSet: new Set(layers) }),
