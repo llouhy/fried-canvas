@@ -1,4 +1,3 @@
-import { layer } from '../definition/identify';
 import { LayerIns } from '../definition/layer';
 import { InitEngineResult, engineById } from '../engineFn';
 import type { ModelOptions } from '../graphOptions';
@@ -9,18 +8,19 @@ import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
 import { useGrid } from './useGrid';
 import { layersByEngine } from './useLayer';
-import { ModelDrawFuncArgs, checkParams, sumModelGraphics } from './useModel';
+import { ModelDrawFuncArgs, sumModelGraphics } from './useModel';
 
-export type DrawShape = (shape: Shape, placePoint?: Point) => string | undefined;
+export type DrawShape = (shape: Shape, placePoint?: Point) => Shape | undefined;
 export type GetShape = (id?: string) => undefined | Shape | Shape[];
-export type UpdateShape = (shape: Shape, ...args: ModelDrawFuncArgs[]) => void;
-// modelName: string, data?: any, model?: ModelOptions, index?: number
+export type UpdateShape = (shape: Shape, ...args: ModelDrawFuncArgs[]) => Shape;
 export type CreateShape = (modelName: string, o?: { data?: any; model?: ModelOptions; index?: number; layer?: LayerIns; }) => Shape;
+export type UpdateShapeAndMove = (shape: Shape, placePoint: Point, ...args: ModelDrawFuncArgs[]) => Shape;
 export type UseShapeRes = {
   drawShape: DrawShape;
   getShape: GetShape;
   updateShape: UpdateShape;
   createShape: CreateShape;
+  updateShapeAndMove: UpdateShapeAndMove
 };
 export type UseShape = (engineId: string) => UseShapeRes;
 
@@ -35,7 +35,7 @@ export const useShape: UseShape = (engineId) => {
       const shapeId = shape.draw(shape.ctx, placePoint);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
       shapeById.set(shapeId, shape);
-      return shapeId;
+      return shape;
     } catch (err) {
       // eslint-disable-next-line no-console
       console.warn(`create Shape error: unknown error`);
@@ -81,8 +81,14 @@ export const useShape: UseShape = (engineId) => {
     updateShapeToGrid(shape, shape.graphicsWithBorder);
     offCanvas = null;
     offCtx = null;
+    return shape;
+  };
+  const updateShapeAndMove: UpdateShapeAndMove = (shape, placePoint, ...args) => {
+    updateShape(shape, ...args).moveTo(placePoint.x, placePoint.y);
+    return shape;
   };
   return shapeCoreByEngineId.set(engineInstance, {
+    updateShapeAndMove,
     createShape,
     updateShape,
     drawShape,

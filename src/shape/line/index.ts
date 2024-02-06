@@ -3,7 +3,8 @@ import { ModelDrawFuncArgs } from "../../init/useModel";
 import { EngineCtx, OffEngineCtx, Point } from "../../rewriteFn/type";
 import { toCheckParams } from "../../utils/toCheckParams";
 
-const drawLine = (ctx: EngineCtx | OffEngineCtx, points: Point[], options?: { lineWidth?: number }) => {
+export const drawLine = (ctx: EngineCtx | OffEngineCtx, points: Point[], options?: { lineWidth?: number }) => {
+  if (!points.length) return;
   ctx.save();
   ctx.beginPath();
   ctx.lineWidth = options?.lineWidth || 2;
@@ -18,10 +19,10 @@ const drawLine = (ctx: EngineCtx | OffEngineCtx, points: Point[], options?: { li
 export const lineModelConfig: [ModelOptions, ...ModelDrawFuncArgs[]] = [
   {
     name: 'line',
-    draw: (ctx: EngineCtx | OffEngineCtx, points: Point[]) => {
-      drawLine(ctx, points);
+    draw: (ctx: EngineCtx | OffEngineCtx, points: Point[], options) => {
+      drawLine(ctx, points, options);
     }
   },
   toCheckParams([{ x: 8, y: 8 }, { x: 32, y: 42 }]),
-  toCheckParams({ lineWidth: 4 })
+  toCheckParams({ lineWidth: 2 })
 ];
