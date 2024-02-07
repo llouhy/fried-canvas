@@ -33,4 +33,5 @@ export type ModelOptions = {
     hash: string;
   };
   drawArgs?: ModelDrawFuncArgs[];
+  isRealtimeComputed?: boolean;
 };

@@ -44,10 +44,8 @@ const getGridShapes: GetGridShapes = (grid) => {
 const generateGrid: GenerateGrid = (engineId, ctx, drawGrid) => {
   const engineInstance = engineById.get(engineId);
   if (gridCoreByEngineId.get(engineInstance)) return { grid: gridCoreByEngineId.get(engineInstance).rootGrid, divider: gridCoreByEngineId.get(engineInstance).divider };
-  const { engine: { width, height } } = engineById.get(engineId);
-  const maxLevel = 6;
-  const xs: Set<number> = new Set();
-  const ys: Set<number> = new Set();
+  const { engine: { width, height } } = engineInstance;
+  const maxLevel = 6, xs: Set<number> = new Set(), ys: Set<number> = new Set();
   xs.add(0) && ys.add(0)
   function createGrid(x: number, y: number, width: number, height: number, idx: number) {
     const isLeaf = idx === maxLevel - 1;
@@ -133,7 +131,6 @@ export const useGrid: UseGrid = (engineId, ctx) => {
     return [...new Set(shapes)].filter(elem => layerSet.has(elem.layer));
   };
   const updateShapeToGrid = (shape: Shape, graphics: Graphics) => {
-    const graph = graphByEngineId.get(engineId);
     const grids = getInfluencedGrid(graphicsToBoundary(graphics));
     [...shape.gridSet.values()].map(elem => elem.shapes = elem.shapes.filter(item => item !== shape));
     shape.gridSet.clear();

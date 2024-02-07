@@ -17,8 +17,6 @@ export const getImpreciseShapeSizeInfo = (
   coordinateStack: Point[]
 ): Graphics => {
   const preBoundary: Boundary = getInitBoundary();
-  // const boundToLineWidth = new Map<keyof Boundary, number>();
-  console.log('精确计算开始')
   let pxMin, pyMin, pxMax, pyMax;
   for (const item of coordinateStack) {
     const { x, y, dWidth, dWidthX, dWidthY } = item; // the difference of stroke lineWidth and 1px
@@ -26,9 +24,6 @@ export const getImpreciseShapeSizeInfo = (
     pyMin = y - (dWidthY || dWidth || 0);
     pxMax = x + (dWidthX || dWidth || 0);
     pyMax = y + (dWidthY || dWidth || 0);
-    // console.log({
-    //   pxMin, pxMax, pyMax, pyMin
-    // })
     if (preBoundary.minX > pxMin) {
       preBoundary.minX = pxMin;
       // boundToLineWidth.set('minX', dWidth || 0);
@@ -65,21 +60,15 @@ export const getPreciseShapeSizeInfo = (
   info: { ox: number; oy: number; width: number; height: number },
   ...args: ModelDrawFuncArgs[]
 ) => {
-  // console.log('info', info)
   const { get: getCanvas } = useOffCanvas();
   const { ox, oy, width, height } = info;
   const COMPENSATE = 4;
   const translateX = ox <= 0 ? Math.ceil(Math.abs(ox)) + COMPENSATE : COMPENSATE;
   const translateY = oy <= 0 ? Math.ceil(Math.abs(oy)) + COMPENSATE : COMPENSATE;
-  // const drawOffset = {
-  //   dx: translateX,
-  //   dy: translateY
-  // };
   const imageOx = Math.floor(ox + translateX);
   const imageOy = Math.floor(oy + translateY);
   const canvasWidth = Math.floor(imageOx + width + COMPENSATE);
   const canvasHeight = Math.floor(imageOy + height + COMPENSATE);
-  // console.log({ drawOffset, imageOx, imageOy, canvasWidth, canvasHeight });
   const offCanvas = getCanvas(canvasWidth, canvasHeight);
   const ctx = offCanvas.getContext('2d');
   // (ctx as any).drawOffset = { dx: 0, dy: 0 };
@@ -100,7 +89,6 @@ export const getPreciseShapeSizeInfo = (
   let [index, r, g, b, a] = [0, 0, 0, 0, 0];
   let minYFlag = false;
   for (let y = imageOy - 2; y < canvasHeight; y++) {
-    // console.log('minY', y)
     for (let x = 0; x < canvasWidth; x++) {
       index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
       r = pixels![index];
@@ -110,7 +98,6 @@ export const getPreciseShapeSizeInfo = (
       if (r || g || b || a) {
         minYFlag = true;
         reduce.top = y;
-        console.log(`找到minY在第${y - (imageOy - 2)}次循环`, y)
         break;
       }
     }
@@ -119,7 +106,6 @@ export const getPreciseShapeSizeInfo = (
 
   let maxYFlag = false;
   for (let y = canvasHeight - 1; y >= 0; y--) {
-    // console.log('maxY', canvasHeight - y)
     for (let x = 0; x < canvasWidth; x++) {
       index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
       r = pixels![index];
@@ -127,10 +113,8 @@ export const getPreciseShapeSizeInfo = (
       b = pixels![index + 2];
       a = pixels![index + 3];
       if (r || g || b || a) {
-        console.log(`找到了maxY在第${canvasHeight - y + 1}次循环`, y)
         reduce.bottom = y;
         maxYFlag = true;
-        // console.log('zhaodao')
         break;
       }
     }
@@ -138,7 +122,6 @@ export const getPreciseShapeSizeInfo = (
   }
 
   let minXFlag = false;
-  console.log(imageOx);
   for (let x = imageOx - 2; x < canvasWidth; x++) {
     for (let y = 0; y < canvasHeight; y++) {
       index = (y * canvasWidth + x) * 4; // 当前像素在pixels的起始位置
@@ -147,7 +130,6 @@ export const getPreciseShapeSizeInfo = (
       b = pixels![index + 2];
       a = pixels![index + 3];
       if (r || g || b || a) {
-        console.log(`找到了minX在第${x - (imageOx - 2)}次循环`, x)
         minXFlag = true;
         reduce.left = x;
         break;
@@ -165,7 +147,6 @@ export const getPreciseShapeSizeInfo = (
       b = pixels![index + 2];
       a = pixels![index + 3];
       if (r || g || b || a) {
-        console.log(`找到了maxX在第${canvasWidth - x + 1}次循环`, x)
         reduce.right = x;
         maxXFlag = true;
         break;
@@ -173,12 +154,7 @@ export const getPreciseShapeSizeInfo = (
     }
     if (maxXFlag) break;
   }
-  // console.log('计算结果', {
-  //   ox: reduce.left - translateX,
-  //   oy: reduce.top - translateY,
-  //   width: reduce.right - reduce.left,
-  //   height: reduce.bottom - reduce.top
-  // });
+
   return {
     graphics: {
       ox: reduce.left - translateX,

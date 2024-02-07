@@ -1,18 +1,26 @@
 {
-  "name": "dogdog",
+  "name": "llou-engine",
   "sideEffects": false,
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "module": "lib/index.js",
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
     "start": "webpack-dev-server --mode=development"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llouhy/llou-engine.git"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/llouhy/llou-engine/issues"
+  },
   "devDependencies": {
     "html-webpack-plugin": "^5.5.1",
     "ts-loader": "^9.4.2",

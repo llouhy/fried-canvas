@@ -226,6 +226,10 @@ export function getSlope(p1: Point, p2: Point): number {
   return (p1.y - p2.y) / (p1.x - p2.x);
 }
 
+export function getLineAngle(p1: Point, p2: Point): number {
+  return radianToAngle(Math.atan((p2.y - p1.y) / (p2.x - p1.x))) + 180;
+}
+
 export function mergeBoundary(bounds: Boundary[]) {
   bounds.reduce((pre, cur) => {
     return {
