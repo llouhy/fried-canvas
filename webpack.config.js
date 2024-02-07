@@ -13,7 +13,7 @@ module.exports = {
   },
   output: {
     filename: 'index.js',
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'lib'),
     library: 'llou-engine',
     libraryTarget: 'umd', // 导出模块为umd
   },

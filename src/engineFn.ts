@@ -106,5 +106,3 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   });
   return engineResult;
 };
-
-(window as any)['dogdog'] = { initEngine };
