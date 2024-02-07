@@ -38,12 +38,10 @@ export const customLineModelConfig: [ModelOptions, ...ModelDrawFuncArgs[]] = [
         current = points[i], prePoint = points[i - 1], nextPoint = points[i + 1];
         const { arrow, controlPoint } = current;
         if (arrow) {
-          console.log(arrow)
           const arrowDrawFunc = arrowDrawFuncByType[arrow.type];
           ctx.save();
           if (arrow.type === 'arrow:normal') {
             const rotateDeg = arrow.rotateDeg ?? (prePoint ? getLineAngle(current, prePoint) : 0);
-            // console.log('度数是', rotateDeg)
             ctx.translate(current.x, current.y);
             arrowDrawFunc(ctx, rotateDeg);
           } else {

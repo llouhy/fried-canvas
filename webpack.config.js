@@ -12,9 +12,9 @@ module.exports = {
     port: 9000,
   },
   output: {
-    filename: 'engine.js',
+    filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
-    library: 'dogdog',
+    library: 'llou-engine',
     libraryTarget: 'umd', // 导出模块为umd
   },
   module: {
