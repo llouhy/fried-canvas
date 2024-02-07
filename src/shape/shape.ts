@@ -20,6 +20,12 @@ type GetShape = (o: {
   index?: number;
 }) => Shape;
 
+export type ParentInfo = {
+  px: number;
+  py: number;
+  parent?: Shape;
+};
+
 export const allShapeBoundary = {
   minX: -Infinity,
   minY: -Infinity,
@@ -34,6 +40,7 @@ export type Shape = {
   id: string;
   index: number;
   data: any;
+  drawingChildren: boolean;
   rotateDeg: number;
   $model: ModelOptions;
   graphics: Graphics;
@@ -44,8 +51,9 @@ export type Shape = {
   boundary: Boundary;
   drawArgs: ModelDrawFuncArgs[];
   _graphics: Graphics;
+  parentInfo: ParentInfo;
   draw: (ctx: EngineCtx, placePoint?: Point, rotateDeg?: number) => string;
-  drawBoundary: () => void;
+  drawBoundary: (graphics?: Graphics) => void;
   isPointInTheShape: (x: number, y: number) => boolean;
   moveTo: (x: number, y: number) => void;
   rotate: (rotateDeg: number) => void;
@@ -53,8 +61,7 @@ export type Shape = {
 // modelName: string, engineId: string, data?: any, model?: ModelOptions, index?: number
 export const getShape: GetShape = (options) => {
   const { modelName, engineId, data, model, index } = options;
-  // const { getModel } = engineById.get(engineId);
-  const shape: any = getPureObject({
+  const shape: Shape = getPureObject({
     belongEngineId: '',
     layer: null,
     ctx: null,
@@ -65,6 +72,7 @@ export const getShape: GetShape = (options) => {
     graphics: null,
     graphicsWithBorder: null,
     children: null,
+    drawingChildren: false,
     borderOptions: {
       needBorder: true,
       paddingLeft: 0,
@@ -113,12 +121,13 @@ export const getShape: GetShape = (options) => {
       shape.$model.draw(shape.ctx, ...shape.drawArgs);
       shape.ctx.restore();
       shape.drawBoundary({ ox: -width >> 1, oy: -height >> 1, width, height });
-      shape.ctx.restore();
       shape.graphics = {
         ...shape.graphics,
         ox: placePoint.x,
         oy: placePoint.y
       };
+      shape.drawingChildren || drawChildren();
+      shape.ctx.restore();
       shape.graphicsWithBorder = getGraphicsWithBorder(shape.graphics, shape.borderOptions, rotateDeg);
       return shape.id;
     }
@@ -136,6 +145,7 @@ export const getShape: GetShape = (options) => {
       oy: placePoint.y
     };
     shape.drawBoundary();
+    shape.drawingChildren || drawChildren();
     shape.graphicsWithBorder = getGraphicsWithBorder(shape.graphics, shape.borderOptions);
     return shape.id;
   }
@@ -193,6 +203,15 @@ export const getShape: GetShape = (options) => {
     shape.rotateDeg = rotateDeg;
     shape.moveTo(shape.graphics.ox, shape.graphics.oy);
     return;
+  }
+
+  const drawChildren = () => {
+    shape.drawingChildren = true;
+    for (const elem of (shape.children || [])) {
+      const absolutePos = elem.parentInfo;
+      elem.moveTo(absolutePos.px + shape.graphics.ox, absolutePos.py + shape.graphics.oy);
+    }
+    shape.drawingChildren = false;
   }
 
   shape.draw = draw;
