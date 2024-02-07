@@ -1,5 +1,5 @@
 import { gridCoreByEngineId, useGrid } from "./useGrid";
-import { Shape } from "../shape/shape";
+import { ParentInfo, Shape } from "../shape/shape";
 import { isNumber } from "../utils/is";
 import { shapeById } from "./useShape";
 import { InitEngineResult, engineById } from "../engineFn";
@@ -74,6 +74,13 @@ const useClipPath: UseClipPath = (ctx) => {
   }
   return [set, destroy];
 };
+const getShapeParent = (shape: Shape): Shape[] => {
+  let current: Shape = shape, result: Shape[] = [];
+  while(current = current?.parentInfo?.parent) {
+    result.push(current);
+  }
+  return result;
+}
 export const useGraph: UseGraph = (engineId) => {
   const engineInstance = engineById.get(engineId);
   if (graphCoreByEngineId.get(engineInstance)) return graphCoreByEngineId.get(engineInstance);

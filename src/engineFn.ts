@@ -328,9 +328,10 @@ const now = performance.now();
 drawShape(shape1);
 drawShape(shape2, { x: 500, y: 400 });
 drawShape(shape3, { x: 100, y: 300 });
-// setTimeout(() => {
-//   setChild(arrow, shape3, { px: 50, py: 50 });
-// }, 0)
+setTimeout(() => {
+  console.log(arrow)
+  setChild(arrow, shape3, { px: 50, py: 50 });
+}, 0)
 drawShape(shape4);
 drawShape(shape5, { x: 800, y: 200 });
 drawShape(shape6);
