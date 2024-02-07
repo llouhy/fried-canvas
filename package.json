@@ -5,7 +5,7 @@
   "description": "",
   "main": "lib/index.js",
   "module": "lib/index.js",
-  "private": true,
+  "private": false,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
@@ -16,7 +16,7 @@
     "url": "git+https://github.com/llouhy/llou-engine.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "laohaiyi",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/llouhy/llou-engine/issues"
@@ -28,5 +28,8 @@
     "webpack": "^5.80.0",
     "webpack-cli": "^5.0.2",
     "webpack-dev-server": "^4.15.0"
+  },
+  "dependencies": {
+    "llou-engine": "^1.0.0"
   }
 }
