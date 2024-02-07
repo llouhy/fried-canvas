@@ -2,7 +2,7 @@ import { ModelOptions } from "../../graphOptions";
 import { ModelDrawFuncArgs } from "../../init/useModel";
 import { EngineCtx, OffEngineCtx } from "../../rewriteFn/type";
 import { angleToRadian } from "../../utils/math";
-import { toCheckParams } from "../../utils/toCheckParams";
+import { observe } from "../../utils/observe";
 
 export const drawControlPoint = (ctx: EngineCtx | OffEngineCtx, r: number, lineWidth: number) => {
   ctx.save();
@@ -16,4 +16,4 @@ export const drawControlPoint = (ctx: EngineCtx | OffEngineCtx, r: number, lineW
 export const controlPointModelConfig: [ModelOptions, ...ModelDrawFuncArgs[]] = [{
   name: 'controlPoint',
   draw: drawControlPoint,
-}, toCheckParams(10), toCheckParams(4)];
+}, observe(10), observe(4)];

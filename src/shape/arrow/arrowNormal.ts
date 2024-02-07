@@ -2,7 +2,7 @@ import { ModelOptions } from "../../graphOptions";
 import { ModelDrawFuncArgs } from "../../init/useModel";
 import { EngineCtx, OffEngineCtx, Point } from "../../rewriteFn/type";
 import { angleToRadian } from "../../utils/math";
-import { toCheckParams } from "../../utils/toCheckParams";
+import { observe } from "../../utils/observe";
 
 export const drawArrowNormal = (ctx: EngineCtx | OffEngineCtx, rotateDeg: number = 0) => {
   const point = { x: 0, y: 0 };
@@ -27,5 +27,5 @@ export const arrowNormalConfig: [ModelOptions, ...ModelDrawFuncArgs[]] = [
     name: 'arrow:normal',
     draw: drawArrowNormal
   },
-  toCheckParams(0)
+  observe(0)
 ];

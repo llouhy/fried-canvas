@@ -1,8 +1,10 @@
+import { graph } from '../definition/identify';
 import { LayerIns } from '../definition/layer';
 import { InitEngineResult, engineById } from '../engineFn';
 import type { ModelOptions } from '../graphOptions';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
-import { Shape, getShape as getShapeIns } from '../shape/shape';
+import { ParentInfo, Shape, getShape as getShapeIns } from '../shape/shape';
+import { isNumber } from '../utils/is';
 import { getGraphicsWithBorder } from '../utils/math';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
@@ -15,12 +17,16 @@ export type GetShape = (id?: string) => undefined | Shape | Shape[];
 export type UpdateShape = (shape: Shape, ...args: ModelDrawFuncArgs[]) => Shape;
 export type CreateShape = (modelName: string, o?: { data?: any; model?: ModelOptions; index?: number; layer?: LayerIns; }) => Shape;
 export type UpdateShapeAndMove = (shape: Shape, placePoint: Point, ...args: ModelDrawFuncArgs[]) => Shape;
+export type RemoveParent = (child: Shape) => Shape;
+export type SetChild = (child: Shape, parent: Shape, options: ParentInfo) => Shape;
 export type UseShapeRes = {
   drawShape: DrawShape;
   getShape: GetShape;
   updateShape: UpdateShape;
   createShape: CreateShape;
-  updateShapeAndMove: UpdateShapeAndMove
+  updateShapeAndMove: UpdateShapeAndMove;
+  removeParent: RemoveParent;
+  setChild: SetChild;
 };
 export type UseShape = (engineId: string) => UseShapeRes;
 
@@ -87,11 +93,39 @@ export const useShape: UseShape = (engineId) => {
     updateShape(shape, ...args).moveTo(placePoint.x, placePoint.y);
     return shape;
   };
+  const removeParent: RemoveParent = (child) => {
+    console.log(child)
+    if (!child.parentInfo) return;
+    let parent = child.parentInfo.parent, targetIdx;
+    for (let i = 0; i < parent.children.length; i++) {
+      if (parent.children[i] === child) {
+        targetIdx = i;
+        break;
+      }
+    }
+    const deleteEle = (isNumber(targetIdx) && parent.children.splice(targetIdx, 1)) || [];
+    deleteEle[0]?.parentInfo && (deleteEle[0].parentInfo = null);
+    return deleteEle[0];
+  }
+  const setChild: SetChild = (child, parent, options) => {
+    console.log(child)
+    parent.children = [...new Set([...parent.children || [], child])];
+    if (child?.parentInfo?.parent !== parent) { removeParent(child) }
+    child.parentInfo = {
+      px: options.px || 0,
+      py: options.py || 0,
+      parent
+    };
+    parent.moveTo(parent.graphics.ox, parent.graphics.oy);
+    return parent;
+  }
   return shapeCoreByEngineId.set(engineInstance, {
     updateShapeAndMove,
     createShape,
     updateShape,
     drawShape,
+    removeParent,
+    setChild,
     getShape
   }).get(engineInstance);
 };

@@ -1,5 +1,5 @@
 import { getType } from './common';
-import { checkParams, engine, error, model, shape } from '../definition/identify';
+import { observe, engine, error, model, shape } from '../definition/identify';
 
 export const isObject = (value: any) => {
   return getType(value) === 'object';
@@ -41,8 +41,8 @@ export const isModel = (value: any) => {
   return value.__isModel__ === model;
 };
 
-export const isCheckParams = (value: any) => {
-  return value?.__isCheckParams__ === checkParams;
+export const isObserve = (value: any) => {
+  return value?.__isObserve__ === observe;
 }
 
 export const isSuccess = (value: any) => {

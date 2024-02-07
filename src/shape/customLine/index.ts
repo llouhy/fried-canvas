@@ -3,7 +3,7 @@ import { ModelDrawFuncArgs } from "../../init/useModel";
 import { EngineCtx, OffEngineCtx, Point } from "../../rewriteFn/type";
 import { isNumber } from "../../utils/is";
 import { getLineAngle } from "../../utils/math";
-import { toCheckParams } from "../../utils/toCheckParams";
+import { observe } from "../../utils/observe";
 import { drawArrowCircle } from "../arrow/arrowCircle";
 import { drawArrowNormal } from "../arrow/arrowNormal";
 import { drawArrowPoint } from "../arrow/arrowPoint";
@@ -56,4 +56,4 @@ export const customLineModelConfig: [ModelOptions, ...ModelDrawFuncArgs[]] = [
         }
       }
     }
-  }, toCheckParams([{ x: 0, y: 0 }, { x: 20, y: 20 }])];
+  }, observe([{ x: 0, y: 0 }, { x: 20, y: 20 }])];

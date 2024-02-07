@@ -86,6 +86,19 @@ export const useGraph: UseGraph = (engineId) => {
     bottom: engineById.get(engineId).engine.height,
     zoom: 1,
   }, 'graph')).get(engineId);
+  // const zoom = (multiple: number) => {
+  //   if (!isNumber(multiple)) return;
+  //   const { clearRect, updateAllShapeToGrid, engine: { width, height }, getAllLayer } = engineInstance;
+  //   for (const layer of getAllLayer()) {
+  //     clearRect(layer.ctx, graph.left, graph.top, width, height);
+  //     layer.ctx.scale(multiple, multiple);
+  //   }
+  //   const translateX = graph.translateX,
+  //     translateY = graph.translateY,
+  //     left = -translateX,
+  //     top = -translateY,
+  //     right = left + width
+  // }
   const translate: Translate = (x, y, cachePointer = {}) => {
     if (!isNumber(x) || !isNumber(y)) return;
     const { clearRect, updateAllShapeToGrid, engine: { width, height }, getAllLayer } = engineInstance;
@@ -136,7 +149,6 @@ export const useGraph: UseGraph = (engineId) => {
     }
   }
   const repaintInfluencedShape: RepaintInfluencedShape = (graphics, shape) => {
-    // console.log(shape, layersByEngine.get(engineInstance));
     const excludesSet = new Set([shape]) || new Set(), layers = [shape.layer];
     const { getInfluencedGrid, getInfluencedShape, mergeGridBoundary } = useGrid(engineId);
     const boundary = graphicsToBoundary(graphics),
@@ -145,8 +157,6 @@ export const useGraph: UseGraph = (engineId) => {
       gridClearBoundary = mergeGridBoundary(grids),
       canvasClearBoundary = gridToGraph(gridClearBoundary),
       destroyClips = [];
-    // console.log('影响的shapes', shapes);
-    // console.log('canvasClearBoundary', canvasClearBoundary)
     for (const elem of layers) {
       const [setClip, destroyClip] = useClipPath(elem.ctx);
       destroyClips.push(destroyClip);

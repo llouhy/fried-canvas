@@ -1,7 +1,7 @@
 import { ModelOptions } from "../../graphOptions";
 import { ModelDrawFuncArgs } from "../../init/useModel";
 import { EngineCtx, OffEngineCtx, Point } from "../../rewriteFn/type";
-import { toCheckParams } from "../../utils/toCheckParams";
+import { observe } from "../../utils/observe";
 
 export const drawLine = (ctx: EngineCtx | OffEngineCtx, points: Point[], options?: { lineWidth?: number }) => {
   if (!points.length) return;
@@ -23,6 +23,6 @@ export const lineModelConfig: [ModelOptions, ...ModelDrawFuncArgs[]] = [
       drawLine(ctx, points, options);
     }
   },
-  toCheckParams([{ x: 8, y: 8 }, { x: 32, y: 42 }]),
-  toCheckParams({ lineWidth: 2 })
+  observe([{ x: 8, y: 8 }, { x: 32, y: 42 }]),
+  observe({ lineWidth: 2 })
 ];

@@ -6,4 +6,4 @@ export const model = Symbol.for('__isModel__');
 export const grid = Symbol.for('__isGrid__');
 export const graph = Symbol.for('__isGraph__');
 export const layer = Symbol.for('__isLayer');
-export const checkParams = Symbol.for('__isCheckParams__');
+export const observe = Symbol.for('__isObserve__');

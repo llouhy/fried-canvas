@@ -1,4 +1,4 @@
-import { isCheckParams } from '../utils/is';
+import { isObserve } from '../utils/is';
 import { InitEngineResult, engineById } from '../engineFn';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
@@ -9,7 +9,7 @@ import { setIdentify } from '../utils/setIdentify';
 import { useEvent } from './useEvent';
 import { presetModel } from '../shape/preset';
 
-export type checkParams = { value: ModelDrawFuncArgs; isCheckParams: symbol };
+export type checkParams = { value: ModelDrawFuncArgs; isObserve: symbol };
 export type ModelDrawFuncArgs = { [key: string]: any } | string | number | boolean | checkParams;
 export type AddModel = (x: ModelOptions, ...args: ModelDrawFuncArgs[]) => any;
 export type GetModel = (name: string) => undefined | ModelOptions;
@@ -65,7 +65,7 @@ export const useModel: UseModel = (engineId) => {
       const checkArgs: checkParams[] = [];
       const modelArgs: unknown[] = [];
       for (const [key, item] of args.entries()) {
-        if (isCheckParams(item)) {
+        if (isObserve(item)) {
           checkArgMap.set(key, item as checkParams);
           checkArgs.push((item as checkParams));
           modelArgs.push((item as checkParams).value);

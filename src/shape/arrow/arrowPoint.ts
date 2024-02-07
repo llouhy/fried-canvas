@@ -2,7 +2,7 @@ import { ModelOptions } from "../../graphOptions";
 import { ModelDrawFuncArgs } from "../../init/useModel";
 import { EngineCtx, OffEngineCtx, Point } from "../../rewriteFn/type";
 import { angleToRadian } from "../../utils/math";
-import { toCheckParams } from "../../utils/toCheckParams";
+import { observe } from "../../utils/observe";
 
 export const drawArrowPoint = (ctx: EngineCtx | OffEngineCtx, radius: number) => {
   const point = { x: 0, y: 0 };
@@ -18,5 +18,5 @@ export const arrowPointConfig: [ModelOptions, ...ModelDrawFuncArgs[]] = [
   {
     name: 'arrow:point',
     draw: drawArrowPoint,
-  }, toCheckParams(4)
+  }, observe(4)
 ];

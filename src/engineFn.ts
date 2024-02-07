@@ -13,7 +13,7 @@ import { getPureObject, microtask, omitObjectProperty, setCanvasSize, setPropert
 import type { Graphics, ModelOptions } from './graphOptions';
 import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
 import { UseConfigRes, useConfig } from './init/useConfig';
-import { ToCheckParams, toCheckParams } from './utils/toCheckParams';
+import { ToObserve, observe } from './utils/observe';
 import { UseLayerRes, useLayer } from './init/useLayer';
 import { presetModel } from './shape/preset';
 
@@ -121,13 +121,14 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
 (window as any)['dogdog'] = { initEngine };
 
 const engine = initEngine({ mountDom: document.getElementById('canvas-wrap'), width: 1500, height: 1500 });
-const { addModel, createShape, drawShape, updateShape, updateShapeAndMove, createLayer, engine: { ctx }, translate, updateModel, onEvent } = engine;
+const { addModel, createShape, setChild, removeParent, drawShape, updateShape, updateShapeAndMove, createLayer, engine: { ctx }, translate, updateModel, onEvent } = engine;
+let line, arrow: Shape, customLine;
 onEvent('after:engineInit', (data) => {
   console.log('event', data)
   // const control = createShape('controlPoint');
-  const line = createShape('line');
-  const arrow = createShape('arrow:normal');
-  const customLine = createShape('line:custom');
+  line = createShape('line');
+  arrow = createShape('arrow:normal');
+  customLine = createShape('line:custom');
   updateShapeAndMove(drawShape(customLine), { x: 400, y: 200 }, [
     { x: 400, y: 200 }, {
       x: 300, y: 300, arrow: { type: 'arrow:normal' }
@@ -185,7 +186,6 @@ const getTestModel1 = (): ModelOptions => {
   return {
     name: 'test1',
     draw: (ctx: EngineCtx | OffEngineCtx, p1, p2, p3) => {
-      // ctx.beginPath();
       ctx.save();
       ctx.moveTo(200, 40);
       ctx.transform(1.4, 0, -0.3, 3, 290, 140);
@@ -204,26 +204,15 @@ const getTestModel2 = (): ModelOptions => {
   return {
     name: 'test2',
     draw: (ctx: EngineCtx | OffEngineCtx): void => {
-      // console.log('%c画了2', 'color: orange')
-      // ctx.save();
-      // ctx.restore();
-      // console.log(ctx.getTransform());
       ctx.save();
-      // ctx.scale(2,2);
       ctx.lineWidth = 5;
       ctx.strokeStyle = 'orange';
-      // ctx.transform(1,0,0,1,200,0); 
       ctx.beginPath();
       ctx.moveTo(300, 60);
       ctx.lineTo(420, 420);
-      // ctx.lineTo(420, 450);
       ctx.closePath();
-      // console.log('%c看看吧', 'background: red;padding:20px;', ctx.getTransform())
       ctx.stroke();
-      // ctx.restore();
-      // return;
       ctx.beginPath();
-      // console.log('%c看看吧', 'background: green;padding:20px;', ctx.getTransform())
       ctx.arc(420, 420, 44, angleToRadian(45), angleToRadian(270));
       ctx.stroke();
       ctx.fillRect(100, 120, 20, 20);
@@ -236,30 +225,15 @@ const getTestModel2 = (): ModelOptions => {
       ctx.lineTo(240, 40);
       ctx.stroke();
       ctx.restore();
-    }
-    ,
-    // borderOptions: {
-    //   paddingLeft: 10,
-    //   paddingRight: 10,
-    //   paddingTop: 20,
-    //   paddingBottom: 20,
-    //   borderDash: [5, 5],
-    //   borderWidth: 2
-    // }
+    },
   };
 };
 const getTestModel3 = () => {
   return {
     name: 'test3',
     draw: (ctx: EngineCtx | OffEngineCtx) => {
-      // console.log('%c画了3', 'color: blue')
-      // console.log('huale333')
-
       ctx.save();
       ctx.beginPath();
-      // ctx.scale(2, 2)
-      // ctx.lineWidth = 4;
-      // console.log(ctx.lineWidth)
       const g = ctx.createLinearGradient(-50, -50, 100, 100);
       g.addColorStop(0, "orange");
       g.addColorStop(0.5, "blue");
@@ -267,15 +241,10 @@ const getTestModel3 = () => {
       ctx.strokeStyle = g;
       ctx.moveTo(-50, -50);
       ctx.lineTo(100, 100);
-      // ctx.stroke();
-      // ctx.strokeStyle = '';
       ctx.lineTo(-50, 100);
       ctx.closePath();
       ctx.stroke();
-      // console.log(img)
-      // ctx.drawImage(img, 200, 200);
       ctx.restore();
-      // ctx.putImageData()
     }
   }
 }
@@ -283,8 +252,6 @@ const getTestModel4 = () => {
   return {
     name: 'test4',
     draw: (ctx: EngineCtx | OffEngineCtx, p1: any, refParams: any) => {
-      // console.log('%c画了4', 'color: red')
-      // console.log(ctx, p1, refParams)
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(600 - 2 * refParams, 430 - refParams);
@@ -328,55 +295,26 @@ const getTestModel6 = () => {
       ctx.save();
       ctx.beginPath();
       ctx.rect(100, 100, 100, 100);
-      // ctx.strokeStyle = 'yellow';
-      // console.log(ctx.strokeStyle);
       ctx.stroke();
       ctx.beginPath();
-      // ctx.transform(2,0.3,0.3,1,100,100);
       ctx.rect(100, 100, 100, 100);
       ctx.strokeStyle = 'red';
       ctx.stroke();
-      // ctx.fill();
       ctx.transform(1, 0, 0, 1.1, 120, 80);
-      // ctx.translate(100,100)
       ctx.rotate(-45 * Math.PI / 180);
       ctx.fillStyle = 'orange';
       ctx.fillRect(100, 100, 100, 100);
-      // ctx.fillRect(200,200,200,200);
       ctx.restore();
-      // ctx.save();
-      // ctx.restore();
     }
   }
 };
-// ctx.$strokeRect(88,727,42,38);
-// addModel([getTestModel1(), getTestModel2(), getTestModel3(), getTestModel4(), getTestModel5(), getTestModel6()]);
-// for (let i = 4; i <= 4; i++) {
-//   console.log(`%caddModel${i}${i}${i}${i}${i}`, 'background:orange;padding:5px;');
-//   addModel(eval(`getTestModel${i}()`));
-// }
-addModel(getTestModel4(), 0.6, toCheckParams(30))
+addModel(getTestModel4(), 0.6, observe(30))
 addModel(getTestModel1());
 addModel(getTestModel2());
 addModel(getTestModel3());
 addModel(getTestModel5());
 const helloo = (window as any)['helloo'];
 ctx.strokeStyle = 'red';
-// ctx.$strokeRect(570, 400, 100,100);
-// console.log(helloo)
-// ctx.$strokeRect(helloo.minX, helloo.minY, helloo.maxX - helloo.minX, helloo.maxY - helloo.minY);
-// console.log('%c11111', 'background:orange;padding:5px;')
-// addModel(getTestModel1());
-// console.log('%c22222', 'background:orange;padding:5px;')
-// addModel(getTestModel2());
-// console.log('%c33333', 'background:orange;padding:5px;')
-// addModel(getTestModel3());
-// console.log('%c44444', 'background:orange;padding:5px;')
-// addModel(getTestModel4());
-// console.log('%c55555', 'background:orange;padding:5px;')
-// addModel(getTestModel5());
-// console.log('%cend', 'background:orange;padding:5px;')
-// addModel(getTestModel6());
 const newLayer = createLayer(1, false);
 const shape1 = createShape('test1');
 const shape2 = createShape('test2');
@@ -388,57 +326,12 @@ const shape6 = createShape('test6');
 // console.log(shape5)
 const now = performance.now();
 drawShape(shape1);
-
-// ctx.$beginPath();
-// const { x, y, width, height } = (window as any).tess;
-// ctx.$strokeRect(x, y, width, height);
-// for (const [idx, point] of (window as any)[`arcTest`].entries()) {
-//   console.log(point)
-//   if (!idx) {
-//     // ctx.$arc(point.x, point.y, 50, 0, 360 * Math.PI / 180);
-//     ctx.$moveTo(point.x, point.y);
-//     // ctx.$arc(point.x, point.y, (window as any)['transRadius'], 0, 2 * Math.PI);
-//   } else {
-//     ctx.$lineTo(point.x, point.y);
-//   }
-//   const map = {
-//     '0': 'black',
-//     '1': 'pink',
-//     '2': 'orange',
-//     '3': 'yellow'
-//   };
-//   // ctx.strokeStyle = (map as any)[idx];
-//   // ctx.$strokeRect(point.x, point.y, 1, 200);
-// }
-// ctx.closePath()
-// ctx.$stroke();
-// ctx.$beginPath();
-// ctx.strokeStyle = 'pink';
-// for (const [idx, point] of (window as any).testtt.entries()) {
-//   if (!idx) {
-//     ctx.$moveTo(point.x, point.y);
-//   } else {
-//     ctx.$lineTo(point.x, point.y)
-//   }
-// }
-// ctx.$stroke();
-
-// ctx.beginPath();
-// // ctx.$arc(184, 146, 50, 0, 360 * Math.PI / 180);
-// // ctx.$stroke();
-// // ctx.beginPath();
-// ctx.$moveTo(100, 70);
-// ctx.$lineTo(100, 20)
-// ctx.$lineTo(135, 35);
-// ctx.$lineTo(150, 70);
-// // ctx.closePath();
-// ctx.$stroke();
 drawShape(shape2, { x: 500, y: 400 });
 drawShape(shape3, { x: 100, y: 300 });
-// const [rx, ry] = [Math.round(Math.random() * 1000), Math.round(Math.random() * 1000)];
+// setTimeout(() => {
+//   setChild(arrow, shape3, { px: 50, py: 50 });
+// }, 0)
 drawShape(shape4);
-// drawShape(shape4, { x: 500, y: 200 })
-// ctx.$strokeRect(rx, ry, 100, 100)
 drawShape(shape5, { x: 800, y: 200 });
 drawShape(shape6);
 
@@ -452,15 +345,6 @@ let iddd = setInterval(() => {
     clearInterval(iddd);
     callARotateMove(shape4);
   };
-  // console.log(idd)
-  // const { ox, oy, width, height } = shape4._graphics;
-  // const { ox: cOx, oy: cOy, width: cWidth, height: cHeight } = shape4.graphics;
-  // ctx.translate(cOx + Math.round(cWidth / 2), cOy + Math.round(cHeight / 2));
-  // ctx.rotate(idd * Math.PI / 180);
-  // shape4.moveTo(-width / 2, -height / 2);
-  // idd++;
-  // idd > 30 && clearInterval(iddd);
-  // ctx.restore();
 }, 30);
 function callARotateMove(shape: Shape) {
   let idx = 0;
@@ -479,32 +363,15 @@ function callARotateMove(shape: Shape) {
     };
   }, 20);
 }
-const cur = performance.now();
-// console.log(now, cur, cur - now);
-// ctx.putImageData((window as any)[`testtest`], 600,500);
-// ctx.$strokeRect(100, 100, 551, 282)
-// let id: string | number | NodeJS.Timer = undefined;
 function callATranslate() {
   let idx = 0;
   let id = setInterval(() => {
-    // console.log(ctx.getTransform())
     idx++;
-    // idx > 0 && clearInterval(id);
-    // return;
-    // return;
     shape4.moveTo(idx * 3 + 480, idx * 3 + 680);
     idx >= 100 && clearInterval(id)
-    // idx >= 220 && ctx.translate(-100, -100);
     if (idx === 100) {
       callTranslate();
-      // ctx.save();
-      // ctx.strokeStyle = 'blue';
-      // ctx.$strokeRect(0, 0, 1500, 1500);
-      // ctx.restore();
     }
-
-    //   // idx < 100 && shape3.moveTo(idx * 5 + 100, idx * 5 + 100);
-    //   // shape4.moveTo(idx * 4 + 200, idx * 4 + 200);
   }, 10);
 }
 
@@ -518,13 +385,6 @@ function callTranslate() {
     idx >= 38 && translate(-4, -8, t);
     if (idx >= 60) {
       clearInterval(id);
-      // console.log({
-      //   'newLayerCtx': newLayer.ctx,
-      //   'oldLayerCtx': ctx,
-      //   'newLayer': newLayer.ctx.getTransform(),
-      //   'oldLayer': ctx.getTransform()
-      // })
-      // console.log(newLayer, ctx)
       setTimeout(() => {
         moveAShape();
       }, 3000);
@@ -532,27 +392,15 @@ function callTranslate() {
   }, 10);
 }
 function moveAShape() {
-  // return;
-  // return;
-  // return;
-  // return 'ss'
   let idx = 0;
   let id = setInterval(() => {
     idx++;
     shape1.moveTo(idx * 3 - 30, idx * 4 - 30);
     if (idx >= 2) {
       clearInterval(id);
-      // moveShape2();
       ctx.save();
       ctx.strokeStyle = 'green';
       ctx.$strokeRect(0, 0, 1500, 1500);
-      // ctx.strokeStyle = 'red';
-      // ctx.$moveTo(281, 187);
-      // ctx.$lineTo(796, 187);
-      // ctx.$lineTo(796, 1031);
-      // ctx.$lineTo(281, 1031);
-      // ctx.closePath();
-      // ctx.$stroke();
       ctx.restore();
     };
   }, 10);
@@ -577,9 +425,6 @@ function moveShape2() {
       ctx.save();
       ctx.lineWidth = 1;
       ctx.strokeStyle = 'green';
-      // for (const item of arr) {
-      //   ctx.$strokeRect(item[0], item[1], 300, 1);
-      // }
       ctx.restore();
       clearInterval(id);
     }
