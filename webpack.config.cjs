@@ -16,7 +16,7 @@ const config = {
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
     library: {
-      name: 'llou-engine',
+      name: 'fried-canvas',
       type: 'umd'
     }
   },
