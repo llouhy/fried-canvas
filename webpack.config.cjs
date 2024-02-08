@@ -1,7 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const TerserPlugin = require('terser-webpack-plugin');
-module.exports = {
+const isProduction = process.env.NODE_ENV == 'production';
+const config = {
   entry: './src/index.ts', // 入口
   devtool: 'inline-source-map',
   devServer: {
@@ -13,16 +14,18 @@ module.exports = {
   },
   output: {
     filename: 'index.js',
-    path: path.resolve(__dirname, 'lib'),
-    library: 'llou-engine',
-    libraryTarget: 'umd', // 导出模块为umd
+    path: path.resolve(__dirname, 'dist'),
+    library: {
+      name: 'fried-canvas',
+      type: 'umd'
+    }
   },
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.(tsx|ts)$/i,
         use: 'ts-loader',
-        exclude: /node_modules/
+        exclude: ["/node_modules/"]
       }
     ]
   },
@@ -77,4 +80,13 @@ module.exports = {
   //     }
   //   }
   // }
+}
+
+module.exports = () => {
+  if(isProduction) {
+    config.mode = 'production';
+  } else {
+    config.mode = 'development';
+  }
+  return config;
 }

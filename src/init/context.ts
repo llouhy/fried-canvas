@@ -1,14 +1,21 @@
-import type { ContextAttributes } from '../engine';
 import useRewriteCtxFunction from '../rewriteFn';
 import { bezierCurveTo } from '../rewriteFn/bezierCurveTo';
 import { quadraticCurveTo } from '../rewriteFn/quadraticCurveTo';
 import type { EngineCtx, OffEngineCtx } from '../rewriteFn/type';
-import { useCoordinateCache } from '../shape/coordinate';
 import { getDefaultContextAttribute } from '../config/common';
 import { drawImage } from '../rewriteFn/drawImage';
 
 type ReloadCtxResult<T> = T extends CanvasRenderingContext2D ? EngineCtx : OffEngineCtx;
-
+export type ContextAttributes = {
+  alpha: boolean;
+  antialias: boolean;
+  depth: boolean;
+  failIfMajorPerformanceCaveat: boolean;
+  powerPreference: 'default' | 'high-performance' | 'low-power';
+  premultipliedAlpha: boolean;
+  preserveDrawingBuffer: boolean;
+  stencil: boolean;
+};
 export const reloadCtxFunction = <T>(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
 ): EngineCtx => {

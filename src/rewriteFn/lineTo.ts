@@ -1,6 +1,5 @@
 import type { Point, EngineCtx, OffEngineCtx } from './type';
 // import { useLineWidthToCoordinateMap } from '../shape/coordinate';
-import Engine from '../engine';
 import { toHalfPixel } from '../utils/math';
 
 export const lineTo = (ctx: EngineCtx | OffEngineCtx) => {

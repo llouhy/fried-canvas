@@ -1,25 +1,34 @@
 {
-  "name": "llou-engine",
+  "name": "fried-canvas",
   "sideEffects": false,
   "version": "1.0.0",
-  "description": "",
-  "main": "lib/index.js",
-  "module": "lib/index.js",
-  "private": true,
+  "description": "A canvas graphic tool library",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "private": false,
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
+    "build:prod": "webpack --mode=production --node-env=production",
     "start": "webpack-dev-server --mode=development"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/llouhy/llou-engine.git"
+    "url": "git+https://github.com/llouhy/fried-canvas.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "node",
+    "javascript",
+    "canvas"
+  ],
+  "author": "laohaiyi<laohaiyi@qq.com>(https://github.com/llouhy)",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/llouhy/llou-engine/issues"
+    "url": "https://github.com/llouhy/fried-canvas/issues"
   },
   "devDependencies": {
     "html-webpack-plugin": "^5.5.1",
