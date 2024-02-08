@@ -1,1 +1,1 @@
-export { initEngine as fn } from './engineFn';
+export { initEngine } from './engineFn';
