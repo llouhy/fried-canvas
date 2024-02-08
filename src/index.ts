@@ -1,2 +1,1 @@
-import { initEngine as fn } from './engineFn';
-export const initEngine = fn;
+export { initEngine } from './engineFn';
