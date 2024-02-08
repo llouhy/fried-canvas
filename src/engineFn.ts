@@ -106,5 +106,3 @@ export const initEngine: InitEngine = (options): InitEngineResult => {
   });
   return engineResult;
 };
-
-console.log((window as any)['llou-engine'])
