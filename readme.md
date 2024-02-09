@@ -18,7 +18,7 @@ const engine = initEngine(
       height?: number  
     }  
 );  
-```
+
 const { addModel, observe, createShape, drawShape, updateShape, translate, onEvent } = engine;  
 
 3. 添加图形模板  
