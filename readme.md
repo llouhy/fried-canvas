@@ -11,7 +11,7 @@ import { initEngine } from 'fried-canvas';
 ### 项目中使用
 1. 创建实例  
 const engine = initEngine(  
-    { mountDom: HTMLElement;  
+    >>{ mountDom: HTMLElement;  
       id?: string;  
       width?:number;  
       height?: number  
