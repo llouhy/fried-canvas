@@ -8,9 +8,10 @@ fried-canvas是一个基于canvas的图画引擎。
 npm i fried-canvas
 ### 引入到项目
 import { initEngine } from 'fried-canvas';
-### 项目中使用
-1. 创建实例
-   ```javascript
+### 项目中使用  
+```javascript  
+
+1. 创建实例     
 const engine = initEngine(  
     { mountDom: HTMLElement;  
       id?: string;  
@@ -70,3 +71,4 @@ type ShapeEvent = "shape:mousedown" | "shape:mouseup" | "shape:click" | "shape:d
 type LifeCycle = 'after:engineInit' | "before:modelAdd" | "after:modelAdd" | "before:shapeCreate" | "after:shapeCreate" | "before:shapeUpdate" | "after:shapeUpdate";  
 type EventType = "graph:mousedown" | "graph:mouseup" | "graph:click" | "graph:dbClick" | "graph:contextMenu" | "graph:mouseenter" | "graph:mouseleave" | "graph:mousemove" | ShapeEvent | LifeCycle;  
 onEvent(eventType, (data) => {});
+```
