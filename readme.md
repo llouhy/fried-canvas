@@ -7,7 +7,10 @@ fried-canvas是一个基于canvas的图画引擎。
 ### 下载到项目
 npm i fried-canvas
 ### 引入到项目
+``` javascript
+
 import { initEngine } from 'fried-canvas';
+```
 ### 项目中使用  
 ```javascript  
 
