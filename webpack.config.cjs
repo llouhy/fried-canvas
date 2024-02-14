@@ -83,10 +83,16 @@ const config = {
 }
 
 module.exports = () => {
-  if(isProduction) {
+  if (isProduction) {
     config.mode = 'production';
+    config.plugins = [];
   } else {
     config.mode = 'development';
+    config.plugins = [
+      new HtmlWebpackPlugin({
+        template: './src/index.html'
+      })
+    ];
   }
   return config;
 }

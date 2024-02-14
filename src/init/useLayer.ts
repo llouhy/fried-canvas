@@ -34,7 +34,7 @@ export const useLayer: UseLayer = (engineId) => {
     const layer = getLayer({ index, isDefault, engineInstance });
     const layers = layersByEngine.get(engineInstance) || layersByEngine.set(engineInstance, []).get(engineInstance);
     insetLayer(layer, layers);
-    console.log('createLayer', { layer, layers, layersByEngine });
+    // console.log('createLayer', { layer, layers, layersByEngine });
     return layer;
   }
   const appendToLayer: AppendToLayer = (shape, layer) => {
