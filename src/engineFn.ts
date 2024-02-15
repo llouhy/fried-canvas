@@ -9,11 +9,10 @@ import { UseEventRes, useEvent } from './init/useEvent';
 import { UseModelRes, useModel } from './init/useModel';
 import { getPureObject, microtask, omitObjectProperty, setCanvasSize, setPropertyUnWritable } from './utils/common';
 import { UseConfigRes, useConfig } from './init/useConfig';
-import { observe } from './utils/observe';
 import { UseLayerRes, useLayer } from './init/useLayer';
 import { presetModel } from './shape/preset';
 import type { Graphics, ModelOptions } from './graphOptions';
-import type { EngineCtx, OffEngineCtx } from './rewriteFn/type';
+import type { EngineCtx } from './rewriteFn/type';
 
 export type InitEngineResult = {
   engine: {

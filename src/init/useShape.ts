@@ -8,6 +8,7 @@ import { isNumber } from '../utils/is';
 import { getGraphicsWithBorder } from '../utils/math';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
+import { useEvent } from './useEvent';
 import { useGrid } from './useGrid';
 import { layersByEngine } from './useLayer';
 import { ModelDrawFuncArgs, sumModelGraphics } from './useModel';
@@ -37,10 +38,21 @@ export const useShape: UseShape = (engineId) => {
   if (shapeCoreByEngineId.get(engineInstance)) return shapeCoreByEngineId.get(engineInstance);
   const drawShape: DrawShape = (shape, placePoint) => {
     try {
+      const { callEventCallback, createEventData } = useEvent(engineId);
+      callEventCallback('before:shapeDraw', createEventData('before:shapeDraw', {
+        target: shape,
+        placePoint: placePoint,
+        engine: engineInstance
+      }));
       const { updateShapeToGrid } = useGrid(engineId);
       const shapeId = shape.draw(shape.ctx, placePoint);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
       shapeById.set(shapeId, shape);
+      callEventCallback('after:shapeDraw', createEventData('after:shapeDraw', {
+        target: shape,
+        placePoint: placePoint,
+        engine: engineInstance
+      }));
       return shape;
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -59,21 +71,45 @@ export const useShape: UseShape = (engineId) => {
     return shapeById.get(shapeId);
   };
   const createShape: CreateShape = (modelName, options = {}) => {
+    const { callEventCallback, createEventData } = useEvent(engineId);
+    callEventCallback('before:shapeCreate', createEventData('before:shapeCreate', {
+      target: engineById.get(engineId),
+      engine: engineById.get(engineId),
+      modelName,
+      options
+    }));
     const shape = getShapeIns({ modelName, engineId, data: options.data, model: options.model, index: options.index });
     engineInstance.appendToLayer(shape, options.layer || layersByEngine.get(engineInstance).find(elem => elem.isDefault));
+    callEventCallback('after:shapeCreate', createEventData('after:shapeCreate', {
+      target: shape,
+      engine: engineById.get(engineId),
+      modelName,
+      options
+    }));
     return shape;
   };
   const updateShape: UpdateShape = (shape, ...args) => {
+    const { callEventCallback, createEventData } = useEvent(engineId);
     const $model = shape.$model;
     const { engine: { width, height }, repaintInfluencedShape } = engineInstance;
     const isResize = [...$model.checkArg.checkArgMap.keys()].some(idx => shape.drawArgs[idx] !== args[idx]);
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
+    callEventCallback('before:shapeUpdate', createEventData('before:shapeUpdate', {
+      target: shape,
+      engine: engineById.get(engineId),
+      args
+    }));
     if (!isResize) {
       shape.drawArgs = args;
       repaintInfluencedShape(shape.graphicsWithBorder, shape);
       shape.draw(shape.ctx, { x: shape.graphics.ox, y: shape.graphics.oy }, shape.rotateDeg);
       updateShapeToGrid(shape, shape.graphicsWithBorder);
-      return;
+      callEventCallback('after:shapeUpdate', createEventData('after:shapeUpdate', {
+        target: shape,
+        engine: engineById.get(engineId),
+        args
+      }));
+      return shape;
     }
     let offCanvas = useOffscreenCanvas().get(width, height),
       offCtx = offCanvas!.getContext('2d') as OffscreenCanvasRenderingContext2D;
@@ -85,6 +121,11 @@ export const useShape: UseShape = (engineId) => {
     repaintInfluencedShape(shape.graphicsWithBorder || getGraphicsWithBorder(shape.graphics, shape.borderOptions), shape);
     shape.draw(shape.ctx, { x: shape.graphics.ox, y: shape.graphics.oy }, shape.rotateDeg);
     updateShapeToGrid(shape, shape.graphicsWithBorder);
+    callEventCallback('after:shapeUpdate', createEventData('after:shapeUpdate', {
+      target: shape,
+      engine: engineById.get(engineId),
+      args
+    }));
     offCanvas = null;
     offCtx = null;
     return shape;
@@ -94,7 +135,6 @@ export const useShape: UseShape = (engineId) => {
     return shape;
   };
   const removeParent: RemoveParent = (child) => {
-    console.log(child)
     if (!child.parentInfo) return;
     let parent = child.parentInfo.parent, targetIdx;
     for (let i = 0; i < parent.children.length; i++) {
@@ -108,7 +148,6 @@ export const useShape: UseShape = (engineId) => {
     return deleteEle[0];
   }
   const setChild: SetChild = (child, parent, options) => {
-    console.log(child)
     parent.children = [...new Set([...parent.children || [], child])];
     if (child?.parentInfo?.parent !== parent) { removeParent(child) }
     child.parentInfo = {

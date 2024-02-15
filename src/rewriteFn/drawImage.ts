@@ -22,7 +22,6 @@ export const drawImage = (ctx: EngineCtx | OffEngineCtx) => {
       callArgs.splice(4, 5, roundX, roundY, roundWidth, roundHeight);
     }
 
-    console.log('callArgs', callArgs)
     oldDrawImage.call(ctx, ...callArgs);
     if (!drawCoordinates) return;
     const matrix = ctx.getTransform();
@@ -34,7 +33,6 @@ export const drawImage = (ctx: EngineCtx | OffEngineCtx) => {
     ];
     const transBoundary = getTransBoundary(matrix, points);
     // console.log('lall', JSON.parse(JSON.stringify(drawCoordinates)));
-    console.log('image', transBoundary)
     drawCoordinates.push(
       ...[
         {

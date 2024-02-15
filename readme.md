@@ -69,7 +69,7 @@ shapeInstance.moveTo(x: number, y: number);
 shapeInstance.rotate(rotateDegree: number); // 角度非弧度
 ```
 7. 变更图形  
-假如widthParams发生了变化并且想要图形产生变化：  
+* 假如widthParams发生了变化并且想要图形产生变化：  
 ```javascript
 
 widthParams = 30;  
@@ -83,15 +83,15 @@ translate(x: number, y: number);
 9. 事件系统  
 ```javascript
 
-type ShapeEvent = "shape:mousedown" | "shape:mouseup" | "shape:click" | "shape:dbClick" | "shape:contextMenu" | "shape:mouseenter" | "shape:mouseleave" | "shape:mousemove" | "shape:rotateStart" | "shape:rotateEnd" | "shape:moveStart" | "shape:moveEnd";  
-type LifeCycle = 'after:engineInit' | "before:modelAdd" | "after:modelAdd" | "before:shapeCreate" | "after:shapeCreate" | "before:shapeUpdate" | "after:shapeUpdate";  
+type ShapeEvent = "shape:mousedown" | "shape:mouseup" | "shape:click" | "shape:dbClick" | "shape:contextMenu" | "shape:mouseenter" | "shape:mouseleave" | "shape:mousemove";  
+type LifeCycle = 'after:engineInit' | "before:modelAdd" | "after:modelAdd" | "before:shapeCreate" | "after:shapeCreate" | "before:shapeDraw" | "after:shapeDraw" | "before:shapeUpdate" | "after:shapeUpdate";  
 type EventType = "graph:mousedown" | "graph:mouseup" | "graph:click" | "graph:dbClick" | "graph:contextMenu" | "graph:mouseenter" | "graph:mouseleave" | "graph:mousemove" | ShapeEvent | LifeCycle;  
 onEvent(eventType, (data) => {});
 ```
 10. 创建图层、添加图形到图层  
-图层将影响每次图形绘制的最小绘制范围计算，同一图层的图形才会被计算  
-不创建图层的情况下，将创建一个默认图层并将所有图形绘制到该默认图层  
-不建议创建过多图层    
+* 图层将影响每次图形绘制的最小绘制范围计算，同一图层的图形才会被计算。  
+* 不创建图层的情况下，将创建一个默认图层并将所有图形绘制到该默认图层。  
+* 不建议创建过多图层。    
 ```javascript
 
 const layerInstance = createLayer(index: number, isDefault?: boolean);  
