@@ -1,7 +1,7 @@
 {
   "name": "fried-canvas",
   "sideEffects": false,
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "A canvas graphic tool library",
   "main": "dist/index.js",
   "module": "dist/index.js",
