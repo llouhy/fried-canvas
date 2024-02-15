@@ -41,7 +41,6 @@ export const arcTo = (ctx: EngineCtx | OffEngineCtx) => {
       const originPoint = getThePointClosedToAPoint(pointOrigins, preP2);
       const pointCenters = [getPointOnLineAtDistance(originPoint.x, originPoint.y, getSlope(preP1, originPoint), r, true), getPointOnLineAtDistance(originPoint.x, originPoint.y, getSlope(preP1, originPoint), r, false)];
       const centerPoint = getThePointClosedToAPoint(pointCenters, originPoint);
-      console.log('绘画三个点', { startPoint, centerPoint, endPoint });
       const transBoundary = getTransBoundary(matrix, [startPoint, endPoint, centerPoint], [startPoint, centerPoint, endPoint]);
       drawCoordinates.push(...[{ x: transBoundary.minX, y: transBoundary.minY }, { x: transBoundary.maxX, y: transBoundary.maxY }]);
       pathCoordinates.push(getTransPoint(matrix, endPoint));

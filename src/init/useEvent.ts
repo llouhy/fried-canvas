@@ -7,13 +7,14 @@ type Func = (...args: any[]) => any;
 type UseEvent = (engineId: string) => UseEventRes;
 type EngineLifeCycle = 'after:engineInit';
 type ModelLifeCycle = 'before:modelAdd' | 'after:modelAdd';
-type ShapeLifeCycle = 'before:shapeCreate' | 'after:shapeCreate' | 'before:shapeUpdate' | 'after:shapeUpdate';
+type ShapeLifeCycle = 'before:shapeCreate' | 'after:shapeCreate' | 'before:shapeUpdate' | 'after:shapeUpdate' | 'before:shapeDraw' | 'after:shapeDraw';
 type LifeCycle = EngineLifeCycle | ModelLifeCycle | ShapeLifeCycle;
 type BrowserEvent = 'mousedown' | 'mouseup' | 'click' | 'dbClick' | 'contextMenu' | 'mouseenter' | 'mouseleave' | 'mousemove';
 type BrowserMoveEvent = 'mouseenter' | 'mouseleave' | 'mousemove';
 type DefaultEvent = `${'graph' | 'shape'}:${BrowserEvent}`
 type GraphEvent = `graph:${BrowserEvent}`;
-type ShapeEvent = `shape:${BrowserEvent}` | 'shape:rotateStart' | 'shape:rotateEnd' | 'shape:moveStart' | 'shape:moveEnd';
+type ShapeEvent = `shape:${BrowserEvent}`;
+// type ShapeEvent = `shape:${BrowserEvent}` | 'shape:rotateStart' | 'shape:rotateEnd' | 'shape:moveStart' | 'shape:moveEnd';
 type EventType = GraphEvent | ShapeEvent | LifeCycle;
 type CallEventCallback = (eventType: EventType, eventData: EventData) => any;
 export type OnEvent = (eventType: EventType, func: Func) => void;
