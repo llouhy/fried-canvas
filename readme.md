@@ -69,7 +69,7 @@ shapeInstance.moveTo(x: number, y: number);
 shapeInstance.rotate(rotateDegree: number); // 角度非弧度
 ```
 7. 变更图形  
-假如widthParams发生了变化并且想要图形产生变化：  
+* 假如widthParams发生了变化并且想要图形产生变化：  
 ```javascript
 
 widthParams = 30;  
@@ -89,9 +89,9 @@ type EventType = "graph:mousedown" | "graph:mouseup" | "graph:click" | "graph:db
 onEvent(eventType, (data) => {});
 ```
 10. 创建图层、添加图形到图层  
-图层将影响每次图形绘制的最小绘制范围计算，同一图层的图形才会被计算  
-不创建图层的情况下，将创建一个默认图层并将所有图形绘制到该默认图层  
-不建议创建过多图层    
+* 图层将影响每次图形绘制的最小绘制范围计算，同一图层的图形才会被计算。  
+* 不创建图层的情况下，将创建一个默认图层并将所有图形绘制到该默认图层。  
+* 不建议创建过多图层。    
 ```javascript
 
 const layerInstance = createLayer(index: number, isDefault?: boolean);  
