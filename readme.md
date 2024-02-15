@@ -83,8 +83,8 @@ translate(x: number, y: number);
 9. 事件系统  
 ```javascript
 
-type ShapeEvent = "shape:mousedown" | "shape:mouseup" | "shape:click" | "shape:dbClick" | "shape:contextMenu" | "shape:mouseenter" | "shape:mouseleave" | "shape:mousemove" | "shape:rotateStart" | "shape:rotateEnd" | "shape:moveStart" | "shape:moveEnd";  
-type LifeCycle = 'after:engineInit' | "before:modelAdd" | "after:modelAdd" | "before:shapeCreate" | "after:shapeCreate" | "before:shapeUpdate" | "after:shapeUpdate";  
+type ShapeEvent = "shape:mousedown" | "shape:mouseup" | "shape:click" | "shape:dbClick" | "shape:contextMenu" | "shape:mouseenter" | "shape:mouseleave" | "shape:mousemove";  
+type LifeCycle = 'after:engineInit' | "before:modelAdd" | "after:modelAdd" | "before:shapeCreate" | "after:shapeCreate" | "before:shapeDraw" | "after:shapeDraw" | "before:shapeUpdate" | "after:shapeUpdate";  
 type EventType = "graph:mousedown" | "graph:mouseup" | "graph:click" | "graph:dbClick" | "graph:contextMenu" | "graph:mouseenter" | "graph:mouseleave" | "graph:mousemove" | ShapeEvent | LifeCycle;  
 onEvent(eventType, (data) => {});
 ```

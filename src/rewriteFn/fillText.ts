@@ -21,7 +21,6 @@ export const fillText = (ctx: EngineCtx | OffEngineCtx) => {
     const roundY = origin.y;
     const roundWidth = Math.round(ctx.measureText(text).width);
     const roundHeight = Math.round(parseInt(ctx.font) * 1.2);
-    console.log(roundWidth, roundHeight);
     const matrix = ctx.getTransform();
     const points = [
       { x: roundX, y: roundY },
@@ -29,9 +28,7 @@ export const fillText = (ctx: EngineCtx | OffEngineCtx) => {
       { x: roundX + roundWidth, y: roundY + roundHeight },
       { x: roundX, y: y + roundHeight }
     ];
-    console.log(points);
     const transBoundary = getTransBoundary(matrix, points);
-    console.log(transBoundary)
     drawCoordinates.push(
       ...[
         {
