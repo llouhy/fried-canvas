@@ -1,15 +1,13 @@
-import { graph } from '../definition/identify';
 import { LayerIns } from '../definition/layer';
 import { InitEngineResult, engineById } from '../engineFn';
 import type { ModelOptions } from '../graphOptions';
-import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
+import type { Point } from '../rewriteFn/type';
 import { ParentInfo, Shape, getShape as getShapeIns } from '../shape/shape';
 import { isNumber } from '../utils/is';
 import { getGraphicsWithBorder } from '../utils/math';
 import { useOffscreenCanvas } from '../utils/useOffscreen';
 import { reloadCtxFunction } from './context';
-import { useEvent } from './useEvent';
-import { useGrid } from './useGrid';
+import { useEvent, useGrid } from './index';
 import { layersByEngine } from './useLayer';
 import { ModelDrawFuncArgs, sumModelGraphics } from './useModel';
 

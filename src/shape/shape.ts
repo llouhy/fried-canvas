@@ -1,5 +1,5 @@
 import { engineById } from '../engineFn';
-import { useGrid } from '../init/useGrid';
+import { useGrid } from '../init';
 import { GridIns } from '../definition/grid';
 import { setIdentify } from '../utils/setIdentify';
 import { getGraphicsWithBorder } from '../utils/math';
@@ -8,7 +8,6 @@ import { angleToRadian, generateRandomStr } from '../utils/math';
 import type { Boundary, EngineCtx, Point } from '../rewriteFn/type';
 import { getPureObject, setPropertyUnWritable } from '../utils/common';
 import type { ModelOptions, BorderOptions, Graphics } from '../graphOptions';
-import { useEvent } from '../init/useEvent';
 import { configByEngineId } from '../init/useConfig';
 import { LayerIns } from '../definition/layer';
 
