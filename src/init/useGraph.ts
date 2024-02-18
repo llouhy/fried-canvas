@@ -1,12 +1,12 @@
-import { gridCoreByEngineId, useGrid } from "./useGrid";
-import { ParentInfo, Shape } from "../shape/shape";
+import { useGrid } from "./useGrid";
+import { Shape } from "../shape/shape";
 import { isNumber } from "../utils/is";
 import { shapeById } from "./useShape";
 import { InitEngineResult, engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
 import { setCanvasSize } from "../utils/common";
 import { setIdentify } from "../utils/setIdentify";
-import { angleToRadian, graphicsToBoundary } from "../utils/math";
+import { graphicsToBoundary } from "../utils/math";
 import { Boundary, EngineCtx } from "../rewriteFn/type";
 
 export type Graph = {

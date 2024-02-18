@@ -1,16 +1,25 @@
 import { Shape } from './shape/shape';
-import { UseGridRes, useGrid } from './init/useGrid';
-import { UseGraphRes, useGraph } from './init/useGraph';
+import { UseGridRes } from './init/useGrid';
+import { UseGraphRes } from './init/useGraph';
 import { generateRandomStr } from './utils/math';
 import { setIdentify } from './utils/setIdentify';
-import { UseShapeRes, useShape } from './init/useShape';
+import { UseShapeRes } from './init/useShape';
 import { initContext, reloadCtxFunction } from './init/context';
-import { UseEventRes, useEvent } from './init/useEvent';
-import { UseModelRes, useModel } from './init/useModel';
+import { UseEventRes } from './init/useEvent';
+import { UseModelRes } from './init/useModel';
 import { getPureObject, microtask, omitObjectProperty, setCanvasSize, setPropertyUnWritable } from './utils/common';
-import { UseConfigRes, useConfig } from './init/useConfig';
-import { UseLayerRes, useLayer } from './init/useLayer';
+import { UseConfigRes } from './init/useConfig';
+import { UseLayerRes } from './init/useLayer';
 import { presetModel } from './shape/preset';
+import {
+  useGrid,
+  useConfig,
+  useEvent,
+  useGraph,
+  useLayer,
+  useModel,
+  useShape
+} from './init';
 import type { Graphics, ModelOptions } from './graphOptions';
 import type { EngineCtx } from './rewriteFn/type';
 

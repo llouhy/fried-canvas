@@ -1,12 +1,11 @@
 import { GridIns, getGrid } from "../definition/grid";
-import { layer } from "../definition/identify";
 import { LayerIns } from "../definition/layer";
 import { InitEngineResult, engineById } from "../engineFn";
 import { Graphics } from "../graphOptions";
 import { Boundary, Point } from "../rewriteFn/type";
 import { Shape } from "../shape/shape";
 import { getDivisibleNum, graphicsToBoundary } from "../utils/math";
-import { graphByEngineId, useGraph } from "./useGraph";
+import { graphByEngineId } from "./useGraph";
 import { shapeById } from "./useShape";
 
 export type Divider = { xs: number[]; ys: number[]; };
@@ -126,7 +125,7 @@ export const useGrid: UseGrid = (engineId, ctx) => {
     const grids = influenceGrids || getInfluencedGrid(boundary);
     const shapes: Shape[] = grids.reduce((pre, cur) => {
       return [...pre, ...(getGridShapes(cur))];
-    }, []);
+  }, []);
     if (!layerSet) return [...new Set(shapes)];
     return [...new Set(shapes)].filter(elem => layerSet.has(elem.layer));
   };

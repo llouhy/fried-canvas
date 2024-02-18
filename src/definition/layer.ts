@@ -2,12 +2,10 @@ import { Shape } from "../shape/shape";
 import { getPureObject, setCanvasSize } from "../utils/common";
 import { generateRandomStr } from "../utils/math";
 import { setIdentify } from "../utils/setIdentify";
-import { Graph, graphByEngineId } from "../init/useGraph";
-import { GridIns } from "./grid";
+import { graphByEngineId } from "../init/useGraph";
 import { EngineCtx } from "../rewriteFn/type";
 import { InitEngineResult } from "../engineFn";
 import { initContext, reloadCtxFunction } from "../init/context";
-import { engine, graph } from "./identify";
 
 export type LayerIns = {
   id: string;
