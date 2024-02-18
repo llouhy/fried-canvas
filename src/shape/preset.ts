@@ -13,7 +13,6 @@ export const presetModel = (engineId: string) => {
     addModel(...lineModelConfig);
   };
   const presetCustomLine = () => {
-    console.log(customLineModelConfig)
     addModel(...customLineModelConfig);
   }
   const presetArrow = () => {

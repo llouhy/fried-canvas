@@ -74,6 +74,17 @@ shapeInstance.rotate(rotateDegree: number); // 角度非弧度
 
 widthParams = 30;  
 updateShape(shapeInstance, isColorRed, widthParams);  
+shapeInstance.updateBorder({ // 更新边框  
+  needBorder?: boolean;  
+  paddingLeft?: number;  
+  paddingRight?: number;  
+  paddingTop?: number;  
+  paddingBottom?: number;  
+  borderDash?: [number, number];  
+  borderWidth?: number;  
+  borderColor?: string;  
+  radius?: number;  
+});  
 ```
 8. 移动画布
 ```javascript
