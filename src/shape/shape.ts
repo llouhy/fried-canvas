@@ -55,8 +55,9 @@ export type Shape = {
   draw: (ctx: EngineCtx, placePoint?: Point, rotateDeg?: number) => string;
   drawBoundary: (graphics?: Graphics) => void;
   isPointInTheShape: (x: number, y: number) => boolean;
-  moveTo: (x: number, y: number) => void;
-  rotate: (rotateDeg: number) => void;
+  moveTo: (x: number, y: number) => Shape;
+  rotate: (rotateDeg: number) => Shape;
+  updateBorder: (o: BorderOptions) => Shape;
 };
 // modelName: string, engineId: string, data?: any, model?: ModelOptions, index?: number
 export const getShape: GetShape = (options) => {
@@ -150,13 +151,13 @@ export const getShape: GetShape = (options) => {
     return shape.id;
   }
   const drawBoundary = (graphics?: Graphics): void => {
+    if (!shape.borderOptions.needBorder) return;
     const shapeGraphics = graphics || shape.graphics;
     const { paddingLeft, paddingRight, paddingTop, paddingBottom, borderDash, borderWidth, borderColor } =
       shape.borderOptions;
     const strokeColor = borderColor;
     const lineWidth = borderWidth || 1;
     const lineDash = borderDash ?? [9, 2];
-    const BORDER_PADDING = 0;
     const boundOx = shapeGraphics.ox - (paddingLeft);
     const boundOy = shapeGraphics.oy - (paddingTop);
     const boundWidth = shapeGraphics.width + (paddingLeft) + (paddingRight);
@@ -197,12 +198,18 @@ export const getShape: GetShape = (options) => {
     shape.draw(shape.ctx, { x, y }, shape.rotateDeg || null);
     const { updateShapeToGrid } = useGrid(shape.belongEngineId);
     updateShapeToGrid(shape, shape.graphicsWithBorder);
+    return shape;
   }
 
   const rotate = (rotateDeg: number) => { // moveTo偏移量会导致清除失败，graphics不同步
     shape.rotateDeg = rotateDeg;
     shape.moveTo(shape.graphics.ox, shape.graphics.oy);
-    return;
+    return shape;
+  }
+
+  const updateBorder = (options: BorderOptions) => {
+    shape.borderOptions = { ...shape.borderOptions, ...options };
+    return shape.moveTo(shape.graphics.ox, shape.graphics.oy);
   }
 
   const drawChildren = () => {
@@ -219,6 +226,7 @@ export const getShape: GetShape = (options) => {
   shape.isPointInTheShape = isPointInTheShape;
   shape.moveTo = moveTo;
   shape.rotate = rotate;
+  shape.updateBorder = updateBorder;
   setPropertyUnWritable(shape, ['draw', 'drawBoundary', 'isPointInTheShape', 'moveTo']);
   return setIdentify(shape, 'shape');
 }
